@@ -198,10 +198,6 @@ uv run flask --app app.py run --host 0.0.0.0 --port 8000
 # http://localhost:8000 を開く
 ```
 
-## CLI
-
-Web UI が主要インターフェースですが、バッチ処理やローカル検証用に `profiler-analyzer` CLI も利用できます。フラグ一覧は `uv run profiler-analyzer --help` を参照してください。
-
 ## Architecture
 
 ### 主要ディレクトリ
@@ -268,6 +264,10 @@ uv run python scripts/ui_smoke_test.py <app-url> --token <token>
 ```
 
 ポストデプロイスモークテストは `./scripts/deploy.sh` 内で自動実行されます。フル分析フロー検証を含める場合は `--full-test` を追加。
+
+## CLI
+
+Web UI が主要インターフェースですが、バッチ処理やローカル検証用に `profiler-analyzer` CLI も利用できます。フラグ一覧は `uv run profiler-analyzer --help` を参照してください。
 
 ## License
 

@@ -207,10 +207,6 @@ uv run flask --app app.py run --host 0.0.0.0 --port 8000
 # open http://localhost:8000
 ```
 
-## CLI
-
-The Web UI is the primary interface. A `profiler-analyzer` CLI is also available for batch jobs and local development. Run `uv run profiler-analyzer --help` for the full flag list.
-
 ## Architecture
 
 ### Main directories
@@ -277,6 +273,10 @@ uv run python scripts/ui_smoke_test.py <app-url> --token <token>
 ```
 
 Post-deploy smoke tests run automatically inside `./scripts/deploy.sh`. Override with `--full-test` to include a full analysis flow check.
+
+## CLI
+
+The Web UI is the primary interface. A `profiler-analyzer` CLI is also available for batch jobs and local development. Run `uv run profiler-analyzer --help` for the full flag list.
 
 ## License
 
