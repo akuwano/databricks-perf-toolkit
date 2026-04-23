@@ -151,16 +151,49 @@ sys.exit(1)
 PY
         }
 
+        # Check if a catalog exists via SHOW CATALOGS LIKE. Returns 0 if it
+        # exists, 1 otherwise. Using this as a guard before CREATE CATALOG
+        # because on Default Storage workspaces `CREATE CATALOG IF NOT EXISTS`
+        # re-validates the metastore storage root *even when the catalog
+        # already exists* and fails with INVALID_STATE. SHOW CATALOGS has no
+        # such side effect.
+        _catalog_exists() {
+            local catalog="$1"
+            local response rc
+            response=$(databricks api post /api/2.0/sql/statements --json "{
+                \"warehouse_id\": \"${WAREHOUSE_ID}\",
+                \"statement\": \"SHOW CATALOGS LIKE '${catalog}'\",
+                \"wait_timeout\": \"30s\"
+            }" 2>&1)
+            rc=$?
+            [ "${rc}" -ne 0 ] && return 1
+            python3 - "${response}" <<'PY'
+import json, sys
+resp = json.loads(sys.argv[1])
+if resp.get("status", {}).get("state") != "SUCCEEDED":
+    sys.exit(1)
+rows = resp.get("result", {}).get("data_array", []) or []
+sys.exit(0 if rows else 1)
+PY
+        }
+
         # Create catalogs and schemas (requires deployer admin privileges)
         _ensure_catalog() {
             local catalog="$1"
             [ -z "${catalog}" ] && return 0
-            echo "  Ensuring catalog ${catalog} exists ..."
+            if _catalog_exists "${catalog}"; then
+                echo "  ✓ Catalog ${catalog} already exists"
+                return 0
+            fi
+            echo "  Catalog ${catalog} not found — attempting CREATE CATALOG IF NOT EXISTS ..."
             if _run_sql "CREATE CATALOG IF NOT EXISTS \`${catalog}\`"; then
-                echo "  ✓ Catalog ${catalog} ready"
+                echo "  ✓ Catalog ${catalog} created"
                 return 0
             fi
             echo "  ✗ Catalog ${catalog} creation FAILED (see error above)"
+            echo "    Hint: on Default Storage workspaces, CREATE CATALOG via SQL needs an"
+            echo "    explicit MANAGED LOCATION. Create the catalog via Catalog Explorer UI"
+            echo "    first, then set its name in dabs/local-overrides.yml."
             return 1
         }
         _ensure_schema() {
