@@ -278,8 +278,22 @@ APP_URL=$(databricks apps get "${APP_NAME}" --output json 2>/dev/null \
     | python3 -c "import json,sys; print(json.load(sys.stdin).get('url',''))" 2>/dev/null || echo "")
 
 if [ -n "${APP_URL}" ]; then
-    # Get token from Databricks CLI for smoke test auth
-    SMOKE_TOKEN=$(databricks auth token -p DEFAULT 2>/dev/null | python3 -c "import json,sys; print(json.load(sys.stdin).get('access_token',''))" 2>/dev/null || echo "")
+    # Read the Databricks CLI profile from local-overrides.yml so the token we
+    # fetch matches the workspace we actually deployed to. Previously this was
+    # hardcoded to `-p DEFAULT`, which silently produced an empty token for
+    # anyone using a non-default profile — resulting in every smoke-test API
+    # call returning 401.
+    SMOKE_PROFILE=$(_run_py -c "
+import yaml
+with open('${ROOT_DIR}/dabs/local-overrides.yml') as f:
+    o = yaml.safe_load(f)
+print(o.get('targets',{}).get('${TARGET}',{}).get('workspace',{}).get('profile','DEFAULT'))
+" 2>/dev/null || echo "DEFAULT")
+    SMOKE_TOKEN=$(databricks auth token -p "${SMOKE_PROFILE}" 2>/dev/null | python3 -c "import json,sys; print(json.load(sys.stdin).get('access_token',''))" 2>/dev/null || echo "")
+    if [ -z "${SMOKE_TOKEN}" ]; then
+        echo "  ⚠ Could not fetch token for profile '${SMOKE_PROFILE}' — smoke tests will run unauthenticated and all API checks will return 401."
+        echo "    Fix: ensure the profile exists (\`databricks auth login --host ... --profile ${SMOKE_PROFILE}\`)."
+    fi
     SMOKE_ARGS="--skip-analysis"
     if [ "${2:-}" = "--full-test" ]; then
         SMOKE_ARGS=""
