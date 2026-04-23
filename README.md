@@ -207,46 +207,9 @@ uv run flask --app app.py run --host 0.0.0.0 --port 8000
 # open http://localhost:8000
 ```
 
-## CLI Usage
+## CLI
 
-The CLI analyzes a query profile JSON and optionally persists or compares the result.
-
-```bash
-# Basic analysis
-uv run profiler-analyzer profile.json
-
-# Metrics-only (skip LLM)
-uv run profiler-analyzer profile.json --no-llm
-
-# With EXPLAIN
-uv run profiler-analyzer profile.json --explain explain.txt
-
-# Japanese output
-uv run profiler-analyzer profile.json --lang ja
-
-# Customize LLM stages
-uv run profiler-analyzer profile.json \
-  --model databricks-claude-opus-4-6 \
-  --review-model databricks-claude-opus-4-6 \
-  --refine-model databricks-claude-opus-4-6 \
-  --verbose
-
-# Tag with experiment / variant
-uv run profiler-analyzer profile.json \
-  --experiment-id exp_2026_04 --variant baseline
-
-# Persist results to Delta tables
-uv run profiler-analyzer profile.json --persist
-
-# Compare against a prior analysis
-uv run profiler-analyzer profile.json --compare-with <analysis-id>
-
-# Add structured tags
-uv run profiler-analyzer profile.json --tags '{"env":"prod","team":"analytics"}'
-
-# Review & refine the generated report
-uv run profiler-analyzer profile.json --report-review --refine-report
-```
+The Web UI is the primary interface. A `profiler-analyzer` CLI is also available for batch jobs and local development. Run `uv run profiler-analyzer --help` for the full flag list.
 
 ## Architecture
 
