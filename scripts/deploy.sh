@@ -120,38 +120,71 @@ v = o.get('targets',{}).get('${TARGET}',{}).get('variables',{})
 print(v.get('sparkperf_catalog',''), v.get('sparkperf_schema',''), v.get('dbsql_catalog',''), v.get('dbsql_schema',''))
 ")
 
+        # Run a SQL statement via the statements API and return 0 only if the
+        # SQL actually SUCCEEDED (not just "HTTP 200"). The older pattern of
+        # `databricks api post ... > /dev/null && echo ready` masked real
+        # failures (e.g. CREATE CATALOG denied by metastore) as success.
+        _run_sql() {
+            local stmt="$1" timeout="${2:-30s}"
+            local response rc
+            response=$(databricks api post /api/2.0/sql/statements --json "{
+                \"warehouse_id\": \"${WAREHOUSE_ID}\",
+                \"statement\": \"${stmt}\",
+                \"wait_timeout\": \"${timeout}\"
+            }" 2>&1)
+            rc=$?
+            if [ "${rc}" -ne 0 ]; then
+                echo "    [http_error] ${response}" >&2
+                return 1
+            fi
+            python3 - "${response}" <<'PY' || return 1
+import json, sys
+resp = json.loads(sys.argv[1])
+state = resp.get("status", {}).get("state", "")
+if state == "SUCCEEDED":
+    sys.exit(0)
+err = resp.get("status", {}).get("error", {}) or {}
+code = err.get("error_code", "")
+msg = err.get("message", "")
+sys.stderr.write(f"    [state={state or '?'}] {code}: {msg}\n".strip() + "\n")
+sys.exit(1)
+PY
+        }
+
         # Create catalogs and schemas (requires deployer admin privileges)
         _ensure_catalog() {
             local catalog="$1"
-            [ -z "${catalog}" ] && return
+            [ -z "${catalog}" ] && return 0
             echo "  Ensuring catalog ${catalog} exists ..."
-            databricks api post /api/2.0/sql/statements --json "{
-                \"warehouse_id\": \"${WAREHOUSE_ID}\",
-                \"statement\": \"CREATE CATALOG IF NOT EXISTS \`${catalog}\`\",
-                \"wait_timeout\": \"30s\"
-            }" > /dev/null 2>&1 && echo "  ✓ Catalog ${catalog} ready" || echo "  ⚠ Catalog creation failed (may already exist or no permission)"
+            if _run_sql "CREATE CATALOG IF NOT EXISTS \`${catalog}\`"; then
+                echo "  ✓ Catalog ${catalog} ready"
+                return 0
+            fi
+            echo "  ✗ Catalog ${catalog} creation FAILED (see error above)"
+            return 1
         }
         _ensure_schema() {
             local catalog="$1" schema="$2"
-            [ -z "${catalog}" ] || [ -z "${schema}" ] && return
-            _ensure_catalog "${catalog}"
+            [ -z "${catalog}" ] || [ -z "${schema}" ] && return 0
+            _ensure_catalog "${catalog}" || return 1
             echo "  Ensuring ${catalog}.${schema} exists ..."
-            databricks api post /api/2.0/sql/statements --json "{
-                \"warehouse_id\": \"${WAREHOUSE_ID}\",
-                \"statement\": \"CREATE SCHEMA IF NOT EXISTS \`${catalog}\`.\`${schema}\`\",
-                \"wait_timeout\": \"30s\"
-            }" > /dev/null 2>&1 && echo "  ✓ ${catalog}.${schema} ready" || echo "  ⚠ Schema creation failed (may already exist or no permission)"
+            if _run_sql "CREATE SCHEMA IF NOT EXISTS \`${catalog}\`.\`${schema}\`"; then
+                echo "  ✓ ${catalog}.${schema} ready"
+                return 0
+            fi
+            echo "  ✗ ${catalog}.${schema} creation FAILED (see error above)"
+            return 1
         }
-        _ensure_schema "${SP_CATALOG}" "${SP_SCHEMA}"
+        _ensure_schema "${SP_CATALOG}" "${SP_SCHEMA}" || true
         if [ "${DBSQL_CATALOG}.${DBSQL_SCHEMA}" != "${SP_CATALOG}.${SP_SCHEMA}" ]; then
-            _ensure_schema "${DBSQL_CATALOG}" "${DBSQL_SCHEMA}"
+            _ensure_schema "${DBSQL_CATALOG}" "${DBSQL_SCHEMA}" || true
         fi
 
         # Grant SP write permissions (CREATE TABLE + MODIFY for table_writer)
         # Also SELECT (all SQL connections use SP auth)
         _grant_sp_write() {
             local catalog="$1" schema="$2" include_select="$3"
-            [ -z "${catalog}" ] || [ -z "${schema}" ] && return
+            [ -z "${catalog}" ] || [ -z "${schema}" ] && return 0
             echo "  Granting SP write on ${catalog}.${schema} ..."
             local stmts=(
                 "GRANT USE CATALOG ON CATALOG \`${catalog}\` TO \`${SP_CLIENT_ID}\`"
@@ -162,20 +195,24 @@ print(v.get('sparkperf_catalog',''), v.get('sparkperf_schema',''), v.get('dbsql_
             if [ "${include_select}" = "true" ]; then
                 stmts+=("GRANT SELECT ON SCHEMA \`${catalog}\`.\`${schema}\` TO \`${SP_CLIENT_ID}\`")
             fi
+            local failed=0
             for stmt in "${stmts[@]}"; do
-                databricks api post /api/2.0/sql/statements --json "{
-                    \"warehouse_id\": \"${WAREHOUSE_ID}\",
-                    \"statement\": \"${stmt}\",
-                    \"wait_timeout\": \"10s\"
-                }" > /dev/null 2>&1 || true
+                if ! _run_sql "${stmt}" "10s"; then
+                    failed=$((failed + 1))
+                fi
             done
-            echo "  ✓ ${catalog}.${schema} SP write granted"
+            if [ "${failed}" -eq 0 ]; then
+                echo "  ✓ ${catalog}.${schema} SP write granted"
+            else
+                echo "  ✗ ${catalog}.${schema} SP write: ${failed} of ${#stmts[@]} grants FAILED"
+                return 1
+            fi
         }
         # Spark Perf: write + SELECT (SELECT needed for Genie Space creation)
-        _grant_sp_write "${SP_CATALOG}" "${SP_SCHEMA}" "true"
+        _grant_sp_write "${SP_CATALOG}" "${SP_SCHEMA}" "true" || true
         # DBSQL: write + SELECT (all SQL connections use SP auth)
         if [ "${DBSQL_CATALOG}.${DBSQL_SCHEMA}" != "${SP_CATALOG}.${SP_SCHEMA}" ]; then
-            _grant_sp_write "${DBSQL_CATALOG}" "${DBSQL_SCHEMA}" "true"
+            _grant_sp_write "${DBSQL_CATALOG}" "${DBSQL_SCHEMA}" "true" || true
         fi
 
         # Grant CAN_MANAGE_RUN on jobs to App SP
