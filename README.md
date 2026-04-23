@@ -148,72 +148,63 @@ Dev/test groups: `pytest`, `pytest-cov`, `mypy`, `playwright`, `babel`.
 
 ## Quick Start
 
-This repository is designed to be deployed as a Databricks App and also used locally through the CLI.
+This tool is deployed to Databricks Apps via the bundled `./scripts/deploy.sh` — it handles everything from config generation to permission grants.
 
-### 1. Clone and install
+### Prerequisites
+
+- Python 3.11+
+- [uv](https://docs.astral.sh/uv/) (dependency manager used throughout this repo)
+- A Databricks workspace reachable by `DATABRICKS_HOST` / `DATABRICKS_TOKEN`
+- `databricks` CLI with a configured profile (`databricks auth login --host <workspace-url>`)
+
+### From scratch
 
 ```bash
+# 1. Clone
 git clone https://github.com/akuwano/databricks-perf-toolkit.git
 cd databricks-perf-toolkit
 
-python -m venv .venv
-source .venv/bin/activate
+# 2. Install Python dependencies (editable)
+uv sync
 
-pip install -e ".[web]"
+# 3. Configure your environment (this is the ONLY config file you edit)
+cp dabs/local-overrides.yml.sample dabs/local-overrides.yml
+# Edit dabs/local-overrides.yml and set per-target:
+#   - catalog / schema for DBSQL profiler + Spark Perf persistence
+#   - warehouse_id (SQL Warehouse ID)
+#   - log_root / cluster_id (for Spark Perf ETL input)
+#   - app_name (Databricks App name)
+
+# 4. Authenticate the Databricks CLI once
+databricks auth login --host https://<your-workspace>
+# Use profile name DEFAULT, or update local-overrides.yml to match
+
+# 5. Deploy (generates runtime-config.json + app.yaml, deploys bundle,
+#    grants warehouse + job permissions, runs smoke tests)
+./scripts/deploy.sh dev
+# targets: dev (default), staging, prod
+
+# On success the script prints the app URL. Open it in a browser.
 ```
 
-For dev/test/lint extras:
+`deploy.sh` handles everything end-to-end: `runtime-config.json` generation, `app.yaml` generation with Warehouse resource declaration, `databricks bundle deploy`, app start/restart, SP Warehouse `CAN_USE` grant, catalog/schema auto-create, SP write grants, job `CAN_MANAGE_RUN`, and post-deploy smoke tests.
+
+Add `--full-test` to run a full analysis flow verification after deploy:
 
 ```bash
-pip install -e ".[web,test,lint,ui-smoke,dev]"
+./scripts/deploy.sh dev --full-test
 ```
 
-### 2. Set environment variables
+See `docs/operations-guide.md` for full operations and troubleshooting.
 
-For LLM-backed analysis:
+### Local Web UI for development
 
-```bash
-export DATABRICKS_HOST="https://<your-workspace>"
-export DATABRICKS_TOKEN="<your-token>"
-```
-
-Optional output language (default `en`):
+To iterate on the Web UI without redeploying:
 
 ```bash
-export DBSQL_LANG="ja"
-```
-
-### 3. Databricks Apps deployment inputs
-
-For Apps deployment, configure at minimum:
-
-- a Databricks workspace where the app runs
-- auth credentials (`DATABRICKS_HOST` / `DATABRICKS_TOKEN`)
-- catalog / schema / warehouse settings for persistence and Web UI
-- notebook / job wiring for Spark ETL and dashboard flows
-
-Deployment assets live under `dabs/`, `scripts/`, and `docs/`.
-
-### 4. Launch the Web UI locally
-
-```bash
-python dabs/app/app.py
-# then open http://localhost:8000
-```
-
-### 5. Run a first analysis via CLI
-
-```bash
-profiler-analyzer path/to/profile.json --no-llm
-```
-
-Or with `EXPLAIN` and LLM stages:
-
-```bash
-profiler-analyzer path/to/profile.json \
-  --explain path/to/explain.txt \
-  --model databricks-claude-opus-4-6 \
-  --review-model databricks-claude-opus-4-6
+cd dabs/app
+uv run flask --app app.py run --host 0.0.0.0 --port 8000
+# open http://localhost:8000
 ```
 
 ## CLI Usage
@@ -222,39 +213,39 @@ The CLI analyzes a query profile JSON and optionally persists or compares the re
 
 ```bash
 # Basic analysis
-profiler-analyzer profile.json
+uv run profiler-analyzer profile.json
 
 # Metrics-only (skip LLM)
-profiler-analyzer profile.json --no-llm
+uv run profiler-analyzer profile.json --no-llm
 
 # With EXPLAIN
-profiler-analyzer profile.json --explain explain.txt
+uv run profiler-analyzer profile.json --explain explain.txt
 
 # Japanese output
-profiler-analyzer profile.json --lang ja
+uv run profiler-analyzer profile.json --lang ja
 
 # Customize LLM stages
-profiler-analyzer profile.json \
+uv run profiler-analyzer profile.json \
   --model databricks-claude-opus-4-6 \
   --review-model databricks-claude-opus-4-6 \
   --refine-model databricks-claude-opus-4-6 \
   --verbose
 
 # Tag with experiment / variant
-profiler-analyzer profile.json \
+uv run profiler-analyzer profile.json \
   --experiment-id exp_2026_04 --variant baseline
 
 # Persist results to Delta tables
-profiler-analyzer profile.json --persist
+uv run profiler-analyzer profile.json --persist
 
 # Compare against a prior analysis
-profiler-analyzer profile.json --compare-with <analysis-id>
+uv run profiler-analyzer profile.json --compare-with <analysis-id>
 
 # Add structured tags
-profiler-analyzer profile.json --tags '{"env":"prod","team":"analytics"}'
+uv run profiler-analyzer profile.json --tags '{"env":"prod","team":"analytics"}'
 
 # Review & refine the generated report
-profiler-analyzer profile.json --report-review --refine-report
+uv run profiler-analyzer profile.json --report-review --refine-report
 ```
 
 ## Architecture
@@ -300,25 +291,29 @@ See `docs/analysis-pipeline.md` and `docs/action-plan-generation.md` for details
 
 ## Development
 
-```bash
-# Install dev extras
-pip install -e ".[web,test,lint,ui-smoke,dev]"
+All dev commands use `uv run` so the correct virtualenv and dep groups are picked up automatically.
 
-# Run tests
-pytest                       # full suite
-pytest dabs/app/tests        # app only
-pytest eval/tests            # eval only
+```bash
+# Install all dev groups (test + lint + ui-smoke + dev)
+uv sync --all-groups
+
+# Run tests (from dabs/app so pytest picks up the right conftest)
+cd dabs/app && uv run pytest                     # full app suite
+cd dabs/app && uv run pytest ../../eval/tests    # eval framework
+cd dabs/app && uv run pytest tests/test_usecases.py -v   # a single file
 
 # Type-check
-mypy dabs/app
+cd dabs/app && uv run mypy .
 
-# Lint / format (ruff)
-ruff check .
-ruff format .
+# Lint / format
+uv run ruff check dabs/app/
+uv run ruff format --check dabs/app/
 
-# UI smoke test
-python scripts/ui_smoke_test.py
+# UI smoke (requires running app, see scripts/ui_smoke_test.py --help)
+uv run python scripts/ui_smoke_test.py <app-url> --token <token>
 ```
+
+Post-deploy smoke tests run automatically inside `./scripts/deploy.sh`. Override with `--full-test` to include a full analysis flow check.
 
 ## License
 
