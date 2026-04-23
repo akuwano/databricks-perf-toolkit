@@ -1,0 +1,3610 @@
+# Japanese translations for DBSQL Profiler Analyzer.
+# Copyright (C) 2026 Databricks
+# This file is distributed under the same license as the DBSQL Profiler
+# Analyzer project.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: DBSQL Profiler Analyzer 1.0\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-01-23 23:46+0900\n"
+"PO-Revision-Date: 2026-01-23 15:43+0900\n"
+"Last-Translator: \n"
+"Language: ja\n"
+"Language-Team: ja <LL@li.org>\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.17.0\n"
+
+#: app.py:527
+msgid "Analysis not found"
+msgstr "分析結果が見つかりません"
+
+#: app.py:536
+#, python-brace-format
+msgid "Analysis not ready. Status: {status}"
+msgstr "分析が完了していません。ステータス: {status}"
+
+#: core/analyzers.py:51
+#, python-brace-format
+msgid "Cache hit ratio is moderate ({ratio})"
+msgstr "キャッシュヒット率が中程度です ({ratio})"
+
+#: core/analyzers.py:56
+#, python-brace-format
+msgid "Cache hit ratio is low ({ratio})"
+msgstr "キャッシュヒット率が低いです ({ratio})"
+
+#: core/analyzers.py:59
+msgid "Consider leveraging Delta cache by scaling up"
+msgstr "スケールアップによりDeltaキャッシュの活用を検討してください"
+
+#: core/analyzers.py:68
+msgid "Remote read ratio is very high ({ratio})"
+msgstr "リモート読み取り率が非常に高いです ({ratio})"
+
+#: core/analyzers.py:71
+msgid "Consider enabling disk cache or scaling up cluster"
+msgstr "ディスクキャッシュの有効化またはクラスターのスケールアップを検討"
+
+#: core/analyzers.py:76
+msgid "Remote read ratio is high ({ratio})"
+msgstr "リモート読み取り率が高いです ({ratio})"
+
+#: core/analyzers.py:89
+#, python-brace-format
+msgid "Photon utilization has room for improvement ({ratio})"
+msgstr "Photon利用率に改善の余地があります ({ratio})"
+
+#: core/analyzers.py:94
+#, python-brace-format
+msgid "Photon utilization is low ({ratio})"
+msgstr "Photon利用率が低いです ({ratio})"
+
+#: core/analyzers.py:97
+msgid ""
+"Consider setting spark.sql.join.preferSortMergeJoin=false if Sort-Merge "
+"joins are used"
+msgstr ""
+"Sort-Merge joinが使用されている場合、spark.sql.join.preferSortMergeJoin=false "
+"の設定を検討してください"
+
+#: core/analyzers.py:132
+#, python-brace-format
+msgid "Significant disk spill is occurring ({size})"
+msgstr "大量のディスクスピルが発生しています ({size})"
+
+#: core/analyzers.py:134
+msgid "Memory configuration and partition strategy need review"
+msgstr "メモリ設定とパーティション戦略の見直しが必要です"
+
+#: core/analyzers.py:136
+msgid "Consider expanding cluster size (increasing worker nodes)"
+msgstr "クラスターサイズの拡大（ワーカーノード増加）を検討してください"
+
+#: core/analyzers.py:140
+#, python-brace-format
+msgid "Disk spill is occurring ({size})"
+msgstr "ディスクスピルが発生しています ({size})"
+
+#: core/analyzers.py:142 core/analyzers.py:236
+msgid "Please verify spark.sql.adaptive.skewJoin.enabled=true"
+msgstr "spark.sql.adaptive.skewJoin.enabled=true を確認してください"
+
+#: core/analyzers.py:147
+#, python-brace-format
+msgid "Minor disk spill is occurring ({size})"
+msgstr "軽微なディスクスピルが発生しています ({size})"
+
+#: core/analyzers.py:157
+#, python-brace-format
+msgid "File pruning efficiency is low ({ratio})"
+msgstr "ファイルプルーニング効率が低いです ({ratio})"
+
+#: core/analyzers.py:160
+msgid "Please check partitioning or Z-Order configuration"
+msgstr "パーティショニングまたはZ-Order設定を確認してください"
+
+#: core/analyzers.py:174
+msgid "Bytes pruning efficiency is low ({ratio})"
+msgstr "バイトプルーニング効率が低いです ({ratio})"
+
+#: core/analyzers.py:188 core/analyzers.py:196
+#, python-brace-format
+msgid "Shuffle operations account for {ratio} of total time"
+msgstr "Shuffle操作が全体時間の{ratio}を占めています"
+
+#: core/analyzers.py:191
+msgid ""
+"Consider increasing broadcast join threshold "
+"(spark.sql.autoBroadcastJoinThreshold) to 200MB"
+msgstr ""
+"broadcast join閾値 (spark.sql.autoBroadcastJoinThreshold) を200MBに "
+"引き上げることを検討してください"
+
+#: core/analyzers.py:203
+#, python-brace-format
+msgid ""
+"Shuffle operation (Node {node_id}) has low memory efficiency "
+"({size}/partition > 512MB threshold)"
+msgstr "Shuffle操作 (Node {node_id}) のメモリ効率が低いです ({size}/パーティション > 512MB閾値)"
+
+#: core/analyzers.py:213
+#, python-brace-format
+msgid "Consider using REPARTITION({partitions}, {attrs}) hint"
+msgstr "REPARTITION({partitions}, {attrs}) ヒントの使用を検討してください"
+
+#: core/analyzers.py:226
+#, python-brace-format
+msgid "Average partition size for AQEShuffleRead is large ({size} > 512MB)"
+msgstr "AQEShuffleReadの平均パーティションサイズが大きいです ({size} > 512MB)"
+
+#: core/analyzers.py:233
+#, python-brace-format
+msgid "Data skew detected ({count} partitions)"
+msgstr "データスキューが検出されました ({count} パーティション)"
+
+#: core/analyzers.py:259
+#, python-brace-format
+msgid "Cloud storage retry rate is high ({ratio})"
+msgstr "クラウドストレージのリトライ率が高いです ({ratio})"
+
+#: core/analyzers.py:262
+msgid "Cloud storage access may be a bottleneck - check for throttling"
+msgstr "クラウドストレージアクセスがボトルネックの可能性 - スロットリングを確認"
+
+#: core/analyzers.py:267
+msgid "Cloud storage retry rate is elevated ({ratio})"
+msgstr "クラウドストレージのリトライ率が上昇しています ({ratio})"
+
+#: core/analyzers.py:274
+#, python-brace-format
+msgid "Sort-Merge join is used in {count} places (not supported by Photon)"
+msgstr "Sort-Merge joinが{count}箇所で使用されています（Photon非対応）"
+
+#: core/analyzers.py:277
+msgid "Consider setting spark.sql.join.preferSortMergeJoin=false"
+msgstr "spark.sql.join.preferSortMergeJoin=false の設定を検討してください"
+
+#: core/analyzers.py:280
+msgid "Consider setting spark.databricks.adaptive.joinFallback=true"
+msgstr "spark.databricks.adaptive.joinFallback=true の設定を検討してください"
+
+#: core/analyzers.py:331
+#, python-brace-format
+msgid "Tables missing optimizer statistics: {tables}"
+msgstr "オプティマイザ統計が不足しているテーブル: {tables}"
+
+#: core/analyzers.py:335
+#, python-brace-format
+msgid "Run ANALYZE TABLE {table} COMPUTE STATISTICS FOR ALL COLUMNS"
+msgstr "ANALYZE TABLE {table} COMPUTE STATISTICS FOR ALL COLUMNS を実行してください"
+
+#: core/analyzers.py:340
+#, python-brace-format
+msgid "Tables with partial optimizer statistics: {tables}"
+msgstr "部分的な統計のみ存在するテーブル: {tables}"
+
+#: core/analyzers.py:359
+#, python-brace-format
+msgid "Partition filter not used for table `{table}`"
+msgstr "テーブル `{table}` でパーティションフィルタが使用されていません"
+
+#: core/analyzers.py:362
+#, python-brace-format
+msgid "Check partitioning strategy for table `{table}`"
+msgstr "テーブル `{table}` のパーティショニング戦略を確認してください"
+
+#: core/analyzers.py:378
+msgid "Shuffle exchanges are occurring despite broadcast joins"
+msgstr "ブロードキャストジョインが使われているにも関わらずShuffle Exchangeが発生しています"
+
+#: core/analyzers.py:381
+msgid "Consider increasing spark.sql.autoBroadcastJoinThreshold to 200MB or more"
+msgstr "spark.sql.autoBroadcastJoinThreshold を200MB以上に引き上げることを検討してください"
+
+#: core/analyzers.py:388
+#, python-brace-format
+msgid "Sort Merge Join detected in {count} places (not supported by Photon)"
+msgstr "Sort Merge Joinが{count}箇所で検出されました（Photon非対応）"
+
+#: core/analyzers.py:392
+msgid "Set spark.sql.join.preferSortMergeJoin=false to avoid Sort Merge Join"
+msgstr "Sort Merge Joinを回避するため spark.sql.join.preferSortMergeJoin=false を設定してください"
+
+#: core/analyzers.py:405
+msgid "Multiple aggregation stages but Partial/Final optimization not detected"
+msgstr "複数の集約ステージがありますが、Partial/Final最適化が検出されませんでした"
+
+#: core/analyzers.py:413
+#, python-brace-format
+msgid "Many Exchange operations ({count}) occurring with disk spill"
+msgstr "多数のExchange操作 ({count}) がディスクスピルと共に発生しています"
+
+#: core/analyzers.py:416
+msgid ""
+"Consider adjusting shuffle partition count: increase "
+"spark.sql.shuffle.partitions"
+msgstr "シャッフルパーティション数の調整を検討してください: spark.sql.shuffle.partitions を増加"
+
+#: core/analyzers.py:425
+msgid "EXPLAIN indicates query is not fully supported by Photon"
+msgstr "EXPLAINによるとクエリは完全にはPhotonでサポートされていません"
+
+#: core/analyzers.py:431
+msgid "EXPLAIN shows full Photon support but actual Photon utilization is low"
+msgstr "EXPLAINでは完全なPhotonサポートを示していますが、実際のPhoton利用率は低いです"
+
+#: core/analyzers.py:434
+msgid "Verify that the query is running on a Photon-enabled cluster"
+msgstr "クエリがPhoton対応クラスターで実行されていることを確認してください"
+
+#: core/analyzers.py:597
+#, python-brace-format
+msgid "Disk spill: {size}"
+msgstr "ディスクスピル: {size}"
+
+#: core/analyzers.py:599
+#, python-brace-format
+msgid "Spill operators: {ops}"
+msgstr "スピル発生オペレータ: {ops}"
+
+#: core/analyzers.py:603
+msgid "I/O delay due to disk spill"
+msgstr "ディスクスピルによるI/O遅延"
+
+#: core/analyzers.py:605
+msgid "Memory shortage or data skew"
+msgstr "メモリ不足またはデータスキュー"
+
+#: core/analyzers.py:606
+msgid "Expand cluster size or adjust partition count"
+msgstr "クラスターサイズ拡大またはパーティション数調整"
+
+#: core/analyzers.py:618
+#, python-brace-format
+msgid "Skewed partition count: {count}"
+msgstr "スキューパーティション数: {count}"
+
+#: core/analyzers.py:621
+#, python-brace-format
+msgid "Skewed key: {keys}"
+msgstr "スキューキー: {keys}"
+
+#: core/analyzers.py:624
+msgid "Processing imbalance due to data skew"
+msgstr "データスキューによる処理不均衡"
+
+#: core/analyzers.py:626
+msgid "Imbalance in join or aggregation key value distribution"
+msgstr "結合/集約キーの値分布の偏り"
+
+#: core/analyzers.py:627
+msgid "Enable AQE skew join or use SALTING for key distribution"
+msgstr "AQE skew join有効化またはSALTINGでキー分散"
+
+#: core/analyzers.py:639
+#, python-brace-format
+msgid "Photon utilization: {ratio}"
+msgstr "Photon利用率: {ratio}"
+
+#: core/analyzers.py:641
+#, python-brace-format
+msgid "Sort-Merge joins: {count} places"
+msgstr "Sort-Merge join: {count}箇所"
+
+#: core/analyzers.py:644
+msgid "Low Photon utilization"
+msgstr "Photon利用率の低さ"
+
+#: core/analyzers.py:646
+msgid "Using Sort-Merge joins or Photon-unsupported functions"
+msgstr "Sort-Merge joinまたはPhoton非対応関数の使用"
+
+#: core/analyzers.py:647
+msgid "Settings to avoid Sort-Merge joins or query rewrite"
+msgstr "Sort-Merge join回避設定またはクエリ書き換え"
+
+#: core/analyzers.py:658
+#, python-brace-format
+msgid "Cache hit ratio: {ratio}"
+msgstr "キャッシュヒット率: {ratio}"
+
+#: core/analyzers.py:660
+#, python-brace-format
+msgid "Read data size: {size}"
+msgstr "読み取りデータサイズ: {size}"
+
+#: core/analyzers.py:663
+msgid "Low cache hit ratio"
+msgstr "キャッシュヒット率の低さ"
+
+#: core/analyzers.py:665
+msgid "First execution, insufficient cache size, or cluster restart"
+msgstr "初回実行、キャッシュサイズ不足、またはクラスター再起動"
+
+#: core/analyzers.py:666
+msgid "Verify cache effect by re-running same query, or scale up"
+msgstr "同一クエリ再実行でキャッシュ効果確認、またはスケールアップ"
+
+#: core/analyzers.py:676
+#, python-brace-format
+msgid "Shuffle impact ratio: {ratio}"
+msgstr "Shuffle影響率: {ratio}"
+
+#: core/analyzers.py:679
+#, python-brace-format
+msgid "Inefficient shuffles: {count} places"
+msgstr "非効率Shuffle: {count}箇所"
+
+#: core/analyzers.py:682
+msgid "Shuffle operations are dominant"
+msgstr "Shuffle操作の支配"
+
+#: core/analyzers.py:684
+msgid "Joins between large tables or insufficient broadcast threshold"
+msgstr "大規模テーブル間のJoinまたはbroadcast閾値不足"
+
+#: core/analyzers.py:685
+msgid "Expand broadcast threshold or use REPARTITION hint"
+msgstr "broadcast閾値拡大またはREPARTITIONヒント使用"
+
+#: core/analyzers.py:696
+#, python-brace-format
+msgid "Filter efficiency: {ratio}"
+msgstr "フィルタ効率: {ratio}"
+
+#: core/analyzers.py:699
+#, python-brace-format
+msgid "Read file count: {read} / {total}"
+msgstr "読み取りファイル数: {read} / {total}"
+
+#: core/analyzers.py:702
+msgid "Low file pruning efficiency"
+msgstr "ファイルプルーニング効率の低さ"
+
+#: core/analyzers.py:704
+msgid ""
+"Mismatch between partition key and filter condition, or Z-Order not "
+"configured"
+msgstr "パーティションキーとフィルタ条件の不一致、またはZ-Order未設定"
+
+#: core/analyzers.py:705
+msgid "Review table partitioning or apply Z-Order/Liquid Clustering"
+msgstr "テーブルパーティショニング見直しまたはZ-Order/Liquid Clustering適用"
+
+#: core/analyzers.py:718
+#, python-brace-format
+msgid "Execution time share: {share}%"
+msgstr "実行時間シェア: {share}%"
+
+#: core/analyzers.py:719
+#, python-brace-format
+msgid "Operator: {op}"
+msgstr "オペレータ: {op}"
+
+#: core/analyzers.py:724
+#, python-brace-format
+msgid "Scan operation accounts for {share}% of total time"
+msgstr "Scan操作が全体の{share}%を占有"
+
+#: core/analyzers.py:726
+msgid "Large data read or insufficient column pruning"
+msgstr "大量データ読み取りまたはカラムプルーニング不足"
+
+#: core/analyzers.py:727
+msgid "SELECT only required columns or add partition filter"
+msgstr "必要カラムのみSELECTまたはパーティションフィルタ追加"
+
+#: core/analyzers.py:730
+#, python-brace-format
+msgid "time_share of Node {id} < 20%"
+msgstr "Node {id} のtime_share < 20%"
+
+#: core/analyzers.py:736
+#, python-brace-format
+msgid "Non-Photon join accounts for {share}% of total time"
+msgstr "非Photon Joinが全体の{share}%を占有"
+
+#: core/analyzers.py:738
+msgid "Sort-Merge join or unsupported join type"
+msgstr "Sort-Merge joinまたは非対応join種別"
+
+#: core/analyzers.py:739
+msgid "Change join type (Hash Join recommended)"
+msgstr "join種別変更（Hash Join推奨）"
+
+#: core/analyzers.py:743
+#, python-brace-format
+msgid "Photon execution on Node {id}"
+msgstr "Node {id} はPhoton実行"
+
+#: core/i18n.py:438
+msgid "Queued..."
+msgstr "キューに追加中..."
+
+#: core/i18n.py:439
+msgid "Analyzing metrics..."
+msgstr "メトリクスを分析中..."
+
+#: core/i18n.py:440
+msgid "Analyzing EXPLAIN..."
+msgstr "EXPLAINを分析中..."
+
+#: core/i18n.py:441
+msgid "Stage 1/3: Initial LLM analysis..."
+msgstr "ステージ 1/3: LLM初期分析..."
+
+#: core/i18n.py:442
+msgid "Stage 2/3: LLM review..."
+msgstr "ステージ 2/3: LLMレビュー..."
+
+#: core/i18n.py:443
+msgid "Stage 3/3: LLM refinement..."
+msgstr "ステージ 3/3: LLMリファイン..."
+
+#: core/i18n.py:444
+msgid "Generating report..."
+msgstr "レポートを生成中..."
+
+#: core/i18n.py:445
+msgid "Complete!"
+msgstr "完了!"
+
+#: core/reporters.py:23 core/reporters.py:761 core/reporters.py:780
+#: core/reporters.py:823
+msgid "Low"
+msgstr "低"
+
+#: core/reporters.py:25 core/reporters.py:760 core/reporters.py:779
+#: core/reporters.py:822
+msgid "Medium"
+msgstr "中"
+
+#: core/reporters.py:27 core/reporters.py:759 core/reporters.py:777
+#: core/reporters.py:778 core/reporters.py:821
+msgid "High"
+msgstr "高"
+
+#: core/reporters.py:29
+msgid "Very High"
+msgstr "非常に高"
+
+#: core/reporters.py:56
+msgid "Tables Used"
+msgstr "使用テーブル"
+
+#: core/reporters.py:57
+msgid "Table Name"
+msgstr "テーブル名"
+
+#: core/reporters.py:57
+msgid "Alias"
+msgstr "エイリアス"
+
+#: core/reporters.py:57
+msgid "Usage"
+msgstr "用途"
+
+#: core/reporters.py:63
+msgid "Target"
+msgstr "ターゲット"
+
+#: core/reporters.py:63
+msgid "Source"
+msgstr "ソース"
+
+#: core/reporters.py:71
+msgid "Query Structure"
+msgstr "クエリ構造"
+
+#: core/reporters.py:72
+msgid "Statement Type"
+msgstr "ステートメント種別"
+
+#: core/reporters.py:75
+msgid "Join Count"
+msgstr "JOIN数"
+
+#: core/reporters.py:77
+msgid "Join Types"
+msgstr "JOIN種別"
+
+#: core/reporters.py:79
+msgid "Join Details"
+msgstr "JOIN詳細"
+
+#: core/reporters.py:80
+msgid "Left Table"
+msgstr "左テーブル"
+
+#: core/reporters.py:80
+msgid "Right Table"
+msgstr "右テーブル"
+
+#: core/reporters.py:91
+msgid "CTE Count"
+msgstr "CTE数"
+
+#: core/reporters.py:82
+msgid "CTE Names"
+msgstr "CTE名"
+
+#: core/reporters.py:85
+msgid "Subquery Count"
+msgstr "サブクエリ数"
+
+#: core/reporters.py:88
+msgid "Aggregate Functions"
+msgstr "集約関数"
+
+#: core/reporters.py:91
+msgid "Window Functions"
+msgstr "ウィンドウ関数"
+
+#: core/reporters.py:107
+msgid "Clauses Used"
+msgstr "使用句"
+
+#: core/reporters.py:110
+msgid "Complexity"
+msgstr "複雑度"
+
+#: core/reporters.py:110
+msgid "Score"
+msgstr "スコア"
+
+#: core/reporters.py:127
+msgid "Execution Plan Analysis (EXPLAIN)"
+msgstr "実行プラン分析 (EXPLAIN)"
+
+#: core/reporters.py:132
+msgid "Physical Plan Summary"
+msgstr "物理プランサマリー"
+
+#: core/reporters.py:139
+msgid "Operator Type"
+msgstr "オペレータ種別"
+
+#: core/reporters.py:139 core/reporters.py:548
+msgid "Count"
+msgstr "件数"
+
+#: core/reporters.py:149
+msgid "Table Scans"
+msgstr "テーブルスキャン"
+
+#: core/reporters.py:150
+msgid "Table"
+msgstr "テーブル"
+
+#: core/reporters.py:150
+msgid "Format"
+msgstr "フォーマット"
+
+#: core/reporters.py:162
+msgid "(None)"
+msgstr "(なし)"
+
+#: core/reporters.py:171
+msgid "Join Operators"
+msgstr "Joinオペレータ"
+
+#: core/reporters.py:191
+msgid "Shuffle/Exchange"
+msgstr "Shuffle/Exchange"
+
+#: core/reporters.py:192
+msgid "Exchange operations"
+msgstr "Exchange操作数"
+
+#: core/reporters.py:199
+msgid "Hash Partitioning detected"
+msgstr "Hashパーティショニング検出"
+
+#: core/reporters.py:202
+msgid "Range Partitioning detected"
+msgstr "Rangeパーティショニング検出"
+
+#: core/reporters.py:205
+msgid "SinglePartition detected (for broadcast)"
+msgstr "SinglePartition検出（ブロードキャスト用）"
+
+#: core/reporters.py:212
+msgid "Aggregation Operators"
+msgstr "集約オペレータ"
+
+#: core/reporters.py:213
+msgid "Aggregation stages"
+msgstr "集約ステージ数"
+
+#: core/reporters.py:218
+msgid "Using multi-stage aggregation (Partial -> Final)"
+msgstr "マルチステージ集約使用中 (Partial -> Final)"
+
+#: core/reporters.py
+msgid "Optimized SQL"
+msgstr "最適化済みSQL"
+
+#: core/reporters.py:224
+msgid "Optimized Logical Plan Summary"
+msgstr "最適化論理プランサマリー"
+
+#: core/reporters.py:229
+msgid "Referenced tables"
+msgstr "参照テーブル"
+
+#: core/reporters.py:234
+msgid "Joins"
+msgstr "Joins"
+
+#: core/reporters.py:239
+msgid "Filters"
+msgstr "フィルタ"
+
+#: core/reporters.py:239
+msgid "pushdown applied"
+msgstr "pushdown適用"
+
+#: core/reporters.py:245 core/reporters.py:824
+msgid "Photon Support Status"
+msgstr "Photonサポート状況"
+
+#: core/reporters.py:254
+msgid "Optimizer Statistics"
+msgstr "オプティマイザ統計"
+
+#: core/reporters.py:260
+msgid "Missing statistics"
+msgstr "統計なし"
+
+#: core/reporters.py:264
+msgid "Partial statistics"
+msgstr "部分的統計"
+
+#: core/reporters.py:268
+msgid "Full statistics"
+msgstr "完全な統計"
+
+#: core/reporters.py:277 core/reporters.py:422 core/reporters.py:726
+msgid "Good"
+msgstr "良好"
+
+#: core/reporters.py
+msgid "Info"
+msgstr "情報"
+
+#: core/reporters.py:278 core/reporters.py:420 core/reporters.py:506
+msgid "Warning"
+msgstr "警告"
+
+#: core/reporters.py:279
+msgid "Alert"
+msgstr "注意"
+
+#: core/reporters.py:280 core/reporters.py:418 core/reporters.py:726
+#: core/reporters.py:798
+msgid "Critical"
+msgstr "危機的"
+
+#: core/reporters.py:302
+msgid "Indicator"
+msgstr "指標"
+
+#: core/reporters.py:302 core/reporters.py:357 core/reporters.py:409
+msgid "Value"
+msgstr "値"
+
+#: core/reporters.py:302 core/reporters.py:409 core/reporters.py:496
+#: core/reporters.py:1015 templates/result.html:24
+msgid "Status"
+msgstr "ステータス"
+
+#: core/reporters.py:302
+msgid "Threshold"
+msgstr "閾値"
+
+#: core/reporters.py:308 core/reporters.py:757 core/reporters.py:1006
+#: templates/result.html:52
+msgid "Cache Hit Ratio"
+msgstr "キャッシュヒット率"
+
+#: core/reporters.py:313
+msgid "Remote Read Ratio"
+msgstr "リモート読み取り率"
+
+#: core/reporters.py:394
+msgid "Rescheduled Scan Ratio"
+msgstr "リスケジュールスキャン率"
+
+#: core/analyzers.py
+#, python-brace-format
+msgid "Rescheduled scan ratio is high ({ratio}) - scan locality degradation detected"
+msgstr "リスケジュールスキャン率が高いです ({ratio}) - スキャンローカリティの低下を検出"
+
+#: core/analyzers.py
+msgid "Check per-node cache hit ratio vs non-local task count to identify cause (cold node from scale-out, CPU contention from concurrent queries, or file layout issues)"
+msgstr "ノード別のキャッシュヒット率とnon-localタスク数の相関を確認し、原因を特定してください（スケールアウトによるコールドノード、多重実行によるCPU競合、またはファイルレイアウトの問題）"
+
+#: core/analyzers.py
+msgid "High rescheduled scan ratio indicates scan locality degradation"
+msgstr "リスケジュールスキャン率の高さはスキャンローカリティの低下を示しています"
+
+#: core/analyzers.py
+msgid "Tasks rescheduled to nodes without cached data. Likely causes: scale-out adding cold nodes, CPU contention from concurrent queries, or suboptimal file layout. Check per-node cache hit ratio to identify the root cause."
+msgstr "キャッシュデータを持たないノードにタスクが再スケジュールされました。考えられる原因: スケールアウトによるコールドノードの追加、多重実行によるCPU競合、またはファイルレイアウトの問題。ノード別キャッシュヒット率を確認して根本原因を特定してください。"
+
+#: core/analyzers.py
+msgid "1) Check per-node cache hit vs non-local correlation. 2) If cold nodes: consider warehouse warm-up or reducing scale-out frequency. 3) If CPU contention: spread concurrent query scheduling. 4) If file layout: run OPTIMIZE or apply Liquid Clustering."
+msgstr "1) ノード別キャッシュヒット率とnon-local率の相関を確認。2) コールドノードの場合: ウォームアップ戦略の検討またはスケールアウト頻度の低減。3) CPU競合の場合: 同時実行クエリのスケジューリング分散。4) ファイルレイアウトの場合: OPTIMIZEの実行またはLiquid Clusteringの適用。"
+
+#: core/analyzers.py
+msgid "Apply Liquid Clustering to improve data locality"
+msgstr "Liquid Clusteringを適用してデータローカリティを改善"
+
+#: core/analyzers.py:231
+#, python-brace-format
+msgid "Rescheduled scan ratio is elevated ({ratio}) - monitor for performance impact"
+msgstr "リスケジュールスキャン率が上昇しています ({ratio}) - パフォーマンスへの影響を監視してください"
+
+#: core/reporters.py:318 core/reporters.py:1006 templates/result.html:66
+msgid "Photon Utilization"
+msgstr "Photon利用率"
+
+#: core/reporters.py:324 core/reporters.py:1006 templates/result.html:94
+msgid "Disk Spill"
+msgstr "ディスクスピル"
+
+#: core/reporters.py:329 core/reporters.py:728
+msgid "Filter Efficiency"
+msgstr "フィルタ効率"
+
+#: core/reporters.py:334 core/reporters.py:729
+msgid "Bytes Pruning"
+msgstr "バイトプルーニング"
+
+#: core/reporters.py:339
+msgid "Shuffle Impact Ratio"
+msgstr "Shuffle影響率"
+
+#: core/reporters.py:355
+msgid "I/O Metrics"
+msgstr "I/Oメトリクス"
+
+#: core/reporters.py:357 core/reporters.py:409 core/reporters.py:726
+msgid "Metric"
+msgstr "指標"
+
+#: core/reporters.py:357
+msgid "Details"
+msgstr "詳細"
+
+#: core/reporters.py:361
+msgid "Total Read"
+msgstr "総読み取り"
+
+#: core/reporters.py:365
+msgid "From Cache"
+msgstr "キャッシュから"
+
+#: core/reporters.py:369
+msgid "From Remote"
+msgstr "リモートから"
+
+#: core/reporters.py:374
+msgid "Files Read"
+msgstr "読み取りファイル数"
+
+#: core/reporters.py:375
+msgid "Files Pruned"
+msgstr "プルーニングファイル数"
+
+#: core/reporters.py:375 core/reporters.py:380
+msgid "efficiency"
+msgstr "効率"
+
+#: core/reporters.py:380
+msgid "Bytes Pruned"
+msgstr "プルーニングバイト"
+
+#: core/reporters.py:384
+msgid "Rows Skipped (Predictive I/O)"
+msgstr "スキップ行数 (Predictive I/O)"
+
+#: core/reporters.py:386
+msgid "Batches Skipped (Predictive I/O)"
+msgstr "スキップバッチ数 (Predictive I/O)"
+
+#: core/reporters.py:407
+msgid "Cloud Storage Performance"
+msgstr "クラウドストレージパフォーマンス"
+
+#: core/reporters.py:413
+msgid "Total Requests"
+msgstr "総リクエスト数"
+
+#: core/reporters.py:423
+msgid "Total Retries"
+msgstr "総リトライ数"
+
+#: core/reporters.py:426
+msgid "Avg Request Duration"
+msgstr "平均リクエスト時間"
+
+#: core/reporters.py:430
+msgid "Retry Overhead"
+msgstr "リトライオーバーヘッド"
+
+#: core/reporters.py:436
+msgid "Warning: Retry rate indicates possible storage throttling"
+msgstr "警告: リトライ率がストレージスロットリングの可能性を示しています"
+
+#: core/reporters.py:455
+msgid "Spill Analysis"
+msgstr "スピル分析"
+
+#: core/reporters.py:461
+msgid "Total Spill"
+msgstr "総スピル"
+
+#: core/reporters.py:461
+msgid "Max Spill Operator"
+msgstr "最大スピルオペレータ"
+
+#: core/reporters.py:464 core/reporters.py:649
+msgid "Rank"
+msgstr "順位"
+
+#: core/reporters.py:464 core/reporters.py:649
+msgid "Operator"
+msgstr "オペレータ"
+
+#: core/reporters.py:464 core/reporters.py:649 core/reporters.py:794
+msgid "Spill"
+msgstr "スピル"
+
+#: core/reporters.py:464
+msgid "Peak Memory"
+msgstr "ピークメモリ"
+
+#: core/reporters.py:464 core/reporters.py:649
+msgid "Share"
+msgstr "シェア"
+
+#: core/reporters.py:494
+msgid "AQE Shuffle Health"
+msgstr "AQE Shuffle健全性"
+
+#: core/reporters.py:496 core/reporters.py:1077
+msgid "Node"
+msgstr "ノード"
+
+#: core/reporters.py:496
+msgid "Partitions"
+msgstr "パーティション数"
+
+#: core/reporters.py:496
+msgid "Data Size"
+msgstr "データサイズ"
+
+#: core/reporters.py:496
+msgid "Avg Size"
+msgstr "平均サイズ"
+
+#: core/reporters.py:496
+msgid "Skewed"
+msgstr "スキュー"
+
+#: core/reporters.py:512
+msgid "OK"
+msgstr "OK"
+
+#: core/reporters.py:525
+msgid "Recommendation"
+msgstr "推奨事項"
+
+#: core/reporters.py:544
+msgid "Photon Blockers"
+msgstr "Photonブロッカー"
+
+#: core/reporters.py:546
+msgid "Photon utilization is"
+msgstr "Photon利用率は"
+
+#: core/reporters.py:546
+msgid "The following operations are not running on Photon"
+msgstr "以下の操作はPhotonで実行されていません"
+
+#: core/reporters.py:548
+msgid "Reason"
+msgstr "理由"
+
+#: core/reporters.py:548 core/reporters.py:584
+msgid "Impact"
+msgstr "影響度"
+
+#: core/reporters.py:548 core/reporters.py:757 core/reporters.py:796
+msgid "Action"
+msgstr "アクション"
+
+#: core/reporters.py:574
+msgid "Top Findings (Actions by Priority)"
+msgstr "主要発見事項（優先度順アクション）"
+
+#: core/reporters.py:584
+msgid "Effort"
+msgstr "工数"
+
+#: core/reporters.py:584
+msgid "Priority Score"
+msgstr "優先スコア"
+
+#: core/reporters.py:587
+msgid "Evidence"
+msgstr "根拠"
+
+#: core/reporters.py:594
+msgid "Likely Cause"
+msgstr "推定原因"
+
+#: core/reporters.py:597
+msgid "Fix"
+msgstr "対応策"
+
+#: core/reporters.py:607
+msgid "Validation Metric"
+msgstr "検証指標"
+
+#: core/reporters.py:628
+msgid "Hot Operators (Top Time-Consuming)"
+msgstr "Hot Operators（時間消費上位）"
+
+#: core/reporters.py
+msgid "Full Operator Names"
+msgstr "オペレータ名（全文）"
+
+#: core/reporters.py:639
+msgid "scan"
+msgstr "scan"
+
+#: core/reporters.py:640
+msgid "join"
+msgstr "join"
+
+#: core/reporters.py:641
+msgid "shuffle"
+msgstr "shuffle"
+
+#: core/reporters.py:642
+msgid "sort"
+msgstr "sort"
+
+#: core/reporters.py:643
+msgid "agg"
+msgstr "agg"
+
+#: core/reporters.py:644 core/reporters.py:696
+msgid "spill"
+msgstr "spill"
+
+#: core/reporters.py:646
+msgid "Main Bottleneck Type"
+msgstr "主要ボトルネック種別"
+
+#: core/reporters.py:649
+msgid "Time"
+msgstr "時間"
+
+#: core/reporters.py:649
+msgid "Rows (in/out)"
+msgstr "行数 (in/out)"
+
+#: core/reporters.py:649
+msgid "Photon"
+msgstr "Photon"
+
+#: core/reporters.py:649 core/reporters.py:1056
+msgid "Type"
+msgstr "種別"
+
+#: core/reporters.py:690
+msgid "Warning: The following operators are critical bottlenecks"
+msgstr "警告: 以下のオペレータがクリティカルなボトルネックです"
+
+#: core/reporters.py:694
+msgid "time share"
+msgstr "時間シェア"
+
+#: core/reporters.py:718
+msgid "Tuning Guide"
+msgstr "チューニングガイド"
+
+#: core/reporters.py:719
+msgid "The following recommendations are based on detected bottlenecks."
+msgstr "以下の推奨事項は検出されたボトルネックに基づいています。"
+
+#: core/reporters.py:723
+msgid "I/O Optimization"
+msgstr "I/O最適化"
+
+#: core/reporters.py:724 core/reporters.py:755 core/reporters.py:771
+#: core/reporters.py:794 core/reporters.py:817 core/reporters.py:851
+msgid "Current Status"
+msgstr "現在の状況"
+
+#: core/reporters.py:724
+msgid "Filter efficiency"
+msgstr "フィルタ効率"
+
+#: core/reporters.py:724
+msgid "Bytes pruning"
+msgstr "バイトプルーニング"
+
+#: core/reporters.py:725 core/reporters.py:756 core/reporters.py:818
+msgid "Evaluation Criteria"
+msgstr "評価基準"
+
+#: core/reporters.py:726
+msgid "Needs Improvement"
+msgstr "要改善"
+
+#: core/reporters.py:730 core/reporters.py:762
+msgid "Recommended Actions"
+msgstr "推奨アクション"
+
+#: core/reporters.py:731
+msgid "Partitioning"
+msgstr "パーティショニング"
+
+#: core/reporters.py:731
+msgid "Partition by frequently filtered columns (date columns recommended)"
+msgstr "頻繁にフィルタされるカラム（日付カラム推奨）でパーティション"
+
+#: core/reporters.py:732
+msgid "Target partition count"
+msgstr "目標パーティション数"
+
+#: core/reporters.py:733
+msgid "Run OPTIMIZE per partition to avoid small files"
+msgstr "小ファイルを避けるためパーティション単位でOPTIMIZEを実行"
+
+#: core/reporters.py:734
+msgid "Apply Z-Order for columns not suitable for partitioning"
+msgstr "パーティショニングに適さないカラムにZ-Orderを適用"
+
+#: core/reporters.py:735 core/reporters.py:1092
+msgid "Recommended"
+msgstr "推奨"
+
+#: core/reporters.py:735
+msgid "columns or less"
+msgstr "カラム以下"
+
+#: core/reporters.py:736
+msgid "Place Z-Order target columns in first 32 columns"
+msgstr "Z-Order対象カラムを先頭32カラム以内に配置"
+
+#: core/reporters.py:737
+msgid "Consider as alternative to partitioning + Z-Order"
+msgstr "パーティショニング + Z-Orderの代替として検討"
+
+#: core/reporters.py:738
+msgid "Effective for reducing Shuffle operations"
+msgstr "Shuffle操作の削減に効果的"
+
+#: core/reporters.py:739
+msgid "Especially useful when memory usage exceeds 100GB"
+msgstr "特にメモリ使用量が100GBを超える場合に有効"
+
+#: core/reporters.py:740
+msgid "Example SQL"
+msgstr "SQLサンプル"
+
+#: core/reporters.py:754
+msgid "Cache Efficiency"
+msgstr "キャッシュ効率"
+
+#: core/reporters.py:755
+msgid "Cache hit ratio"
+msgstr "キャッシュヒット率"
+
+#: core/reporters.py:755
+msgid "Remote read ratio"
+msgstr "リモート読み取り率"
+
+#: core/reporters.py:757 core/reporters.py:819
+msgid "Evaluation"
+msgstr "評価"
+
+#: core/reporters.py:759 core/reporters.py:821
+msgid "Good state"
+msgstr "良好な状態"
+
+#: core/reporters.py:760
+msgid "Consider scale up"
+msgstr "スケールアップを検討"
+
+#: core/reporters.py:761
+msgid "Review cache strategy"
+msgstr "キャッシュ戦略を見直し"
+
+#: core/reporters.py:763
+msgid "Re-run the same query to verify cache effect"
+msgstr "同一クエリを再実行してキャッシュ効果を確認"
+
+#: core/reporters.py:764
+msgid "If cache hit remains low, consider scaling up the cluster"
+msgstr "キャッシュヒットが低いままの場合、クラスターのスケールアップを検討"
+
+#: core/reporters.py:765
+msgid ""
+"Prioritize I/O optimization (partitioning/Liquid) to reduce data read "
+"first"
+msgstr "まずI/O最適化（パーティショニング/Liquid Clustering）でデータ読み取りを削減"
+
+#: core/reporters.py:770
+msgid "Shuffle Optimization"
+msgstr "Shuffle最適化"
+
+#: core/reporters.py:771
+msgid "Shuffle impact ratio"
+msgstr "Shuffle影響率"
+
+#: core/reporters.py:773
+msgid "Inefficient Shuffle Operations"
+msgstr "非効率なShuffle操作"
+
+#: core/reporters.py:773
+msgid "detected"
+msgstr "検出"
+
+#: core/reporters.py:774
+msgid "Memory Efficiency Criteria"
+msgstr "メモリ効率基準"
+
+#: core/reporters.py:775
+msgid "Memory/Partition"
+msgstr "メモリ/パーティション"
+
+#: core/reporters.py:775
+msgid "Priority"
+msgstr "優先度"
+
+#: core/reporters.py:775
+msgid "Recommended Action"
+msgstr "推奨アクション"
+
+#: core/reporters.py:777
+msgid "Scale up cluster or significantly increase partition count"
+msgstr "クラスターをスケールアップまたはパーティション数を大幅に増加"
+
+#: core/reporters.py:778
+msgid "Increase partition count, adjust AQE settings"
+msgstr "パーティション数を増加、AQE設定を調整"
+
+#: core/reporters.py:779
+msgid "Recommend partition count adjustment"
+msgstr "パーティション数の調整を推奨"
+
+#: core/reporters.py:780
+msgid "Efficient state"
+msgstr "効率的な状態"
+
+#: core/reporters.py:781
+msgid "REPARTITION Hints"
+msgstr "REPARTITIONヒント"
+
+#: core/reporters.py:793
+msgid "Disk Spill Countermeasures"
+msgstr "ディスクスピル対策"
+
+#: core/reporters.py:795
+msgid "Severity Criteria"
+msgstr "重要度基準"
+
+#: core/reporters.py:796
+msgid "Spill Amount"
+msgstr "スピル量"
+
+#: core/reporters.py:796
+msgid "Severity"
+msgstr "重要度"
+
+#: core/reporters.py:798
+msgid "Memory configuration and partition strategy review required"
+msgstr "メモリ設定とパーティション戦略の見直しが必要"
+
+#: core/reporters.py:799
+msgid "Important"
+msgstr "重要"
+
+#: core/reporters.py:799
+msgid "Optimization strongly recommended"
+msgstr "最適化を強く推奨"
+
+#: core/reporters.py:800
+msgid "Caution"
+msgstr "注意"
+
+#: core/reporters.py:800
+msgid "Monitor and consider improvement"
+msgstr "監視し改善を検討"
+
+#: core/reporters.py:801
+msgid "Ideal"
+msgstr "理想"
+
+#: core/reporters.py:801
+msgid "Optimal state"
+msgstr "最適な状態"
+
+#: core/reporters.py:802
+msgid "Countermeasures by Priority"
+msgstr "優先度別対策"
+
+#: core/reporters.py:803
+msgid "Emergency (High Priority)"
+msgstr "緊急（高優先度）"
+
+#: core/reporters.py:804
+msgid "Scale up cluster (increase worker nodes)"
+msgstr "クラスターをスケールアップ（ワーカーノード増加）"
+
+#: core/reporters.py:805
+msgid "Change to high-memory instance type"
+msgstr "高メモリインスタンスタイプに変更"
+
+#: core/reporters.py:806
+msgid "Short-term"
+msgstr "短期"
+
+#: core/reporters.py:809
+msgid "Medium-term"
+msgstr "中期"
+
+#: core/reporters.py:810
+msgid "Explicit partition specification (.repartition())"
+msgstr "明示的なパーティション指定（.repartition()）"
+
+#: core/reporters.py:811
+msgid "JOIN strategy optimization (use Broadcast JOIN)"
+msgstr "JOIN戦略の最適化（Broadcast JOIN使用）"
+
+#: core/reporters.py:812
+msgid "Implement Liquid Clustering"
+msgstr "Liquid Clusteringの実装"
+
+#: core/reporters.py:816
+msgid "Photon Utilization Improvement"
+msgstr "Photon利用率の改善"
+
+#: core/reporters.py:817
+msgid "Photon utilization"
+msgstr "Photon利用率"
+
+#: core/reporters.py:819
+msgid "Utilization"
+msgstr "利用率"
+
+#: core/reporters.py:819
+msgid "Description"
+msgstr "説明"
+
+#: core/reporters.py:822
+msgid "Room for improvement"
+msgstr "改善の余地あり"
+
+#: core/reporters.py:823
+msgid "Optimization required"
+msgstr "最適化が必要"
+
+#: core/reporters.py:825
+msgid "Join Type"
+msgstr "Join種別"
+
+#: core/reporters.py:825
+msgid "Photon Support"
+msgstr "Photonサポート"
+
+#: core/reporters.py:827 core/reporters.py:828 core/reporters.py:830
+msgid "Supported"
+msgstr "対応"
+
+#: core/reporters.py:829
+msgid "Not Supported"
+msgstr "非対応"
+
+#: core/reporters.py:832
+msgid "Detected Photon Blockers"
+msgstr "検出されたPhotonブロッカー"
+
+#: core/reporters.py:839
+msgid "Cluster Size Adjustment"
+msgstr "クラスターサイズ調整"
+
+#: core/reporters.py:840
+msgid "Scale Out"
+msgstr "スケールアウト"
+
+#: core/reporters.py:840
+msgid "When concurrent query count is high and queue waiting occurs"
+msgstr "同時実行クエリ数が多くキュー待ちが発生している場合"
+
+#: core/reporters.py:841
+msgid "DBSQL max concurrent queries per cluster"
+msgstr "DBSQLのクラスターあたり最大同時実行クエリ数"
+
+#: core/reporters.py:841
+msgid "fixed value"
+msgstr "固定値"
+
+#: core/reporters.py:842
+msgid "Determine max cluster count based on queued query count"
+msgstr "キュー待ちクエリ数から最大クラスター数を決定"
+
+#: core/reporters.py:843
+msgid "Scale Up"
+msgstr "スケールアップ"
+
+#: core/reporters.py:843
+msgid "When performance degradation is caused by high-load queries"
+msgstr "高負荷クエリによりパフォーマンス劣化が発生している場合"
+
+#: core/reporters.py:844
+msgid "CPU/Memory/Disk spill resource issues"
+msgstr "CPU/メモリ/ディスクスピルのリソース問題"
+
+#: core/reporters.py:845
+msgid "Low Delta cache hit ratio"
+msgstr "Deltaキャッシュヒット率の低さ"
+
+#: core/reporters.py:846
+msgid "Scale up reduces cluster count, enabling effective Delta cache utilization"
+msgstr "スケールアップでクラスター数を削減し、Deltaキャッシュを効率的に活用"
+
+#: core/reporters.py:850
+msgid "Cloud Storage Bottleneck"
+msgstr "クラウドストレージボトルネック"
+
+#: core/reporters.py:851
+msgid "Retry ratio"
+msgstr "リトライ率"
+
+#: core/reporters.py:852
+msgid "Judgment Criteria"
+msgstr "判定基準"
+
+#: core/reporters.py:853
+msgid "High retry count indicates cloud storage access is a bottleneck"
+msgstr "リトライ数が多い場合、クラウドストレージアクセスがボトルネック"
+
+#: core/reporters.py:854
+msgid "Ideal state is retry count = 0"
+msgstr "理想はリトライ数が0の状態"
+
+#: core/reporters.py:855
+msgid "Metrics to Check"
+msgstr "確認すべきメトリクス"
+
+#: core/reporters.py:863
+msgid "No significant bottlenecks detected. Query performance appears optimal."
+msgstr "重大なボトルネックは検出されませんでした。クエリパフォーマンスは最適と思われます。"
+
+#: core/reporters.py:880
+msgid "Recommended Spark Parameters"
+msgstr "推奨Sparkパラメータ"
+
+#: core/reporters.py:893
+msgid "Join Optimization"
+msgstr "Join最適化"
+
+#: core/reporters.py:895
+msgid "Recommended based on detected join/shuffle issues"
+msgstr "検出されたjoin/shuffle問題に基づく推奨"
+
+#: core/reporters.py:903
+msgid "AQE (Adaptive Query Execution) Settings"
+msgstr "AQE (Adaptive Query Execution) 設定"
+
+#: core/reporters.py:905
+msgid "Extended AQE settings recommended based on detected shuffle/spill issues"
+msgstr "検出されたshuffle/spill問題に基づく拡張AQE設定を推奨"
+
+#: core/reporters.py:932
+msgid "Shuffle Partition Settings"
+msgstr "Shuffleパーティション設定"
+
+#: core/reporters.py:933
+msgid "Significant shuffle impact detected. Consider partition count adjustment."
+msgstr "大きなShuffle影響を検出。パーティション数の調整を検討してください。"
+
+#: core/reporters.py:954
+msgid "Validation Checklist"
+msgstr "検証チェックリスト"
+
+#: core/reporters.py:955
+msgid "Please verify the following metrics after optimization"
+msgstr "最適化後、以下のメトリクスを確認してください"
+
+#: core/reporters.py:970
+msgid "on re-run"
+msgstr "再実行時"
+
+#: core/reporters.py:1000
+msgid "Query Performance Report"
+msgstr "クエリパフォーマンスレポート"
+
+#: core/reporters.py:1004
+msgid "Summary"
+msgstr "サマリー"
+
+#: core/reporters.py:1006 core/reporters.py:1018 templates/result.html:31
+msgid "Execution Time"
+msgstr "実行時間"
+
+#: core/reporters.py:1006
+msgid "Read Data"
+msgstr "読み取りデータ"
+
+#: core/reporters.py:1012
+msgid "Basic Information"
+msgstr "基本情報"
+
+#: core/reporters.py:1014 templates/result.html:19
+msgid "Query ID"
+msgstr "クエリID"
+
+#: core/reporters.py:1016
+msgid "Total Execution Time"
+msgstr "総実行時間"
+
+#: core/reporters.py:1017
+msgid "Compilation Time"
+msgstr "コンパイル時間"
+
+#: core/reporters.py:1022 templates/result.html:45
+msgid "Bottleneck Indicators"
+msgstr "ボトルネック指標"
+
+#: core/reporters.py:1032
+msgid "Critical Issues"
+msgstr "重要な問題"
+
+#: core/reporters.py:1043
+msgid "Warnings"
+msgstr "警告"
+
+#: core/reporters.py:1054
+msgid "Join Type Analysis"
+msgstr "Join種別分析"
+
+#: core/reporters.py:1056
+msgid "Join Operator"
+msgstr "Joinオペレータ"
+
+#: core/reporters.py:1056
+msgid "Type Support"
+msgstr "種別サポート"
+
+#: core/reporters.py:1056
+msgid "Photon Execution"
+msgstr "Photon実行"
+
+#: core/reporters.py:1073
+msgid "Shuffle Operations Requiring Optimization"
+msgstr "最適化が必要なShuffle操作"
+
+#: core/reporters.py:1078
+msgid "Memory Usage"
+msgstr "メモリ使用量"
+
+#: core/reporters.py:1078
+msgid "per partition"
+msgstr "パーティションあたり"
+
+#: core/reporters.py:1079
+msgid "Optimization Priority"
+msgstr "最適化優先度"
+
+#: core/reporters.py:1113 core/reporters.py:1151
+msgid "LLM Analysis Report"
+msgstr "LLM分析レポート"
+
+#: core/reporters.py:1123
+msgid "Initial Analysis"
+msgstr "初期分析"
+
+#: core/reporters.py:1132
+msgid "Review"
+msgstr "レビュー"
+
+#: core/reporters.py:1141
+msgid "Final Analysis"
+msgstr "最終分析"
+
+#: core/reporters.py:1160
+msgid "Review Result"
+msgstr "レビュー結果"
+
+#: core/reporters.py:1178
+msgid "This report was generated using Databricks Foundation Model APIs."
+msgstr "このレポートはDatabricks Foundation Model APIを使用して生成されました。"
+
+#: templates/base.html:820 templates/index.html:3
+msgid "Upload"
+msgstr "アップロード"
+
+#: templates/base.html:830
+msgid "Toggle theme"
+msgstr "テーマ切替"
+
+#: templates/error.html:3 templates/index.html:228
+msgid "Error"
+msgstr "エラー"
+
+#: templates/error.html:11
+msgid "An error occurred"
+msgstr "エラーが発生しました"
+
+#: templates/error.html:15
+msgid "Return to Home"
+msgstr "ホームに戻る"
+
+#: templates/index.html:30
+msgid "Query Profile Analysis"
+msgstr "クエリプロファイル分析"
+
+#: templates/index.html:35
+msgid ""
+"Upload a Databricks SQL query profile JSON to analyze performance metrics"
+" and get optimization recommendations."
+msgstr "Databricks SQLクエリプロファイルJSONをアップロードして、パフォーマンスメトリクスを分析し、最適化の推奨事項を取得します。"
+
+#: templates/index.html:42
+msgid "Drag and drop JSON file"
+msgstr "JSONファイルをドラッグ＆ドロップ"
+
+#: templates/index.html:43
+msgid "or click to select"
+msgstr "またはクリックして選択"
+
+#: templates/index.html:64
+msgid "EXPLAIN Analysis (Optional)"
+msgstr "EXPLAIN分析（オプション）"
+
+#: templates/index.html:70
+msgid ""
+"Adding EXPLAIN EXTENDED output enables detailed analysis based on the "
+"execution plan."
+msgstr "EXPLAIN EXTENDED出力を追加すると、実行プランに基づいた詳細な分析が可能になります。"
+
+#: templates/index.html:75
+msgid "EXPLAIN file (.txt)"
+msgstr "EXPLAINファイル (.txt)"
+
+#: templates/index.html:80
+msgid "or"
+msgstr "または"
+
+#: templates/index.html:84
+msgid "Paste EXPLAIN text"
+msgstr "EXPLAINテキストを貼り付け"
+
+#: templates/index.html:106
+msgid "LLM Analysis Options"
+msgstr "LLM分析オプション"
+
+#: templates/index.html:114
+msgid "Skip LLM analysis (metrics only)"
+msgstr "LLM分析をスキップ（メトリクスのみ）"
+
+#: templates/index.html:120
+msgid "Primary Model"
+msgstr "プライマリモデル"
+
+#: templates/index.html:128
+msgid "Review Model"
+msgstr "レビューモデル"
+
+#: templates/index.html:136
+msgid "Refine Model"
+msgstr "リファインモデル"
+
+#: templates/index.html:138
+msgid "Same as Primary"
+msgstr "プライマリと同じ"
+
+#: templates/index.html:154
+msgid "Start Analysis"
+msgstr "分析を開始"
+
+#: templates/index.html:166
+msgid "Metrics"
+msgstr "メトリクス"
+
+#: templates/index.html:167
+msgid "Cache hit ratio, Photon utilization, Shuffle impact"
+msgstr "キャッシュヒット率、Photon利用率、Shuffle影響"
+
+#: templates/index.html:173
+msgid "LLM Analysis"
+msgstr "LLM分析"
+
+#: templates/index.html:174
+msgid "3-stage analysis: Initial -> Review -> Refine"
+msgstr "3段階分析: 初期 -> レビュー -> リファイン"
+
+#: templates/index.html:180 templates/result.html:137
+msgid "Export"
+msgstr "エクスポート"
+
+#: templates/index.html:181
+msgid "Download report in Markdown"
+msgstr "Markdownでレポートをダウンロード"
+
+#: templates/index.html:192
+msgid "Analyzing..."
+msgstr "分析中..."
+
+#: templates/index.html:225
+#, python-brace-format
+msgid "File loaded: {name}"
+msgstr "ファイル読み込み: {name}"
+
+#: templates/index.html:226
+#, python-brace-format
+msgid "Text input: {lines} lines"
+msgstr "テキスト入力: {lines}行"
+
+#: templates/index.html:227
+msgid "Please select a JSON file"
+msgstr "JSONファイルを選択してください"
+
+#: templates/index.html:229
+msgid "Analysis failed"
+msgstr "分析に失敗しました"
+
+#: templates/index.html:230
+msgid "Server returned non-JSON response. Check console."
+msgstr "サーバーが非JSONレスポンスを返しました。コンソールを確認してください。"
+
+#: templates/index.html:231
+msgid "Starting analysis..."
+msgstr "分析を開始しています..."
+
+#: templates/result.html:3
+msgid "Analysis Result"
+msgstr "分析結果"
+
+#: templates/result.html:14
+msgid "Query Information"
+msgstr "クエリ情報"
+
+#: templates/result.html:32
+msgid "seconds"
+msgstr "秒"
+
+#: templates/result.html:34
+msgid "File"
+msgstr "ファイル"
+
+#: templates/result.html:80
+msgid "Shuffle Impact"
+msgstr "Shuffle影響"
+
+#: templates/result.html:110
+msgid "Detected Issues"
+msgstr "検出された問題"
+
+#: templates/result.html:143
+msgid "Download as Markdown"
+msgstr "Markdownでダウンロード"
+
+#: templates/result.html:147
+msgid "Print / Save as PDF"
+msgstr "印刷 / PDFで保存"
+
+#: templates/result.html:159
+msgid "Analysis Report"
+msgstr "分析レポート"
+
+#: templates/result.html:164
+msgid "LLM Analyzed"
+msgstr "LLM分析済み"
+
+#: templates/result.html:169
+msgid "Metrics Only"
+msgstr "メトリクスのみ"
+
+#~ msgid "Read File Count"
+#~ msgstr "読み取りファイル数"
+
+#~ msgid "Pruned File Count"
+#~ msgstr "プルーニングファイル数"
+
+# New translations for code fix
+
+#: core/reporters.py
+msgid "Note"
+msgstr "備考"
+
+#: core/reporters.py
+msgid "Likely cold run - validate on re-execution"
+msgstr "コールドラン可能性あり - 再実行で確認"
+
+#: core/reporters.py
+msgid "Expected for first execution"
+msgstr "初回実行時の想定される状態"
+
+#: core/reporters.py
+msgid "Task Time"
+msgstr "タスク時間"
+
+#: core/reporters.py
+msgid "The Task Time column shows durationMs from operator metrics, which represents cumulative task time across all parallel executors, not wall-clock time. This is why individual operator times can exceed the total query time. The Share is calculated against taskTotalTimeMs per tuning guide section 9.2."
+msgstr "タスク時間列はオペレータメトリクスのdurationMsを表示します。これは全並列エグゼキュータの累積タスク時間であり、wall-clock時間ではありません。そのため個々のオペレータ時間がクエリ全体時間を超えることがあります。Shareはチューニングガイドセクション9.2に従いtaskTotalTimeMsを基準に計算されています。"
+
+#: core/reporters.py
+msgid "Task Total Time"
+msgstr "タスク総時間"
+
+#: core/reporters.py
+msgid "Photon Total Time"
+msgstr "Photon総時間"
+
+#: core/reporters.py
+msgid "cumulative across all parallel tasks"
+msgstr "全並列タスクの累積"
+
+#: core/reporters.py
+msgid "Evidence source"
+msgstr "根拠となるソース"
+
+#: core/reporters.py
+msgid "Partition count from Sink - Number of partitions metric, peak memory from peakMemoryBytes in JSON profile."
+msgstr "パーティション数は Sink - Number of partitions メトリクスから、ピークメモリはJSONプロファイルのpeakMemoryBytesから取得。"
+
+#: core/reporters.py
+msgid "Partition Count"
+msgstr "パーティション数"
+
+#: core/reporters.py
+msgid "from Sink - Number of partitions metric"
+msgstr "Sink - Number of partitions メトリクスから"
+
+#: core/reporters.py
+msgid "from peakMemoryBytes"
+msgstr "peakMemoryBytesから"
+
+#: core/reporters.py
+msgid "exceeds 512MB/partition guideline"
+msgstr "512MB/パーティションガイドラインを超過"
+
+#: core/analyzers.py
+#, python-brace-format
+msgid "Cache hit ratio is low ({ratio}) - likely cold run, validate on re-execution"
+msgstr "キャッシュヒット率が低いです ({ratio}) - コールドラン可能性あり、再実行で確認"
+
+#: core/analyzers.py
+msgid "Re-run query to verify cache effect before scaling up"
+msgstr "スケールアップ前に同一クエリを再実行してキャッシュ効果を確認"
+
+#: core/sql_annotator.py - SQL Annotation Messages
+msgid "Avoid SELECT *, specify only required columns to reduce I/O"
+msgstr "SELECT * は避け、必要なカラムのみ指定してI/Oを削減"
+
+msgid "No WHERE clause - consider filtering by partition key"
+msgstr "WHERE句がありません - パーティションキーでフィルタを追加"
+
+msgid "Consider BROADCAST hint if this table is small"
+msgstr "小さいテーブルの場合はBROADCASTヒントを検討"
+
+msgid "CROSS JOIN causes cartesian product - verify this is intended"
+msgstr "CROSS JOINは直積を生成します - 意図した動作か確認"
+
+msgid "JOIN without ON condition - may cause cartesian product"
+msgstr "ON条件のないJOIN - 直積が発生する可能性あり"
+
+msgid "ORDER BY without LIMIT causes full data sort - consider adding LIMIT"
+msgstr "LIMITなしのORDER BYは全データソートを引き起こす - LIMIT追加を検討"
+
+msgid "DISTINCT with JOINs - consider fixing join logic instead"
+msgstr "JOINとDISTINCTの併用 - JOIN条件の見直しを検討"
+
+msgid "UNION removes duplicates (costly) - use UNION ALL if duplicates are acceptable"
+msgstr "UNIONは重複除去を行う（高コスト） - 重複許容ならUNION ALLを使用"
+
+msgid "LIKE with leading % prevents index usage"
+msgstr "先頭%のLIKEはインデックスを使用できません"
+
+msgid "Function on column prevents predicate pushdown - consider rewriting"
+msgstr "カラムへの関数適用は述語プッシュダウンを阻害 - 書き換えを検討"
+
+msgid "Could not parse SQL for annotation"
+msgstr "SQLの解析に失敗しました"
+
+msgid "No improvement suggestions found"
+msgstr "改善提案は見つかりませんでした"
+
+#: core/reporters.py - Annotated SQL Section
+msgid "SQL with Improvement Comments"
+msgstr "改善コメント付きSQL"
+
+msgid "Comment Legend"
+msgstr "コメント凡例"
+
+msgid "Performance improvement suggestion"
+msgstr "パフォーマンス改善の提案"
+
+msgid "Additional Suggestions"
+msgstr "追加の提案"
+
+msgid "The following suggestions could not be mapped to specific SQL lines:"
+msgstr "以下の提案はSQL内の特定の行にマッピングできませんでした:"
+
+# New translations - Python files (core/*.py)
+
+msgid "Action Plan"
+msgstr "アクションプラン"
+
+msgid "Fix Risk"
+msgstr "修正リスク"
+
+msgid "Insight"
+msgstr "インサイト"
+
+msgid "Top Alerts"
+msgstr "トップアラート"
+
+msgid "Executive Summary"
+msgstr "エグゼクティブサマリー"
+
+msgid "Root Cause Analysis"
+msgstr "根本原因分析"
+
+msgid "Hot Operators"
+msgstr "ホットオペレータ"
+
+msgid "Scan Locality"
+msgstr "スキャンローカリティ"
+
+msgid "Data Flow"
+msgstr "データフロー"
+
+msgid "Data Flow Details"
+msgstr "データフロー詳細"
+
+msgid "Scan Locality Details"
+msgstr "スキャンローカリティ詳細"
+
+msgid "Performance Metrics"
+msgstr "パフォーマンスメトリクス"
+
+msgid "Recommendations"
+msgstr "推奨事項"
+
+msgid "Appendix"
+msgstr "付録"
+
+msgid "Query Overview"
+msgstr "クエリ概要"
+
+msgid "SQL / Query Structure"
+msgstr "SQL/クエリ構造"
+
+msgid "Stage Execution"
+msgstr "ステージ実行"
+
+msgid "Spill & Photon Analysis"
+msgstr "スピル＆Photon分析"
+
+msgid "All Alerts"
+msgstr "全アラート"
+
+msgid "All"
+msgstr "すべての"
+
+msgid "Verification"
+msgstr "検証"
+
+msgid "P0: Fix Immediately"
+msgstr "P0: 即座に修正"
+
+msgid "P1: Address Soon"
+msgstr "P1: 早急に対処"
+
+msgid "P2: Consider Later"
+msgstr "P2: 後で検討"
+
+msgid "Compute Information"
+msgstr "コンピュート情報"
+
+msgid "Local"
+msgstr "ローカル"
+
+msgid "Non-Local"
+msgstr "非ローカル"
+
+msgid "Pattern"
+msgstr "パターン"
+
+msgid "Cold Node"
+msgstr "コールドノード"
+
+msgid "File Layout"
+msgstr "ファイルレイアウト"
+
+msgid "CPU Contention"
+msgstr "CPU競合"
+
+msgid "Cache Hit %"
+msgstr "キャッシュヒット率"
+
+msgid "Rescheduled %"
+msgstr "リスケジュール率"
+
+msgid "Time Metrics"
+msgstr "時間メトリクス"
+
+msgid "Rows Read"
+msgstr "読み取り行数"
+
+msgid "Rows Produced"
+msgstr "生成行数"
+
+msgid "Bytes Read"
+msgstr "読み取りバイト数"
+
+msgid "30%+ reduction expected"
+msgstr "30%以上の削減が期待される"
+
+msgid "Even across nodes"
+msgstr "ノード間で均等"
+
+msgid "Even distribution across tasks"
+msgstr "タスク間で均等な分布"
+
+msgid "Majority of files pruned"
+msgstr "大部分のファイルがプルーニング済み"
+
+msgid "Moderate spill increases query latency"
+msgstr "中程度のスピルがクエリレイテンシを増加させる"
+
+msgid "Large spill may cause OOM under concurrent workloads"
+msgstr "大量のスピルは同時ワークロード時にOOMを引き起こす可能性がある"
+
+msgid "Significant reduction"
+msgstr "大幅な削減"
+
+#, no-python-format
+msgid "> 30% on re-run"
+msgstr "再実行時に30%以上"
+
+msgid "Setting changes are low-risk and reversible"
+msgstr "設定変更は低リスクで元に戻せます"
+
+msgid "Setting changes are reversible; broadcast threshold increase is safe"
+msgstr "設定変更は元に戻せます。ブロードキャスト閾値の増加は安全です"
+
+msgid "BROADCAST hint is safe for small tables; verify table size first"
+msgstr "BROADCASTヒントは小テーブルに対して安全です。テーブルサイズを先に確認してください"
+
+msgid "Clustering changes require OPTIMIZE run; may take time on large tables"
+msgstr "クラスタリング変更にはOPTIMIZE実行が必要で、大テーブルでは時間がかかる場合があります"
+
+msgid "Root cause varies (cold nodes, CPU contention, file layout); diagnosis needed first"
+msgstr "根本原因は多様（コールドノード、CPU競合、ファイルレイアウト）。まず診断が必要"
+
+msgid "Rewriting SQL may change query semantics; verify results"
+msgstr "SQLの書き換えはクエリのセマンティクスを変更する可能性があります。結果を検証してください"
+
+msgid "Cache behavior depends on cluster state; re-run to confirm"
+msgstr "キャッシュの挙動はクラスター状態に依存します。確認のため再実行してください"
+
+msgid "Column selection and filter changes are safe and reversible"
+msgstr "カラム選択とフィルタの変更は安全で元に戻せます"
+
+msgid "Join type setting is reversible"
+msgstr "結合タイプの設定は元に戻せます"
+
+msgid "Skewed partitions cause task stragglers and potential OOM on executors"
+msgstr "偏ったパーティションはタスクの遅延とエグゼキュータのOOMを引き起こす可能性があります"
+
+#, no-python-format
+msgid "scan nodes show File Layout pattern (>5% rescheduled). Consider Liquid Clustering or OPTIMIZE."
+msgstr "のスキャンノードでFile Layoutパターン（リスケジュール率>5%）を検出。Liquid ClusteringまたはOPTIMIZEを検討してください。"
+
+msgid "shuffle nodes exceed 512MB/partition. REPARTITION hints recommended for these nodes."
+msgstr "のシャッフルノードが512MB/パーティションを超過。これらのノードにREPARTITIONヒントを推奨します。"
+
+msgid "shuffle nodes are within healthy memory limits."
+msgstr "のシャッフルノードはすべて健全なメモリ範囲内です。"
+
+msgid "— repeated scans detected. Consider consolidating into a common CTE."
+msgstr "— 重複スキャンを検出。共通CTEへの統合を検討してください。"
+
+# New translations - templates
+
+msgid "Analyze Query"
+msgstr "クエリ分析"
+
+msgid "Compare & Optimize"
+msgstr "比較＆最適化"
+
+msgid "Spark Job Analysis"
+msgstr "Sparkジョブ分析"
+
+msgid "Compare before/after profiles..."
+msgstr "プロファイルのBefore/After比較 — ヒント変更、ウェアハウスサイズ、Photonチューニング — AI回帰検出付き"
+
+msgid "Analyze Spark event logs..."
+msgstr "Sparkイベントログの分析 — ボトルネック分類、スキュー/シャッフル/GC、Spotロス、エグゼキュータ診断"
+
+msgid "Upload a query profile..."
+msgstr "クエリプロファイルをアップロードして、ボトルネック検出、LLMによる根本原因分析、最適化提案を取得"
+
+msgid "Copy Share Link"
+msgstr "共有リンクをコピー"
+
+msgid "Copy Slack Summary"
+msgstr "Slackサマリーをコピー"
+
+msgid "Copied!"
+msgstr "コピーしました！"
+
+msgid "History"
+msgstr "履歴"
+
+msgid "Compare"
+msgstr "比較"
+
+msgid "Catalog"
+msgstr "カタログ"
+
+msgid "Schema"
+msgstr "スキーマ"
+
+msgid "SQL Warehouse HTTP Path"
+msgstr "SQLウェアハウスHTTPパス"
+
+msgid "Save as Default"
+msgstr "デフォルトとして保存"
+
+msgid "Experiment ID"
+msgstr "実験ID"
+
+msgid "Variant"
+msgstr "バリアント"
+
+msgid "Save results to Delta tables"
+msgstr "結果をDeltaテーブルに保存"
+
+msgid "vs Baseline"
+msgstr "ベースライン比較"
+
+msgid "No regression"
+msgstr "回帰なし"
+
+msgid "Regression detected"
+msgstr "回帰検出"
+
+msgid "View Report"
+msgstr "レポート表示"
+
+msgid "View Saved Report"
+msgstr "保存済みレポート表示"
+
+msgid "Upload Another"
+msgstr "別のファイルをアップロード"
+
+msgid "Loading..."
+msgstr "読み込み中..."
+
+msgid "Zoom In"
+msgstr "拡大"
+
+msgid "Zoom Out"
+msgstr "縮小"
+
+msgid "Fit"
+msgstr "フィット"
+
+msgid "Reset"
+msgstr "リセット"
+
+# New translations added from missing_translations.txt
+
+msgid "Add Partition Filter"
+msgstr "パーティションフィルタを追加"
+
+msgid "Add early filter"
+msgstr "早期フィルタを追加"
+
+msgid "Add partition filter"
+msgstr "パーティションフィルタを追加"
+
+msgid "Add salt column to distribute skewed keys"
+msgstr "スキューキーを分散させるためのsaltカラムを追加"
+
+msgid "Alternative: Use SALTING pattern for severe skew"
+msgstr "代替案: 深刻なスキューにはSALTINGパターンを使用"
+
+msgid "Analyze Spark event logs — bottleneck classification, skew/shuffle/GC, Spot loss, executor diagnostics."
+msgstr "Sparkイベントログを分析 — ボトルネック分類、スキュー/Shuffle/GC、Spotロス、エグゼキュータ診断。"
+
+msgid "Apply Liquid Clustering (Z-Order only if Liquid is unavailable)"
+msgstr "Liquid Clusteringを適用（Liquidが利用不可の場合のみZ-Order）"
+
+msgid "Apply Liquid Clustering (recommended)"
+msgstr "Liquid Clusteringを適用（推奨）"
+
+#, python-brace-format
+msgid "Avg hash probes per row is high ({value}) - indicates join key skew"
+msgstr "行あたりの平均ハッシュプローブ数が多いです ({value}) - 結合キーのスキューを示しています"
+
+#, python-brace-format
+msgid "Avg hash probes per row: {probes}"
+msgstr "行あたりの平均ハッシュプローブ数: {probes}"
+
+msgid "Avoid SELECT * - specify only needed columns"
+msgstr "SELECT * を避け、必要なカラムのみ指定してください"
+
+msgid "BROADCAST Join Hint"
+msgstr "BROADCASTジョインヒント"
+
+msgid "Category"
+msgstr "カテゴリ"
+
+msgid "Channel"
+msgstr "チャンネル"
+
+msgid "Check Databricks documentation for Photon-compatible alternatives"
+msgstr "Photon対応の代替手段についてDatabricksドキュメントを確認してください"
+
+msgid "Check data types compatibility"
+msgstr "データ型の互換性を確認してください"
+
+msgid "Check for data skew in join keys"
+msgstr "結合キーのデータスキューを確認してください"
+
+msgid "Click to expand SQL"
+msgstr "クリックしてSQLを展開"
+
+msgid "Clusters"
+msgstr "クラスター数"
+
+msgid "Cold node pattern detected"
+msgstr "コールドノードパターンを検出"
+
+msgid "Column Pruning"
+msgstr "カラムプルーニング"
+
+msgid "Compare before/after profiles — hint changes, warehouse sizing, Photon tuning — with AI-powered regression detection."
+msgstr "プロファイルのBefore/After比較 — ヒント変更、ウェアハウスサイズ、Photonチューニング — AI回帰検出付き。"
+
+msgid "Completed"
+msgstr "完了"
+
+#, python-brace-format
+msgid "Confidence: {conf:.0%}"
+msgstr "信頼度: {conf:.0%}"
+
+msgid "Consider query rewrite"
+msgstr "クエリの書き換えを検討してください"
+
+msgid "Consider query rewrite for Photon compatibility"
+msgstr "Photon互換性のためにクエリの書き換えを検討してください"
+
+msgid "Current Clustering"
+msgstr "現在のクラスタリング"
+
+msgid "DBSQL Version"
+msgstr "DBSQLバージョン"
+
+msgid "Data Flow Diagram"
+msgstr "データフロー図"
+
+msgid "Data Flow Summary"
+msgstr "データフローサマリー"
+
+msgid "Data Flow Tree"
+msgstr "データフローツリー"
+
+#, python-brace-format
+msgid "Detail: {detail}"
+msgstr "詳細: {detail}"
+
+msgid "Detailed Photon Blocker Information"
+msgstr "Photonブロッカーの詳細情報"
+
+msgid "Drag and drop Markdown file"
+msgstr "Markdownファイルをドラッグ＆ドロップ"
+
+msgid "Enable AQE skew join handling"
+msgstr "AQEのスキュージョイン処理を有効化"
+
+msgid "Endpoint ID"
+msgstr "エンドポイントID"
+
+msgid "Estimated DBU/hour"
+msgstr "推定DBU/時間"
+
+msgid "Billing Model"
+msgstr "課金モデル"
+
+msgid "DBU Unit Price"
+msgstr "DBU単価"
+
+msgid "Estimated DBU"
+msgstr "推定DBU消費量"
+
+msgid "Estimated Query Cost"
+msgstr "推定クエリコスト"
+
+msgid "Estimated Query Cost Share"
+msgstr "推定クエリコスト（按分）"
+
+msgid "Note: Classic/Pro warehouses are billed per uptime, not per query. This is an estimated share."
+msgstr "注: Classic/Proウェアハウスは稼働時間ベースの課金であり、クエリ単位の課金ではありません。これは按分推定値です。"
+
+msgid "Note: Cluster size is assumed. Connect warehouse API for accurate estimation."
+msgstr "注: クラスタサイズは推定値です。正確な見積もりにはWarehouse API接続が必要です。"
+
+msgid "assumed"
+msgstr "推定"
+
+msgid "Parallelism Ratio"
+msgstr "並列度比率"
+
+msgid "Reference Cost by Warehouse Size"
+msgstr "ウェアハウスサイズ別参考コスト"
+
+msgid "Estimated Cost"
+msgstr "推定コスト"
+
+msgid "Size"
+msgstr "サイズ"
+
+#, python-brace-format
+msgid "Exchange operations with high partition count (>{count})"
+msgstr "パーティション数が多いExchange操作 (>{count})"
+
+msgid "Experiment & Variant"
+msgstr "実験＆バリアント"
+
+msgid "Expression"
+msgstr "式"
+
+#, python-brace-format
+msgid "Expression: {expr}"
+msgstr "式: {expr}"
+
+msgid "Failed"
+msgstr "失敗"
+
+#, python-brace-format
+msgid "Hash build time: {time}ms"
+msgstr "ハッシュビルド時間: {time}ms"
+
+msgid "Hash join efficiency issues detected"
+msgstr "ハッシュジョインの効率問題を検出"
+
+#, python-brace-format
+msgid "Hash table resize count: {count}"
+msgstr "ハッシュテーブルリサイズ回数: {count}"
+
+#, python-brace-format
+msgid "Hash table resized {count} times - indicates inaccurate statistics"
+msgstr "ハッシュテーブルが{count}回リサイズされました - 不正確な統計を示しています"
+
+msgid "Hash table resizing or high probe count indicates memory pressure or skewed keys"
+msgstr "ハッシュテーブルのリサイズや高プローブ数はメモリ不足またはスキューキーを示しています"
+
+#, python-brace-format
+msgid "I/O fetch wait time is high ({time}ms)"
+msgstr "I/Oフェッチ待機時間が長いです ({time}ms)"
+
+msgid "Increase broadcast threshold"
+msgstr "ブロードキャスト閾値を引き上げる"
+
+msgid "Increase broadcast threshold to use Broadcast Hash Join, or increase cluster memory"
+msgstr "Broadcast Hash Joinを使用するためにブロードキャスト閾値を引き上げるか、クラスターメモリを増加してください"
+
+msgid "Increase partition count to reduce memory per partition"
+msgstr "パーティションあたりのメモリを削減するためにパーティション数を増加してください"
+
+msgid "Item"
+msgstr "項目"
+
+msgid "Join Keys"
+msgstr "結合キー"
+
+msgid "Key Findings"
+msgstr "主要な発見事項"
+
+#, python-brace-format
+msgid "LLM recommendation: {rationale}"
+msgstr "LLM推奨事項: {rationale}"
+
+#, python-brace-format
+msgid "Local scan tasks: {count}"
+msgstr "ローカルスキャンタスク数: {count}"
+
+msgid "N/A"
+msgstr "N/A"
+
+msgid "No significant issues detected. Query performance appears normal."
+msgstr "重大な問題は検出されませんでした。クエリパフォーマンスは正常と思われます。"
+
+#, python-brace-format
+msgid "Non-local scan tasks: {count}"
+msgstr "非ローカルスキャンタスク数: {count}"
+
+msgid "Note: Only reports generated by the current version are supported. Older versions may not display correctly."
+msgstr "注意: 現在のバージョンで生成されたレポートのみサポートされています。古いバージョンでは正しく表示されない場合があります。"
+
+#, python-brace-format
+msgid "OOM fallback detected in {count} operators: {nodes}"
+msgstr "{count}個のオペレータでOOMフォールバックを検出: {nodes}"
+
+msgid "Or pre-filter data before heavy operations"
+msgstr "または重い操作の前にデータを事前フィルタしてください"
+
+msgid "Or use BROADCAST hint for small tables"
+msgstr "または小テーブルにはBROADCASTヒントを使用してください"
+
+msgid "Output Rows"
+msgstr "出力行数"
+
+msgid "Performance Alerts"
+msgstr "パフォーマンスアラート"
+
+#, python-brace-format
+msgid "Photon-unsupported operation: {reason}"
+msgstr "Photon非対応の操作: {reason}"
+
+msgid "Please check Liquid Clustering configuration"
+msgstr "Liquid Clusteringの設定を確認してください"
+
+msgid "Please select a Markdown file (.md)"
+msgstr "Markdownファイル (.md) を選択してください"
+
+msgid "Pre-filter Data Before Heavy Operations"
+msgstr "重い操作の前にデータを事前フィルタ"
+
+msgid "Pruning Rate"
+msgstr "プルーニング率"
+
+msgid "Query is not fully supported by Photon"
+msgstr "クエリはPhotonで完全にはサポートされていません"
+
+msgid "Recommended Rewrite"
+msgstr "推奨書き換え"
+
+msgid "Recommended action"
+msgstr "推奨アクション"
+
+msgid "Reference Node"
+msgstr "参照ノード"
+
+msgid "Reference node"
+msgstr "参照ノード"
+
+msgid "Refine report based on review"
+msgstr "レビューに基づいてレポートを改善"
+
+msgid "Replace with built-in function if possible"
+msgstr "可能であれば組み込み関数に置き換えてください"
+
+msgid "Report Post-Processing (Optional)"
+msgstr "レポート後処理（オプション）"
+
+#, python-brace-format
+msgid "Rescheduled scan ratio: {ratio}"
+msgstr "リスケジュールスキャン率: {ratio}"
+
+msgid "Review generated report with LLM"
+msgstr "生成されたレポートをLLMでレビュー"
+
+msgid "Run ANALYZE TABLE for tables with missing or partial statistics"
+msgstr "統計が不足または部分的なテーブルにANALYZE TABLEを実行してください"
+
+#, python-brace-format
+msgid "Run ANALYZE TABLE for: {tables}"
+msgstr "以下のテーブルにANALYZE TABLEを実行: {tables}"
+
+msgid "Run ANALYZE TABLE to update optimizer statistics"
+msgstr "オプティマイザ統計を更新するためにANALYZE TABLEを実行してください"
+
+msgid "SALTING Pattern for Skewed Keys"
+msgstr "スキューキーのSALTINGパターン"
+
+msgid "Save analysis results to Databricks managed Delta tables. Requires a SQL Warehouse."
+msgstr "分析結果をDatabricks管理のDeltaテーブルに保存します。SQL Warehouseが必要です。"
+
+msgid "Scan Locality (Per-Node)"
+msgstr "スキャンローカリティ（ノード別）"
+
+msgid "Stage Execution Analysis"
+msgstr "ステージ実行分析"
+
+msgid "Table Output Settings"
+msgstr "テーブル出力設定"
+
+#, python-brace-format
+msgid "Table `{table}` has {count} columns scanned - consider SELECT specific columns"
+msgstr "テーブル `{table}` は{count}カラムをスキャンしています - 特定のカラムをSELECTすることを検討してください"
+
+msgid "Tag this analysis for comparison. Same experiment_id groups related analyses together."
+msgstr "比較のためにこの分析にタグを付けます。同じexperiment_idは関連する分析をグループ化します。"
+
+msgid "The following details are extracted from EXPLAIN EXTENDED output."
+msgstr "以下の詳細はEXPLAIN EXTENDED出力から抽出されています。"
+
+msgid "This operation is not supported by Photon"
+msgstr "この操作はPhotonではサポートされていません"
+
+msgid "This profile does not contain endpoint information."
+msgstr "このプロファイルにはエンドポイント情報が含まれていません。"
+
+msgid "This recommendation may conflict with"
+msgstr "この推奨事項は以下と競合する可能性があります"
+
+msgid "To retrieve warehouse information, set DATABRICKS_HOST and DATABRICKS_TOKEN environment variables."
+msgstr "ウェアハウス情報を取得するには、DATABRICKS_HOSTおよびDATABRICKS_TOKEN環境変数を設定してください。"
+
+msgid "Top Scanned Tables"
+msgstr "スキャン上位テーブル"
+
+msgid "Total alerts"
+msgstr "アラート合計"
+
+msgid "Unsupported Expression"
+msgstr "非対応の式"
+
+#, python-brace-format
+msgid "Unsupported operation: {func}"
+msgstr "非対応の操作: {func}"
+
+#, python-brace-format
+msgid "Unsupported operation: {reason}"
+msgstr "非対応の操作: {reason}"
+
+msgid "Upload a previously downloaded Markdown report to view it."
+msgstr "以前ダウンロードしたMarkdownレポートをアップロードして表示します。"
+
+msgid "Upload a query profile to get bottleneck detection, LLM-powered root cause analysis, and optimization recommendations."
+msgstr "クエリプロファイルをアップロードして、ボトルネック検出、LLMによる根本原因分析、最適化提案を取得します。"
+
+msgid "Use Photon-compatible aggregate functions"
+msgstr "Photon対応の集約関数を使用してください"
+
+msgid "Variant \"baseline\" is automatically used as the comparison reference."
+msgstr "バリアント \"baseline\" は比較の基準として自動的に使用されます。"
+
+msgid "Warehouse ID"
+msgstr "ウェアハウスID"
+
+msgid "Warehouse Name"
+msgstr "ウェアハウス名"
+
+msgid "Warehouse information could not be retrieved"
+msgstr "ウェアハウス情報を取得できませんでした"
+
+msgid "Warehouse information not available"
+msgstr "ウェアハウス情報は利用不可です"
+
+#, python-brace-format
+msgid "Workload pattern: {pattern}"
+msgstr "ワークロードパターン: {pattern}"
+
+msgid "Z-Order (only if Liquid Clustering is not available)"
+msgstr "Z-Order（Liquid Clusteringが利用不可の場合のみ）"
+
+msgid "time_share of scan node"
+msgstr "スキャンノードのtime_share"
+
+msgid "LLM analysis was successfully parsed into sections"
+msgstr "LLM分析は各セクションに正常に振り分けられました"
+
+msgid "Performance analysis and optimization platform for Databricks SQL / Spark workloads"
+msgstr "Databricks SQL / Spark ワークロードのパフォーマンス分析・最適化プラットフォーム"
+
+msgid "Query Analysis"
+msgstr "クエリ分析"
+
+msgid "Workload Analysis"
+msgstr "ワークロード分析"
+
+msgid "Spark Perf"
+msgstr "Sparkジョブ分析"
+
+
+msgid "SQL Analysis"
+msgstr "SQL分析"
+
+# spark_perf.html
+msgid "Process Spark event logs through the ETL pipeline to generate Gold tables."
+msgstr "SparkイベントログをETLパイプラインで処理してGoldテーブルを生成します。"
+
+msgid "Specify the Volume path where event logs are stored and the Cluster ID."
+msgstr "イベントログが格納されているVolumeパスとCluster IDを指定してください。"
+
+msgid "Report Target Spark Job"
+msgstr "レポート対象Sparkアプリケーション"
+
+msgid "Report Target Spark Application"
+msgstr "レポート対象Sparkアプリケーション"
+
+# workload.html
+msgid "Compare DBSQL query analysis and Spark job analysis side by side to identify bottlenecks across the same workload."
+msgstr "DBSQLクエリ分析とSparkジョブ分析を左右に並べて、同じワークロードのボトルネックを横断的に比較します。"
+
+msgid "Left: DBSQL"
+msgstr "左：DBSQL"
+
+msgid "Select a saved query analysis (saved to Delta on the history screen)"
+msgstr "保存済みのクエリ分析を選択（履歴画面でDelta保存したもの）"
+
+msgid "Right: Spark"
+msgstr "右：Spark"
+
+msgid "Select a Spark app generated by the ETL pipeline"
+msgstr "ETLパイプラインで生成されたSparkアプリを選択"
+
+msgid "After selecting both, save the link with"
+msgstr "両方選んだら"
+
+msgid "you can recall it next time"
+msgstr "で紐付けを保存 → 次回すぐ呼び出せます"
+
+msgid "Select a DBSQL analysis from the dropdown on the left"
+msgstr "DBSQL分析を左のドロップダウンから選択してください"
+
+msgid "(Analyze on the top screen → Save to Delta → displayed here)"
+msgstr "（トップ画面で分析 → Delta保存 → ここに表示されます）"
+
+msgid "Select a Spark app from the dropdown on the right"
+msgstr "Sparkアプリを右のドロップダウンから選択してください"
+
+msgid "(Displays the same data as the Spark Perf page)"
+msgstr "（Spark Perfページと同じデータを表示します）"
+
+# result.html
+msgid "Not saved to Delta — shared links will become invalid after the session ends. To persist, enable \"Save to Delta Table\" during analysis."
+msgstr "Delta未保存のためセッション終了後は共有リンクが無効になります。永続化するには分析時に「Save to Delta Table」を有効にしてください。"
+
+# shared_result.html
+msgid "Shared Analysis"
+msgstr "共有分析"
+
+msgid "Persisted"
+msgstr "永続化済み"
+
+msgid "Session only"
+msgstr "セッション限定"
+
+msgid "Copy Link"
+msgstr "リンクコピー"
+
+msgid "Slack Summary"
+msgstr "Slack要約"
+
+msgid "Print"
+msgstr "印刷"
+
+msgid "Total Time"
+msgstr "合計時間"
+
+msgid "Cache Hit"
+msgstr "キャッシュヒット"
+
+msgid "Actions"
+msgstr "アクション"
+
+msgid "No report available for this analysis."
+msgstr "この分析のレポートはありません。"
+
+# compare.html
+msgid "Compare Analyses"
+msgstr "分析比較"
+
+msgid "Search"
+msgstr "検索"
+
+msgid "not selected"
+msgstr "未選択"
+
+msgid "No analyses found. Run an analysis with --persist first."
+msgstr "分析が見つかりません。--persist オプション付きで分析を実行してください。"
+
+msgid "Baseline"
+msgstr "ベースライン"
+
+msgid "Candidate"
+msgstr "候補"
+
+msgid "Analyzed At"
+msgstr "分析日時"
+
+msgid "Experiment"
+msgstr "実験"
+
+msgid "Read"
+msgstr "読み取り"
+
+msgid "Warehouse"
+msgstr "ウェアハウス"
+
+msgid "Alerts"
+msgstr "アラート"
+
+msgid "Analysis ID"
+msgstr "分析ID"
+
+msgid "Prev"
+msgstr "前へ"
+
+msgid "Next"
+msgstr "次へ"
+
+msgid "Comparing..."
+msgstr "比較中..."
+
+msgid "Metric Comparison"
+msgstr "メトリクス比較"
+
+msgid "Group"
+msgstr "グループ"
+
+msgid "Change"
+msgstr "変化"
+
+msgid "Full Report"
+msgstr "完全レポート"
+
+# history.html
+msgid "Analysis History"
+msgstr "分析履歴"
+
+msgid "Home"
+msgstr "ホーム"
+
+msgid "Delete Selected"
+msgstr "選択を削除"
+
+msgid "Select All"
+msgstr "全選択"
+
+msgid "No analyses found. Run an analysis with --persist to save results."
+msgstr "分析が見つかりません。--persist オプション付きで分析結果を保存してください。"
+
+msgid "Report"
+msgstr "レポート"
+
+msgid "Japanese Report"
+msgstr "日本語レポート"
+
+msgid "Reset to Deploy Defaults"
+msgstr "デプロイ設定に戻す"
+
+# spark_perf.html - Settings section
+msgid "Settings"
+msgstr "設定"
+
+msgid "Table Prefix"
+msgstr "テーブル接頭辞"
+
+msgid "Advanced Settings (Optional)"
+msgstr "詳細設定（オプション）"
+
+msgid "HTTP Path"
+msgstr "HTTP パス"
+
+msgid "Genie — Comparison Analysis"
+msgstr "Genie — 比較分析"
+
+msgid "Ask questions about this comparison."
+msgstr "この比較について質問できます。"
+
+msgid "Ask about this comparison..."
+msgstr "この比較について質問..."
+
+msgid "ETL Job ID"
+msgstr "ETL ジョブ ID"
+
+msgid "Create Report Job ID"
+msgstr "レポート作成ジョブ ID"
+
+msgid "Save"
+msgstr "保存"
+
+msgid "Configure the catalog, schema, and table prefix for Spark Performance Gold tables."
+msgstr "Spark パフォーマンスの Gold テーブルのカタログ、スキーマ、テーブル接頭辞を設定します。"
+
+# spark_perf.html - ETL section
+msgid "Run ETL Pipeline"
+msgstr "ETL パイプラインの実行"
+
+msgid "Paste the Cluster Log Destination path from Compute > Advanced Options > Logging tab."
+msgstr "コンピュート > 詳細設定 > ログタブからクラスタログの保存先パス（Destination）を貼り付けてください。"
+
+msgid "Path format and supported compute types"
+msgstr "パスのフォーマットと対応コンピュートタイプ"
+
+msgid "Enter the Destination path from Compute > Advanced Options > Logging tab."
+msgstr "コンピュート > 詳細設定 > ログタブの Destination パスを入力してください。"
+
+msgid "Copy the Destination path as-is. The cluster ID is automatically included."
+msgstr "Destination パスをそのままコピーしてください。クラスタ ID は自動的にログパスに含まれています。"
+
+msgid "Append the cluster ID to the Destination path."
+msgstr "Destination パスにクラスタ ID を付加してください。"
+
+msgid "Append the cluster ID to the pipeline log path."
+msgstr "パイプラインのログ設定パスにクラスタ ID を付加してください。"
+
+msgid "No event logs. Use the SQL Analysis page with Query Profile JSON."
+msgstr "イベントログ非対応。SQL分析画面から Query Profile JSON で分析できます。"
+
+msgid "Cluster Log Destination"
+msgstr "クラスタログの保存先"
+
+msgid "Run ETL"
+msgstr "ETL 実行"
+
+msgid "View in Databricks"
+msgstr "Databricks で表示"
+
+# spark_perf.html - Create Report section
+msgid "Create Report"
+msgstr "レポート作成"
+
+msgid "Generate an LLM analysis report from Gold tables for the selected application."
+msgstr "選択したアプリケーションの Gold テーブルから LLM 分析レポートを生成します。"
+
+msgid "Tag this analysis for comparison. The same experiment_id groups related analyses together."
+msgstr "比較のためにこの分析にタグを付けます。同じ experiment_id は関連する分析をグループ化します。"
+
+# spark_perf.html - Applications table
+msgid "Applications"
+msgstr "Sparkアプリケーション・リスト"
+
+msgid "Spark Application List"
+msgstr "Sparkアプリケーション・リスト"
+
+msgid "App ID"
+msgstr "アプリ ID"
+
+msgid "Cluster ID"
+msgstr "クラスタ ID"
+
+msgid "Name"
+msgstr "名前"
+
+msgid "Started"
+msgstr "開始"
+
+msgid "Duration"
+msgstr "所要時間"
+
+msgid "Jobs"
+msgstr "ジョブ"
+
+msgid "Lang"
+msgstr "言語"
+
+msgid "EXPLAIN"
+msgstr "EXPLAIN"
+
+msgid "Whether EXPLAIN text was attached at analysis time"
+msgstr "分析時に EXPLAIN テキストが添付されていたかどうか"
+
+msgid "EXPLAIN attached"
+msgstr "EXPLAIN 添付あり"
+
+msgid "No EXPLAIN attached"
+msgstr "EXPLAIN 添付なし"
+
+msgid "Unknown (legacy analysis)"
+msgstr "不明（旧分析）"
+
+msgid "Column Types"
+msgstr "カラム型"
+
+msgid "none configured"
+msgstr "未設定"
+
+msgid "No applications found."
+msgstr "アプリケーションが見つかりません。"
+
+msgid "Loading report..."
+msgstr "レポートを読み込み中..."
+
+# spark_perf.html - Chat panel
+msgid "Genie — Spark Analysis"
+msgstr "Genie — Spark 分析"
+
+msgid "New Conversation"
+msgstr "新しい会話"
+
+msgid "Ask questions about this Spark application's performance data."
+msgstr "この Spark アプリケーションのパフォーマンスデータについて質問してください。"
+
+msgid "Examples:"
+msgstr "例:"
+
+msgid "Ask about this application..."
+msgstr "このアプリケーションについて質問..."
+
+# spark_perf.html - JavaScript i18n strings
+msgid "Saving..."
+msgstr "保存中..."
+
+msgid "Saved!"
+msgstr "保存しました！"
+
+msgid "Save failed"
+msgstr "保存に失敗しました"
+
+msgid "Resetting..."
+msgstr "リセット中..."
+
+msgid "Reset!"
+msgstr "リセットしました！"
+
+msgid "Load failed"
+msgstr "読み込み失敗"
+
+msgid "Starting..."
+msgstr "開始中..."
+
+msgid "Starting report generation..."
+msgstr "レポート生成を開始中..."
+
+msgid "Thinking..."
+msgstr "考え中..."
+
+msgid "Report loading timed out"
+msgstr "レポートの読み込みがタイムアウトしました"
+
+msgid "Report failed"
+msgstr "レポートの取得に失敗しました"
+
+msgid "Cluster Log Destination is required"
+msgstr "クラスタログの保存先は必須です"
+
+msgid "Invalid path. Expected format: /Volumes/.../cluster_logs/<cluster_id>"
+msgstr "無効なパスです。形式: /Volumes/.../cluster_logs/<cluster_id>"
+
+msgid "(No response)"
+msgstr "（応答なし）"
+
+msgid "Timed out waiting for response."
+msgstr "応答待ちがタイムアウトしました。"
+
+msgid "Query failed"
+msgstr "クエリが失敗しました"
+
+msgid "Failed to initialize Genie"
+msgstr "Genie の初期化に失敗しました"
+
+msgid "Genie connection failed"
+msgstr "Genie への接続に失敗しました"
+
+msgid "applications"
+msgstr "件のアプリケーション"
+
+msgid "Page"
+msgstr "ページ"
+
+msgid "Showing"
+msgstr "表示中"
+
+msgid "of"
+msgstr "/"
+
+msgid "rows"
+msgstr "行"
+
+msgid "files"
+msgstr "ファイル"
+
+msgid "avg"
+msgstr "平均"
+
+msgid "Refresh"
+msgstr "更新"
+
+msgid "Comparison History"
+msgstr "比較履歴"
+
+msgid "No comparison history found."
+msgstr "比較履歴がありません。"
+
+msgid "Compared At"
+msgstr "比較日時"
+
+msgid "Regression"
+msgstr "リグレッション"
+
+msgid "Comparison Report"
+msgstr "比較レポート"
+
+msgid "No Regression"
+msgstr "リグレッションなし"
+
+msgid "Back to Compare"
+msgstr "比較に戻る"
+
+msgid "No report available for this comparison."
+msgstr "この比較のレポートはありません。"
+
+msgid "Verdict"
+msgstr "判定"
+
+msgid "Improved"
+msgstr "改善"
+
+msgid "No Change"
+msgstr "変化なし"
+
+msgid "Analysis in progress..."
+msgstr "分析実行中..."
+
+msgid "Resuming status check..."
+msgstr "ステータスを確認中..."
+
+msgid "Comparing metrics..."
+msgstr "メトリクス比較中..."
+
+msgid "AI analysis in progress..."
+msgstr "AI分析中..."
+
+msgid "Saving results..."
+msgstr "結果を保存中..."
+
+msgid "Fingerprint"
+msgstr "フィンガープリント"
+
+msgid "Report Date"
+msgstr "レポート作成日時"
+
+msgid "ETL Run Time"
+msgstr "ETL実行時間"
+
+msgid "Current"
+msgstr "新レポート"
+
+msgid "Stale"
+msgstr "旧レポート"
+
+msgid "No Report"
+msgstr "未レポート"
+
+# Streaming Query Analysis
+msgid "Streaming Query Snapshot"
+msgstr "ストリーミングクエリ スナップショット"
+
+msgid "This is a running streaming query snapshot. Metrics are cumulative."
+msgstr "これは実行中のストリーミングクエリのスナップショットです。メトリクスは累積値です。"
+
+msgid "Target Table"
+msgstr "ターゲットテーブル"
+
+msgid "Entry Point"
+msgstr "エントリポイント"
+
+msgid "Micro-Batches"
+msgstr "マイクロバッチ数"
+
+msgid "Batch Duration Statistics"
+msgstr "バッチ実行時間統計"
+
+msgid "Read Bytes (min)"
+msgstr "読み取りバイト (最小)"
+
+msgid "Read Bytes (max)"
+msgstr "読み取りバイト (最大)"
+
+msgid "Rows Read (avg)"
+msgstr "読み取り行数 (平均)"
+
+msgid "Slow Batches Detected"
+msgstr "遅延バッチ検出"
+
+msgid "batch(es) exceeded 2x average duration"
+msgstr "バッチが平均実行時間の2倍を超過"
+
+# Streaming Executive Summary / Performance Metrics
+msgid "Finished Batches"
+msgstr "完了バッチ数"
+
+msgid "Avg Batch Duration"
+msgstr "平均バッチ実行時間"
+
+msgid "Duration CV"
+msgstr "実行時間CV"
+
+msgid "slow batch(es)"
+msgstr "遅延バッチ"
+
+msgid "Micro-Batch Duration"
+msgstr "マイクロバッチ実行時間"
+
+msgid "Micro-Batch I/O Distribution"
+msgstr "マイクロバッチ I/O 分布"
+
+msgid "Read Bytes (avg)"
+msgstr "読み取りバイト (平均)"
+
+msgid "Slow Batches"
+msgstr "遅延バッチ数"
+
+msgid "Cumulative Snapshot"
+msgstr "累積スナップショット"
+
+msgid "query uptime total — not per-batch"
+msgstr "クエリ稼働時間合計 — バッチ単位ではない"
+
+msgid "Query Uptime"
+msgstr "クエリ稼働時間"
+
+msgid "Total Read (all batches)"
+msgstr "読み取り合計 (全バッチ)"
+
+msgid "Rewrite"
+msgstr "リライト"
+
+msgid "Model for Rewrite"
+msgstr "リライト用モデル"
+
+msgid "Generate optimized SQL from analysis"
+msgstr "分析結果から最適化SQLを生成"
+
+msgid "Rewrite this query"
+msgstr "このクエリをリライト"
+
+msgid "Generating SQL rewrite..."
+msgstr "SQLリライトを生成中..."
+
+msgid "Validate"
+msgstr "検証"
+
+msgid "Refine"
+msgstr "調整"
+
+msgid "Request Fix"
+msgstr "修正依頼"
+
+msgid "Send Fix Request"
+msgstr "修正リクエスト送信"
+
+msgid "Fixing rewrite..."
+msgstr "リライトを修正中..."
+
+msgid "Validating..."
+msgstr "検証中..."
+
+msgid "Syntax OK (EXPLAIN)"
+msgstr "構文OK (EXPLAIN)"
+
+msgid "Syntax OK (local)"
+msgstr "構文OK (ローカル)"
+
+msgid "EXPLAIN error"
+msgstr "EXPLAINエラー"
+
+msgid "Syntax error"
+msgstr "構文エラー"
+
+msgid "EXPLAIN unavailable — local check only: "
+msgstr "EXPLAIN利用不可 — ローカルチェックのみ: "
+
+msgid "e.g. keep table aliases, use column name user_id, reduce CTEs..."
+msgstr "例: テーブルエイリアスを維持、カラム名は user_id を使う、CTE を減らす…"
+
+msgid "Rewrite timed out after 10 minutes. Please try again."
+msgstr "リライトが10分後にタイムアウトしました。もう一度お試しください。"
+
+msgid "Schema Analysis"
+msgstr "スキーマ分析"
+
+msgid "Analyze Schema"
+msgstr "スキーマ分析実行"
+
+msgid "Current Type"
+msgstr "現在の型"
+
+msgid "Recommended Type"
+msgstr "推奨型"
+
+msgid "Estimated Savings"
+msgstr "推定削減量"
+
+msgid "Generate Migration SQL"
+msgstr "移行SQL生成"
+
+msgid "Connect to the configured SQL Warehouse, scan table metadata, and flag suboptimal column types."
+msgstr "設定済みのSQLウェアハウスに接続し、テーブルメタデータを走査して非効率なカラム型を検出します。"
+
+msgid "Column name"
+msgstr "カラム名"
+
+msgid "Copy"
+msgstr "コピー"
+
+msgid "row"
+msgstr "行"
+
+msgid "total"
+msgstr "合計"
+
+msgid "No issues found for the selected schema."
+msgstr "選択したスキーマに問題は見つかりませんでした。"
+
+msgid "Row count unavailable"
+msgstr "行数未取得"
+
+msgid "Confirmed"
+msgstr "確認済み"
+
+msgid "Sample"
+msgstr "サンプル取得"
+
+msgid "Verify with Sample before applying"
+msgstr "適用前にサンプル取得で検証してください"
+
+msgid "Tables (optional)"
+msgstr "テーブル（任意）"
+
+msgid "e.g. store_sales, customer (comma-separated, leave empty for all tables)"
+msgstr "例: store_sales, customer（カンマ区切り。空欄ですべてのテーブル）"
+
+msgid "Total tables analyzed"
+msgstr "分析したテーブル数"
+
+msgid "Total issues found"
+msgstr "検出した問題数"
+
+msgid "issues"
+msgstr "件"
+
+msgid "Generate Migration DML"
+msgstr "移行DML生成"
+
+msgid "Copy DML"
+msgstr "DMLをコピー"
+
+msgid "ALTER TABLE (in-place)"
+msgstr "ALTER TABLE（インプレース）"
+
+msgid "CREATE TABLE AS SELECT (safe copy)"
+msgstr "CREATE TABLE AS SELECT（安全なコピー）"
+
+msgid "Review the generated SQL, run in a dev catalog/schema, then swap or replace after validation."
+msgstr "生成されたSQLを確認し、開発用のカタログ/スキーマで実行してから、検証後に差し替えてください。"
+
+msgid "Migration DML (CTAS)"
+msgstr "移行DML（CTAS）"
+
+msgid "Close"
+msgstr "閉じる"
+
+msgid "No type issues in this table."
+msgstr "このテーブルに型の問題はありません。"
+
+msgid "Cross-Table Issues"
+msgstr "テーブル間の問題"
+
+
+msgid "Involved types"
+msgstr "関与する型"
+
+msgid "JOIN Type Mismatch (from past analyses)"
+msgstr "JOIN型不一致（過去の分析より）"
+
+msgid "Left table.column (type)"
+msgstr "左 テーブル.列（型）"
+
+msgid "Right table.column (type)"
+msgstr "右 テーブル.列（型）"
+
+msgid "Past queries scanned"
+msgstr "参照した過去クエリ数"
+
+msgid "No JOIN type mismatches found in recent profiler queries."
+msgstr "直近のプロファイラクエリに JOIN 型不一致は見つかりませんでした。"
+
+msgid "Past Analyses (related to this schema)"
+msgstr "過去の分析（このスキーマに関連）"
+
+msgid "queries"
+msgstr "クエリ"
+
+
+msgid "Query"
+msgstr "クエリ"
+
+msgid "Tables"
+msgstr "テーブル"
+
+msgid "JOIN Issues"
+msgstr "JOIN 問題"
+
+msgid "Link"
+msgstr "リンク"
+
+msgid "No past analyses found for this schema."
+msgstr "このスキーマに該当する過去の分析はありません。"
+
+msgid "Load from past analyses"
+msgstr "過去の分析から読み込み"
+
+msgid "No past analyses found"
+msgstr "過去の分析が見つかりません"
+
+msgid "tables"
+msgstr "テーブル"
+
+msgid "last analyzed"
+msgstr "最終分析日"
+
+msgid "Or load from past analyses"
+msgstr "または過去の分析から読み込み"
+
+msgid "-- Select from past analyses --"
+msgstr "-- 過去の分析から選択 --"
+
+msgid "-- loading... --"
+msgstr "-- 読み込み中... --"
+
+msgid "Warehouse Sizing Recommendations"
+msgstr "ウェアハウスサイジング推奨"
+
+msgid "Warehouse Sizing"
+msgstr "ウェアハウスサイジング"
+
+msgid "Cost impact"
+msgstr "コスト影響"
+
+msgid "Queue overload {seconds}s detected — consider separating BI and ETL workloads to dedicated warehouses"
+msgstr "キュー過負荷 {seconds} 秒を検出 — BI と ETL を専用ウェアハウスに分離することを検討してください"
+
+msgid "Overload queue time indicates the warehouse may be saturated by mixed interactive and batch workloads. Isolating latency-sensitive BI from heavy ETL reduces head-of-line blocking."
+msgstr "過負荷キュー時間は、インタラクティブとバッチが混在しウェアハウスが飽和している可能性を示します。レイテンシ敏感な BI と重い ETL を分離すると、先頭ブロッキングを減らせます。"
+
+msgid "Create separate warehouses: one for interactive BI (auto-stop 10min), one for ETL (auto-stop 5min)"
+msgstr "ウェアハウスを分離: インタラクティブ BI 用（自動停止 10 分）と ETL 用（自動停止 5 分）"
+
+msgid "Cost impact depends on how you split traffic; expect fewer SLA misses and more predictable latency rather than automatic DBU reduction."
+msgstr "コスト影響はトラフィックの分け方次第です。DBU 自動削減より、SLA 逸脱の減少とレイテンシの予測しやすさが期待できます。"
+
+msgid "Provisioning wait {seconds}s with single-cluster — enable multi-cluster auto-scaling"
+msgstr "シングルクラスタでプロビジョニング待ち {seconds} 秒 — マルチクラスタ自動スケールを有効化してください"
+
+msgid "Provisioning queue time with max clusters pinned to 1 suggests new queries wait for capacity instead of scaling out. Raising max clusters allows the warehouse to add clusters under concurrent load."
+msgstr "最大クラスタ数が 1 のままでは、スケールアウトせず容量待ちになる可能性があります。max clusters を上げると同時負荷時にクラスタを追加できます。"
+
+msgid "Set max_num_clusters based on peak concurrent users (1 cluster per 10–15 users)"
+msgstr "ピーク同時ユーザーに応じて max_num_clusters を設定（10〜15 ユーザーあたり 1 クラスタ目安）"
+
+msgid "Better concurrency; additional clusters increase DBU/h ceiling when load spikes."
+msgstr "同時実行性は改善しますが、負荷スパイク時は DBU/h の上限が上がります。"
+
+msgid "Long provisioning wait ({seconds}s) on Pro/Classic — Serverless eliminates cold start"
+msgstr "Pro/Classic でプロビジョニング待ちが長い（{seconds} 秒）— Serverless はコールドスタートを軽減します"
+
+msgid "Long provisioning waits often reflect warehouse startup or capacity scheduling. Serverless SQL warehouses reduce cold-start friction for many workloads; validate fit against your governance and networking constraints."
+msgstr "長いプロビジョニング待ちは起動や容量スケジューリングに起因することが多いです。Serverless SQL は多くのワークロードでコールドスタートを軽減しますが、ガバナンスとネットワーク要件は確認してください。"
+
+msgid "Evaluate migrating this workload to a Serverless SQL warehouse or scheduling queries on warm warehouses"
+msgstr "Serverless SQL ウェアハウスへの移行、またはウォームなウェアハウス上でのスケジュール実行を検討してください"
+
+msgid "Fewer wasted minutes waiting in queue; pricing model differs — compare per-query Serverless DBU vs Pro/Classic uptime billing."
+msgstr "キュー待ちの無駄は減ります。課金モデルが異なるため、Serverless のクエリ単位 DBU と Pro/Classic の稼働時間課金を比較してください。"
+
+msgid "Classic warehouse detected — consider Pro or Serverless for Photon support"
+msgstr "Classic ウェアハウスを検出 — Photon 対応のため Pro または Serverless を検討してください"
+
+msgid "Classic warehouses do not run Photon. If this query would benefit from Photon vectorization, Pro or Serverless warehouses are the typical upgrade paths."
+msgstr "Classic では Photon は動きません。ベクトル化の恩恵が大きいクエリなら、Pro または Serverless への移行が一般的です。"
+
+msgid "Create a Pro or Serverless warehouse and replay the workload to compare Photon utilization and latency"
+msgstr "Pro または Serverless ウェアハウスを作成し、ワークロードを再実行して Photon 利用率とレイテンシを比較してください"
+
+msgid "Potential higher DBU rate with Pro/Serverless offset by faster queries; measure wall-clock and DBU per business outcome."
+msgstr "Pro/Serverless は DBU 単価が上がる一方で高速化で相殺されることがあります。実時間とビジネス成果あたりの DBU を測定してください。"
+
+msgid "Query completes in {seconds}s on {size} with no spill/queue — consider downsizing to {smaller_size}"
+msgstr "スピル/キューなしで {size} 上で {seconds} 秒で完了 — {smaller_size} へのダウンサイズを検討してください"
+
+msgid "Short execution with no disk spill and no overload queue suggests the allocated warehouse capacity may exceed steady-state needs. Validate with repeated runs and peak concurrency before shrinking."
+msgstr "実行が短くスピルも過負荷キューもない場合、割り当て容量が定常需要を上回っている可能性があります。縮小前に再実行とピーク同時性で検証してください。"
+
+msgid "Reduce cluster size one step (e.g. {from_size} → {to_size}) and re-measure p95 latency and spill"
+msgstr "クラスタサイズを 1 段階下げる（例: {from_size} → {to_size}）とし、p95 レイテンシとスピルを再測定してください"
+
+msgid "Reference DBU/h drops from {hi} to {lo} (~{pct}% lower DBU/h at full utilization of that size)"
+msgstr "参考 DBU/h は {hi} から {lo} へ（そのサイズをフル利用した場合の約 {pct}% 削減）"
+
+msgid "Heavy query ({seconds}s, {spill_gb:.1f} GB spill) on {size} — consider scaling up"
+msgstr "重いクエリ（{seconds} 秒、スピル {spill_gb:.1f} GB）を {size} で実行 — スケールアップを検討してください"
+
+msgid "Large disk spill ({spill_gb:.1f} GB) on {size} — consider scaling up"
+msgstr "ディスクスピルが大きい（{spill_gb:.1f} GB）— {size} からのスケールアップを検討してください"
+
+msgid "Long-running query ({seconds}s) on {size} — consider scaling up"
+msgstr "長時間実行（{seconds} 秒）を {size} で実行 — スケールアップを検討してください"
+
+msgid "Large spill or long runtime on the smallest warehouse tiers often indicates memory pressure or insufficient parallelism for the working set."
+msgstr "最小ティアでスピルが大きい、または実行が長い場合、メモリ圧力やワーキングセットに対する並列度不足が考えられます。"
+
+msgid "Increase warehouse size one step or enable multi-cluster scaling; then re-check spill and total time"
+msgstr "ウェアハウスサイズを 1 段階上げるかマルチクラスタを有効化し、スピルと合計時間を再確認してください"
+
+msgid "Higher DBU/h while undersized can still reduce wall-clock and total DBU per successful query if spill drops sharply"
+msgstr "アンダーサイズ時でも DBU/h は上がりますが、スピルが大きく減れば実時間と成功クエリあたりの総 DBU は下がることがあります"
+
+msgid "High-cardinality column {col} used as partition key — causes small file proliferation. Migrate to Liquid Clustering."
+msgstr "高カーディナリティ列 {col} がパーティションキーに使われています — 小ファイル増殖の原因になります。Liquid Clustering への移行を検討してください。"
+
+msgid "ALTER TABLE {fqn} CLUSTER BY ({cols}); DROP PARTITION — no data rewrite needed with LC"
+msgstr "ALTER TABLE {fqn} CLUSTER BY ({cols}); DROP PARTITION — LC ではデータ書き換え不要"
+
+msgid "Function applied to column in filter condition ({func}) — prevents Data Skipping and predicate pushdown"
+msgstr "フィルタ条件で列に関数 ({func}) が適用されています — Data Skipping と述語プッシュダウンを阻害します"
+
+msgid "sargable range/literal predicates"
+msgstr "範囲／リテラル述語（サージャブル）"
+
+msgid "Rewrite as range condition: WHERE col >= \"2024-01-01\" instead of WHERE YEAR(col) = 2024"
+msgstr "範囲条件に書き換え: WHERE YEAR(col) = 2024 の代わりに WHERE col >= \"2024-01-01\""
+
+msgid "CTE \"{name}\" is referenced {n} times — Spark may re-execute it each time"
+msgstr "CTE \"{name}\" が {n} 回参照されています — Spark は毎回再実行する可能性があります"
+
+msgid "≥2 references beyond WITH"
+msgstr "WITH 以外で 2 回以上参照"
+
+msgid "Consider converting to a Temporary View (CREATE OR REPLACE TEMP VIEW) to ensure single materialization"
+msgstr "単一マテリアライズを確実にするため、一時ビュー（CREATE OR REPLACE TEMP VIEW）への変換を検討してください"
+
+msgid "CTE identifier occurrences in SQL: {n}"
+msgstr "SQL 内の CTE 識別子出現回数: {n}"
+
+msgid "Each extra reference can force repeated evaluation unless the optimizer caches inlines"
+msgstr "オプティマイザがインラインをキャッシュしない限り、余分な参照ごとに再評価が発生する可能性があります"
+
+msgid "Compare total time and repeated scan operators before/after"
+msgstr "変更前後の合計時間とスキャンオペレータの重複を比較してください"
+
+msgid "TEMP VIEW is session-scoped; validate in a dev warehouse first"
+msgstr "TEMP VIEW はセッションスコープです。まず開発用ウェアハウスで検証してください"
+
+
+msgid "Current warehouse configuration appears appropriate for this query — no sizing changes recommended."
+msgstr "現在のウェアハウス設定はこのクエリに適切です — サイジング変更の推奨はありません。"
+
+
+# v5.13 — hash resize hotspot attribution + JOIN key type checks
+msgid "Hash resize = Photon doubled and rebuilt its in-memory hash table because row-count estimates were wrong; many resizes signal a data/structural issue (not just slowness)."
+msgstr "ハッシュリサイズ = 行数見積もりが誤っていたため、Photon が in-memory ハッシュテーブルを倍増・再構築した回数です。多発している場合、データ/構造の問題を示唆します（単なる遅さではありません）。"
+
+msgid "join/grouping keys"
+msgstr "JOIN / GROUP BY キー"
+
+msgid "grouping keys"
+msgstr "GROUP BY キー"
+
+msgid "join keys"
+msgstr "JOIN キー"
+
+msgid "hash keys"
+msgstr "ハッシュキー"
+
+#, python-brace-format
+msgid "Hash table resized {count} times with {probes} avg probes/row — likely data skew in {where}. {primer}{keys_hint}"
+msgstr "ハッシュテーブルが {count} 回リサイズされ、1 行あたり平均 {probes} 回プローブされました — {where} のデータスキューが濃厚です。{primer}{keys_hint}"
+
+#, python-brace-format
+msgid "Hash table resized {count} times with {probes} avg probes/row — suspected data skew in {where}. {primer}{keys_hint}"
+msgstr "ハッシュテーブルが {count} 回リサイズされ、1 行あたり平均 {probes} 回プローブされました — {where} のデータスキューが疑われます。{primer}{keys_hint}"
+
+#, python-brace-format
+msgid "Hash table resized {count} times — build side exceeded initial estimate (possible causes: data skew, stale statistics, or memory pressure). {primer}"
+msgstr "ハッシュテーブルが {count} 回リサイズされました — build 側が初期見積もりを超過（原因の可能性: データスキュー / 統計情報の陳腐化 / メモリ圧迫）。{primer}"
+
+#, python-brace-format
+msgid "Hash table resized {count} times — statistics are up-to-date (full), suggesting unexpected data distribution or cardinality. {primer}{hint}"
+msgstr "ハッシュテーブルが {count} 回リサイズされました — 統計情報は最新（full）なため、想定外のデータ分布やカーディナリティを示唆します。{primer}{hint}"
+
+msgid "Investigate join key distribution for skew. Consider pre-aggregating the build side, enabling AQE skew join handling, or changing to broadcast join if the smaller side fits in memory"
+msgstr "JOIN キーの分布にスキューが無いか調査してください。build 側の事前集約、AQE skew join handling の有効化、または片側が小さければ broadcast JOIN への切り替えを検討します"
+
+msgid "Check join key distribution for skew. Consider enabling AQE skew join handling or broadcast join if the smaller side fits in memory"
+msgstr "JOIN キーの分布にスキューが無いか確認してください。AQE skew join handling の有効化、または片側が小さければ broadcast JOIN を検討します"
+
+msgid "The hot grouping column(s) have extreme cardinality. First, verify the data itself — unexpected row explosion (e.g. missing filter, incorrect JOIN producing duplicates) is a common cause. If data is correct, enable AQE and pre-aggregate upstream to reduce group cardinality"
+msgstr "ホット化している GROUP BY カラムが極端なカーディナリティを示しています。まずデータ自体を確認してください — フィルタ漏れや誤った JOIN による行数爆発が典型的な原因です。データに問題が無ければ、AQE を有効化し、上流で事前集約して group のカーディナリティを下げてください"
+
+msgid "Check grouping column(s) for unexpected cardinality. Pre-aggregate or add filters upstream"
+msgstr "GROUP BY カラムに想定外のカーディナリティが無いか確認してください。上流で事前集約するか、フィルタを追加してください"
+
+msgid "Investigate key distribution for skew on the hot columns above. For JOIN skew: enable AQE skew join handling or broadcast the smaller side. For GROUP BY skew: verify no unintended cardinality (e.g. cross-joined rows) and consider pre-aggregating upstream"
+msgstr "上記のホットカラムでキー分布にスキューが無いか調査してください。JOIN スキュー: AQE skew join handling を有効化、または小さい側を broadcast。GROUP BY スキュー: 意図しないカーディナリティ（例: cross join で重複行）が無いか確認し、上流での事前集約を検討します"
+
+msgid "Check key distribution for skew. Enable AQE skew handling and pre-aggregate where possible"
+msgstr "キー分布にスキューが無いか確認してください。AQE skew handling を有効化し、可能なら事前集約を行います"
+
+msgid "Investigate key distribution. Enable AQE skew handling and consider pre-aggregation"
+msgstr "キー分布を調査してください。AQE skew handling を有効化し、事前集約を検討します"
+
+msgid "Statistics are confirmed up-to-date, so ANALYZE TABLE will not help. First, verify the result set size matches expectations — a cardinality explosion often points to a missing JOIN predicate, wrong JOIN key, or missing WHERE filter. If data is correct, investigate join key skew (enable AQE skew join handling, pre-aggregate the build side, or switch to broadcast join if the smaller side fits in memory)"
+msgstr "統計情報は最新であることが確認されているため、ANALYZE TABLE では改善しません。まず結果セットのサイズが期待値と合うか確認してください — カーディナリティ爆発は JOIN 述語の欠落、誤った JOIN キー、WHERE フィルタの欠落を示すことが多いです。データに問題が無い場合は JOIN キーのスキューを調査（AQE skew join handling の有効化、build 側の事前集約、小さい側を broadcast に切替）してください"
+
+#, python-brace-format
+msgid "Duplicate GROUP BY on [{keys}] across {n} separate aggregation nodes ({total_resize:,} resizes total) — the same aggregate is recomputed"
+msgstr "[{keys}] に対する GROUP BY が {n} 個の別個の集約ノードで重複実行されています（リサイズ総数 {total_resize:,} 回） — 同じ集約が繰り返し再計算されています"
+
+msgid "The query likely recomputes the same aggregation multiple times. Consolidate into a single CTE and reference it where needed; verify the optimizer materializes it (look for ReusedExchange in EXPLAIN). For UNION branches with parallel GROUP BY, consider computing the aggregate once upstream"
+msgstr "クエリが同じ集約を複数回再計算している可能性があります。1 つの CTE に統合し、必要箇所から参照してください。オプティマイザが実体化しているかは EXPLAIN の ReusedExchange で確認できます。UNION の各分岐で同種の GROUP BY がある場合、上流で 1 度だけ集約することを検討してください"
+
+msgid "Investigate data distribution on hot join/grouping columns"
+msgstr "ホット化している JOIN / GROUP BY カラムのデータ分布を調査"
+
+msgid "What hash resize means: Photon doubled and rebuilt its in-memory hash table this many times because row-count estimates were wrong. Many resizes signal a data/structural issue, not just slowness. Common root causes are (a) skewed key values, (b) high NULL concentration, or (c) duplicate rows from an upstream transformation. Running these diagnostics confirms which applies before choosing between AQE skew handling, broadcast, pre-aggregation, or fixing data"
+msgstr "ハッシュリサイズとは: 行数見積もりが誤っていたため、Photon が in-memory ハッシュテーブルを倍増・再構築した回数です。多発は「単に遅い」ではなく、データ/構造の問題を示唆します。代表的な根本原因は (a) 値のスキュー、(b) NULL の集中、(c) 上流の変換で生じた重複行 です。以下の診断 SQL を実行することで、どれに該当するかを確認できます。AQE skew handling / broadcast / 事前集約 / データ修正 のどれを選ぶかは、これを切り分けてから決めてください"
+
+msgid "Run the diagnostics below and compare against your expectation. If distinct_values is much lower than expected or null_count is large, the data itself is the problem — fix upstream. Otherwise proceed with skew-handling settings"
+msgstr "以下の診断 SQL を実行し、期待値と比較してください。distinct_values が想定より大幅に小さい、または null_count が大きい場合、データ側に問題があります（上流で修正）。そうでなければ skew-handling 設定に進んでください"
+
+msgid "Confirm skew/NULL/duplicate rows hypothesis before applying fixes"
+msgstr "修正を適用する前に、スキュー / NULL / 重複行の仮説を確認してください"
+
+msgid "Read-only diagnostics; no data or config changes"
+msgstr "読み取り専用の診断クエリです。データや設定は変更しません"
+
+msgid "distinct_values close to expected cardinality"
+msgstr "distinct_values が期待するカーディナリティに近いこと"
+
+msgid "Cardinality check: distinct vs total and NULL count"
+msgstr "カーディナリティ確認: distinct 値と総数、NULL 数"
+
+msgid "Top 20 values by row count (skew / heavy-hitter detection)"
+msgstr "行数上位 20 値（スキュー / ヘビーヒッター検出）"
+
+#, python-brace-format
+msgid "JOIN key type mismatch: {left} ({lt}) ↔ {right} ({rt}) — {reason}; implicit CAST may cause hash collisions and skew"
+msgstr "JOIN キーの型不一致: {left} ({lt}) ↔ {right} ({rt}) — {reason}。暗黙 CAST が発生し、ハッシュ衝突やスキューを誘発する可能性があります"
+
+msgid "Align JOIN key types on both sides. Cast at the source (a DDL change is preferred) or in a pre-JOIN projection to avoid per-row implicit CAST"
+msgstr "JOIN キーの両側の型を揃えてください。DDL 変更（推奨）または JOIN 前の projection でキャストし、行単位の暗黙 CAST を避けます"
+
+#, python-brace-format
+msgid "JOIN key {key} is {type} (scale=0) — BIGINT would likely suffice and reduce hash/comparison cost and memory per row"
+msgstr "JOIN キー {key} は {type}（scale=0）です — BIGINT で十分な可能性が高く、ハッシュ/比較コストと行あたりのメモリを削減できます"
+
+msgid "If values are integer in practice, change the column type to BIGINT (or INT) for faster hashing and smaller row footprint. Apply the same change on both sides of the JOIN to avoid introducing a type mismatch"
+msgstr "実際に整数値しか格納しない場合、カラム型を BIGINT（または INT）に変更することで、ハッシュ化が高速化し行のメモリフットプリントも小さくなります。JOIN の両側で同じ型変更を適用し、型不一致を生じさせないでください"
+
+# v5.13+ — alternative causes when statistics are fresh
+msgid "Statistics are up-to-date — consider alternative causes for hash resize"
+msgstr "統計情報は最新です — ハッシュリサイズの他の要因を検討してください"
+
+msgid "EXPLAIN confirms optimizer statistics are full (all tables)"
+msgstr "EXPLAIN により全テーブルの optimizer statistics が full であることが確認されています"
+
+msgid "When ANALYZE TABLE has already been run (or predictive optimization maintains statistics automatically), stale stats can be ruled out. Re-running ANALYZE TABLE would not help. The remaining likely causes, in order, are: (1) data-level row explosion from a missing filter or wrong JOIN predicate producing duplicates, (2) duplicate aggregation nodes recomputing the same GROUP BY, (3) key-value skew / heavy hitters / NULL concentration, (4) JOIN key type mismatch forcing implicit CAST, (5) hash collision from DECIMAL keys with very high precision, (6) memory pressure (spill + fallback)"
+msgstr "ANALYZE TABLE が既に実行済み（または予測最適化が統計情報を自動管理している）場合、統計情報の陳腐化は原因から除外できます。ANALYZE TABLE を再実行しても改善しません。残る候補は優先順に: (1) フィルタ漏れや誤った JOIN 述語による重複行でのデータレベル行数爆発、(2) 別個の集約ノードが同じ GROUP BY を繰り返し計算、(3) キー値スキュー / ヘビーヒッター / NULL 集中、(4) JOIN キーの型不一致による暗黙 CAST、(5) 高精度 DECIMAL キーのハッシュ衝突、(6) メモリ圧迫（spill + fallback）です"
+
+msgid "Do NOT re-run ANALYZE TABLE. Investigate in this order: (1) verify the result row count matches expectations (row explosion check); (2) look for duplicate GROUP BY across UNION branches / un-materialized CTEs; (3) run the diagnostic SQL from the 'Investigate data distribution' card to confirm skew/NULL; (4) check JOIN key types for mismatch; (5) if none apply, enable AQE skew join handling or broadcast the smaller side"
+msgstr "ANALYZE TABLE を再実行しないでください。以下の順に調査: (1) 結果行数が期待値と一致するか確認（行数爆発チェック）、(2) UNION 各分岐や未実体化 CTE で同じ GROUP BY が重複していないか確認、(3) 「データ分布を調査」カードの診断 SQL を実行してスキュー / NULL を確認、(4) JOIN キーの型不一致を確認、(5) いずれも該当しなければ AQE skew join handling の有効化または小さい側を broadcast 化"
+
+msgid "Root cause identified before applying a fix"
+msgstr "修正を適用する前に根本原因が特定されていること"
+
+msgid "Diagnostic only; no changes applied"
+msgstr "診断のみ。設定やデータの変更は行いません"
+
+# v5.13+ — EXPLAIN attach tip
+msgid "Tip: with EXPLAIN EXTENDED attached, the toolkit detects whether optimizer statistics are up-to-date. When statistics are confirmed full (e.g. predictive optimization is active), the misleading \"Run ANALYZE TABLE\" recommendation is automatically suppressed and alternative root causes of hash resize are surfaced instead."
+msgstr "Tip: EXPLAIN EXTENDED を添付すると、optimizer statistics が最新かどうかを自動判定します。統計が full（例: 予測最適化が有効）と確認できた場合は、誤解を招く「ANALYZE TABLE を実行」の推奨が自動抑制され、代わりにハッシュリサイズ多発の別要因が提示されます。"
+
+# v5.13+ — hash resize mitigation card titles
+msgid "Mitigate hash resize on JOIN and GROUP BY hot columns"
+msgstr "ホット化している JOIN / GROUP BY カラムのハッシュリサイズを緩和"
+
+msgid "Mitigate hash resize on hot GROUP BY columns"
+msgstr "ホット化している GROUP BY カラムのハッシュリサイズを緩和"
+
+msgid "Mitigate hash resize on hot JOIN keys"
+msgstr "ホット化している JOIN キーのハッシュリサイズを緩和"
+
+msgid "Mitigate hash table resize / high probe count"
+msgstr "ハッシュテーブルのリサイズ / プローブ過多を緩和"
+
+msgid "This card directly addresses the top [hash_table_resize_count] alert. Hash table resize + high probe count indicates that Photon's row-count estimate was wrong repeatedly — typically caused by skewed keys, unexpected cardinality from upstream row explosion, or memory pressure"
+msgstr "このカードはトップアラート [hash_table_resize_count] に直接対応しています。ハッシュテーブルのリサイズ + プローブ過多は、Photon の行数見積もりが繰り返し外れたことを示します。典型的な原因はキーのスキュー、上流での行数爆発による想定外カーディナリティ、またはメモリ圧迫です"
+
+msgid "For JOIN skew: pre-aggregate the build side, increase broadcast threshold, or enable AQE skew join handling. For GROUP BY skew: verify no unintended cardinality (row explosion / duplicates) and pre-aggregate upstream"
+msgstr "JOIN スキューの場合: build 側の事前集約、broadcast threshold 引き上げ、または AQE skew join handling を有効化。GROUP BY スキューの場合: 想定外のカーディナリティ（行数爆発 / 重複）が無いか確認し、上流で事前集約"
+
+msgid "For JOIN skew: increase broadcast threshold or enable AQE skew join handling. For GROUP BY skew: verify no unintended cardinality and pre-aggregate upstream"
+msgstr "JOIN スキューの場合: broadcast threshold 引き上げまたは AQE skew join handling を有効化。GROUP BY スキューの場合: 想定外のカーディナリティが無いか確認し、上流で事前集約"
+
+# v5.13+ — shortened EXPLAIN tip
+msgid "Tip: with EXPLAIN EXTENDED attached, the toolkit detects whether optimizer statistics are up-to-date."
+msgstr "Tip: EXPLAIN EXTENDED を添付すると、optimizer statistics が最新かどうかを自動判定します。"
+
+# v5.14 — AQE/AOS runtime events in data flow
+msgid "AQE / AOS Runtime Optimization Events"
+msgstr "AQE / AOS 実行時最適化イベント"
+
+msgid "These events show where Adaptive Query Execution (AQE) or Auto-Optimized Shuffle (AOS) changed the physical plan at runtime. Presence of these events means the initial plan was sub-optimal and the engine self-corrected; the sustainable fix is usually to improve the source layout (Liquid Clustering) or pre-aggregate to avoid the runtime correction in the first place."
+msgstr "以下は Adaptive Query Execution (AQE) または Auto-Optimized Shuffle (AOS) が実行時に物理プランを変更したイベントの一覧です。これらが検出されたということは、初期プランが最適でなく、エンジンが自律的に修正したことを意味します。持続的な改善は、ソーステーブルのレイアウト改善 (Liquid Clustering) や事前集約で「そもそも実行時修正が不要になる」状態にすることです。"
+
+
+msgid "Event"
+msgstr "イベント"
+
+msgid "Detail"
+msgstr "詳細"
+
+#, python-brace-format
+msgid "{n} skewed partition(s) were split at runtime"
+msgstr "実行時に {n} 個のスキューパーティションが分割されました"
+
+#, python-brace-format
+msgid "partitions {orig} → {intended} (×{ratio:.0f}) — AQE auto-repartitioned due to data volume"
+msgstr "パーティション数 {orig} → {intended}（×{ratio:.0f}）— データ量に応じて AQE が自律的に repartition"
+
+#, python-brace-format
+msgid "AQE self-triggered repartition (count={n})"
+msgstr "AQE 自律 repartition (回数={n})"
+
+#, python-brace-format
+msgid "cancelled {n} stage(s) and re-planned"
+msgstr "{n} 個のステージをキャンセルして再プラン"
+
+#, python-brace-format
+msgid "re-optimized after {n} materialization(s)"
+msgstr "{n} 個のステージのマテリアライゼーション後に再最適化"
+
+#, python-brace-format
+msgid "partitions {old} → {new} — AOS coordinated repartition"
+msgstr "パーティション数 {old} → {new} — AOS により協調的に repartition"
+
+#, python-brace-format
+msgid "AOS coordinated repartition (count={n})"
+msgstr "AOS 協調 repartition (回数={n})"
+
+# v5.14 — AQE/AOS event type labels (runtime optimization events table)
+msgid "⚖️ AQE skew-join split"
+msgstr "⚖️ AQE スキュー JOIN 分割"
+
+msgid "🔀 AQE auto-repartition"
+msgstr "🔀 AQE 自律 repartition"
+
+msgid "🔁 AQE re-plan"
+msgstr "🔁 AQE 再プラン"
+
+msgid "🎯 AOS repartition"
+msgstr "🎯 AOS repartition"
+
+msgid "Addresses alert"
+msgstr "アラート"
+
+msgid "General recommendation"
+msgstr "全般"
+
+msgid "Top 10 recommended actions"
+msgstr "Top 10 推奨アクション"
+
+msgid "Additional LLM-generated recommendations"
+msgstr "LLM 独自提案（追加）"
+
+msgid "These supplementary recommendations were generated by the LLM based on the full analysis context. They may overlap with the rule-based cards above when both layers identify the same alert."
+msgstr "以下は LLM がコンテキスト全体から生成した補足的な提案です。上のルールベース推奨と同じアラートを対象とした場合は内容が重複することがあります。"

@@ -1,0 +1,57 @@
+resources:
+  jobs:
+    spark_perf_etl:
+      name: "[${bundle.target}] Spark Perf ETL Pipeline"
+      description: "Runs Spark event log ETL (Bronze→Silver→Gold)"
+
+      tasks:
+        - task_key: run_perf_etl
+          notebook_task:
+            notebook_path: ../notebooks/01_Spark Perf Pipeline PySpark.py
+            base_parameters:
+              log_root: ${var.log_root}
+              cluster_id: ${var.cluster_id}
+              catalog: ${var.sparkperf_catalog}
+              schema: ${var.sparkperf_schema}
+              table_prefix: ${var.table_prefix}
+          environment_key: default
+
+      environments:
+        - environment_key: default
+          spec:
+            client: "1"
+
+      queue:
+        enabled: true
+
+      tags:
+        project: "dbsql-profiler"
+        component: "spark-perf-etl"
+
+    spark_perf_summary:
+      name: "[${bundle.target}] Spark Perf LLM Summary"
+      description: "Generates LLM narrative summary from Gold tables"
+
+      tasks:
+        - task_key: generate_llm_summary
+          notebook_task:
+            notebook_path: ../notebooks/02_generate_summary_notebook.py
+            base_parameters:
+              catalog: ${var.sparkperf_catalog}
+              schema: ${var.sparkperf_schema}
+              table_prefix: ${var.table_prefix}
+              model_endpoint: ${var.model_endpoint}
+              output_lang: ${var.output_language}
+          environment_key: default
+
+      environments:
+        - environment_key: default
+          spec:
+            client: "1"
+
+      queue:
+        enabled: true
+
+      tags:
+        project: "dbsql-profiler"
+        component: "spark-perf-summary"

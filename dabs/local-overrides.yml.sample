@@ -1,0 +1,52 @@
+# Local environment overrides (NOT committed to git)
+#
+# This is the ONLY file you need to edit for deployment configuration.
+# deploy.sh reads this file and auto-generates runtime-config.json and app.yaml.
+#
+# Usage:
+#   cp local-overrides.yml.sample local-overrides.yml
+#   Edit local-overrides.yml with your environment values
+#   ./scripts/deploy.sh dev
+
+targets:
+  dev:
+    # Workspace profile (from ~/.databrickscfg). Uncomment to use a specific profile.
+    # workspace:
+    #   profile: field-eng
+    variables:
+      sparkperf_catalog: "main"
+      sparkperf_schema: "base2"
+      dbsql_catalog: "my_catalog"
+      dbsql_schema: "dbsql_profiler"
+      warehouse_id: "your-warehouse-id"
+      log_root: "/Volumes/main/base/data/cluster_logs/your-cluster"
+      cluster_id: "your-cluster-id"
+      app_name: "your-app-name-dev"
+
+  staging:
+    # workspace:
+    #   profile: your-profile
+    #   root_path: /Workspace/Users/you@company.com/.bundle/${bundle.name}/${bundle.target}
+    variables:
+      sparkperf_catalog: "staging_catalog"
+      sparkperf_schema: "spark_perf"
+      dbsql_catalog: "staging_catalog"
+      dbsql_schema: "sql_perf"
+      warehouse_id: "your-warehouse-id"
+      log_root: "/Volumes/staging_catalog/base/data/cluster_logs/your-cluster"
+      cluster_id: "your-cluster-id"
+      app_name: "your-app-name-staging"
+
+  prod:
+    # workspace:
+    #   profile: your-prod-profile
+    #   root_path: /Workspace/Users/you@company.com/.bundle/${bundle.name}/${bundle.target}
+    variables:
+      sparkperf_catalog: "prod_catalog"
+      sparkperf_schema: "spark_perf"
+      dbsql_catalog: "prod_catalog"
+      dbsql_schema: "profiler"
+      warehouse_id: "your-prod-warehouse-id"
+      log_root: "/Volumes/prod_catalog/base/data/cluster_logs/prod-cluster"
+      cluster_id: "your-prod-cluster-id"
+      app_name: "your-app-name"

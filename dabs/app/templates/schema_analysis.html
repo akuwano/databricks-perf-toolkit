@@ -1,0 +1,747 @@
+{% extends "base.html" %}
+{% block title %}{{ _('Schema Analysis') }} - Performance Toolkit{% endblock %}
+
+{% block extra_css %}
+<style>
+#saResults .sa-data-table { width: 100%; border-collapse: collapse; font-size: 0.8rem; }
+#saResults .sa-data-table thead tr { border-bottom: 2px solid hsl(var(--border)); background: hsl(var(--muted) / 0.35); }
+#saResults .sa-data-table th { padding: 0.45rem 0.5rem; text-align: left; font-weight: 600; }
+#saResults .sa-data-table td { padding: 0.35rem 0.5rem; border-bottom: 1px solid hsl(var(--border)); }
+#saResults .sa-data-table tbody tr:hover { background: hsl(var(--muted) / 0.35); }
+.sa-table-details { border: 1px solid hsl(var(--border)); border-radius: var(--radius); margin-bottom: 0.75rem; background: hsl(var(--card)); overflow: hidden; }
+.sa-table-details > summary { cursor: pointer; padding: 0.65rem 0.85rem; list-style: none; display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem; font-weight: 600; color: hsl(var(--foreground)); }
+.sa-table-details > summary::-webkit-details-marker { display: none; }
+.sa-table-details[open] > summary { border-bottom: 1px solid hsl(var(--border)); }
+.sa-table-details .sa-details-body { padding: 0 0.75rem 0.75rem; }
+#saDmlModal { display: none; position: fixed; inset: 0; z-index: 2000; background: hsl(0 0% 0% / 0.55); align-items: center; justify-content: center; padding: 1rem; }
+#saDmlModal.show { display: flex; }
+#saDmlModal .sa-modal-panel { max-width: 900px; width: 100%; max-height: 85vh; overflow: auto; border-radius: var(--radius); border: 1px solid hsl(var(--border)); background: hsl(var(--card)); padding: 1rem; }
+#saPastSelect { height: 38px; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div style="max-width: 1400px; margin: 0 auto; padding: 2rem;">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; flex-wrap: wrap; gap: 0.5rem;">
+        <h1 style="font-size: 1.5rem; font-weight: 600; margin: 0;">
+            <i class="bi bi-table"></i> {{ _('Schema Analysis') }}
+            {% if app_version %}<small style="font-size: 0.65rem; color: hsl(var(--muted-foreground)); font-weight: 400;">v{{ app_version }}</small>{% endif %}
+        </h1>
+    </div>
+
+    <p style="font-size: 0.85rem; color: hsl(var(--muted-foreground)); margin-bottom: 1.25rem;">
+        {{ _('Connect to the configured SQL Warehouse, scan table metadata, and flag suboptimal column types.') }}
+    </p>
+
+    <div style="border: 1px solid hsl(var(--border)); border-radius: var(--radius); padding: 1rem 1.25rem; margin-bottom: 1.25rem; background: hsl(var(--card));">
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem;">
+            <div>
+                <label class="form-label small text-muted">{{ _('Catalog') }}</label>
+                <input type="text" class="form-control" id="saCatalog" placeholder="main" autocomplete="off" style="font-size: 0.85rem;">
+            </div>
+            <div>
+                <label class="form-label small text-muted">{{ _('Schema') }}</label>
+                <input type="text" class="form-control" id="saSchema" placeholder="default" autocomplete="off" style="font-size: 0.85rem;">
+            </div>
+        </div>
+        <div style="margin-top: 0.75rem;">
+            <label class="form-label small text-muted">{{ _('Tables (optional)') }}</label>
+            <input type="text" class="form-control" id="saTables" autocomplete="off" style="font-size: 0.85rem;"
+                placeholder="{{ _('e.g. store_sales, customer (comma-separated, leave empty for all tables)') }}">
+        </div>
+        <div style="margin-top: 0.75rem;">
+            <label class="form-label small text-muted" for="saPastSelect">{{ _('Or load from past analyses') }}</label>
+            <select id="saPastSelect" class="form-control" style="font-size: 0.85rem;" aria-label="{{ _('Or load from past analyses') }}">
+                <option value="" disabled selected>{{ _('-- loading... --') }}</option>
+            </select>
+        </div>
+        <div style="margin-top: 1rem; display: flex; gap: 0.5rem; flex-wrap: wrap; align-items: center;">
+            <button type="button" class="btn btn-sm" id="saAnalyzeBtn"
+                style="background: hsl(var(--primary)); color: hsl(var(--primary-foreground)); border: none; height: 38px; padding: 0 1rem; border-radius: var(--radius); font-weight: 500;">
+                <i class="bi bi-search"></i> {{ _('Analyze Schema') }}
+            </button>
+            <span id="saStatus" class="small" style="color: hsl(var(--muted-foreground)); display: none;"></span>
+        </div>
+    </div>
+
+    <div id="saResultsSummary" style="display: none; margin-bottom: 1rem; padding: 0.85rem 1rem; border-radius: var(--radius); border: 1px solid hsl(var(--border)); background: hsl(var(--card)); font-size: 0.85rem;">
+        <div style="display: flex; flex-wrap: wrap; gap: 1rem 1.5rem; align-items: center;">
+            <span><strong>{{ _('Total tables analyzed') }}:</strong> <span id="saStatTables">0</span></span>
+            <span><strong>{{ _('Total issues found') }}:</strong> <span id="saStatIssues">0</span></span>
+            <span><strong>{{ _('Estimated Savings') }} ({{ _('total') }}):</strong> <span id="saStatSavings" style="font-family: var(--font-mono, 'JetBrains Mono', monospace);">—</span></span>
+        </div>
+    </div>
+
+    <div id="saCandidateBanner" style="display: none; margin-bottom: 1rem; padding: 0.65rem 0.85rem; border-radius: var(--radius); border: 1px solid hsl(var(--border)); background: hsl(var(--muted) / 0.35); font-size: 0.82rem; color: hsl(var(--muted-foreground));">
+        <i class="bi bi-info-circle"></i>
+        {{ _('Verify with Sample before applying') }}
+    </div>
+
+    <div id="saResults"></div>
+
+    <div id="saMigrationWrap" style="display: none; margin-top: 1.5rem; padding: 1rem; border-radius: var(--radius); border: 1px solid hsl(var(--border)); background: hsl(var(--card));">
+        <div style="font-size: 0.75rem; color: hsl(var(--muted-foreground)); margin-bottom: 0.75rem;">{{ _('ALTER TABLE (in-place)') }}</div>
+        <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.5rem; flex-wrap: wrap;">
+            <button type="button" class="btn btn-sm" id="saMigrationBtn"
+                style="background: hsl(var(--secondary)); color: hsl(var(--secondary-foreground)); border: 1px solid hsl(var(--border)); height: 34px;">
+                <i class="bi bi-code-slash"></i> {{ _('Generate Migration SQL') }}
+            </button>
+            <button type="button" class="btn btn-sm" id="saCopyBtn" style="display: none; border: 1px solid hsl(var(--border)); background: transparent; color: hsl(var(--muted-foreground)); height: 34px;">
+                <i class="bi bi-clipboard"></i> {{ _('Copy') }}
+            </button>
+        </div>
+        <pre id="saMigrationSql" style="display: none; margin: 0; padding: 1rem; border-radius: var(--radius); border: 1px solid hsl(var(--border)); background: hsl(var(--muted) / 0.35); font-size: 0.78rem; max-height: 280px; overflow: auto;"></pre>
+
+        <div style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid hsl(var(--border)); font-size: 0.75rem; color: hsl(var(--muted-foreground)); margin-bottom: 0.75rem;">{{ _('CREATE TABLE AS SELECT (safe copy)') }}</div>
+        <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.5rem; flex-wrap: wrap;">
+            <button type="button" class="btn btn-sm" id="saDmlBtn"
+                style="background: hsl(var(--secondary)); color: hsl(var(--secondary-foreground)); border: 1px solid hsl(var(--border)); height: 34px;">
+                <i class="bi bi-layers"></i> {{ _('Generate Migration DML') }}
+            </button>
+            <button type="button" class="btn btn-sm" id="saCopyDmlBtn" style="display: none; border: 1px solid hsl(var(--border)); background: transparent; color: hsl(var(--muted-foreground)); height: 34px;">
+                <i class="bi bi-clipboard"></i> {{ _('Copy DML') }}
+            </button>
+        </div>
+        <p style="font-size: 0.72rem; color: hsl(var(--muted-foreground)); margin: 0 0 0.5rem;">{{ _('Review the generated SQL, run in a dev catalog/schema, then swap or replace after validation.') }}</p>
+    </div>
+</div>
+
+<div id="saDmlModal" aria-hidden="true">
+    <div class="sa-modal-panel">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
+            <strong style="font-size: 0.95rem;">{{ _('Migration DML (CTAS)') }}</strong>
+            <button type="button" class="btn btn-sm" id="saDmlModalClose" style="border: 1px solid hsl(var(--border)); background: transparent;">{{ _('Close') }}</button>
+        </div>
+        <pre id="saMigrationDml" style="margin: 0; padding: 1rem; border-radius: var(--radius); border: 1px solid hsl(var(--border)); background: hsl(var(--muted) / 0.35); font-size: 0.75rem; max-height: 60vh; overflow: auto; white-space: pre-wrap;"></pre>
+    </div>
+</div>
+
+<script>
+(function() {
+    function fmtBytes(n) {
+        if (n == null || isNaN(n)) return '—';
+        var u = ['B', 'KB', 'MB', 'GB', 'TB'];
+        var v = Number(n);
+        var i = 0;
+        while (v >= 1024 && i < u.length - 1) { v /= 1024; i++; }
+        return v.toFixed(i > 0 ? 2 : 0) + ' ' + u[i];
+    }
+
+    function escHtml(s) {
+        if (s == null) return '';
+        var d = document.createElement('div');
+        d.textContent = s;
+        return d.innerHTML;
+    }
+
+    function fmtAnalyzedAt(iso) {
+        if (!iso) return lblDash;
+        var t = new Date(iso);
+        if (isNaN(t.getTime())) return escHtml(String(iso));
+        return escHtml(t.toLocaleString());
+    }
+
+    function analyzedTs(iso) {
+        if (!iso) return -Infinity;
+        var t = new Date(iso).getTime();
+        return isNaN(t) ? -Infinity : t;
+    }
+
+    function quoteId(id) {
+        return '`' + String(id).replace(/`/g, '') + '`';
+    }
+
+    function severityStyle(sev) {
+        var s = (sev || '').toUpperCase();
+        if (s === 'CRITICAL') return 'background: hsl(var(--destructive)); color: #fff;';
+        if (s === 'HIGH') return 'background: #ea580c; color: #fff;';
+        if (s === 'MEDIUM') return 'background: #ca8a04; color: #111;';
+        if (s === 'LOW') return 'background: hsl(217 91% 55%); color: #fff;';
+        return 'background: hsl(var(--muted)); color: hsl(var(--foreground));';
+    }
+
+    function issueKey(table, col) {
+        return table + '\t' + col;
+    }
+
+    var lastPayload = null;
+    var sampledTables = new Set();
+    var confirmedPairs = new Set();
+
+    var lblCol = '{{ _("Column name") }}';
+    var lblCur = '{{ _("Current Type") }}';
+    var lblRec = '{{ _("Recommended Type") }}';
+    var lblSev = '{{ _("Severity") }}';
+    var lblSav = '{{ _("Estimated Savings") }}';
+    var lblReason = '{{ _("Reason") }}';
+    var lblStatus = '{{ _("Status") }}';
+    var lblCandidate = '{{ _("Candidate") }}';
+    var lblConfirmed = '{{ _("Confirmed") }}';
+    var lblSample = '{{ _("Sample") }}';
+    var lblRows = '{{ _("rows") }}';
+    var lblFiles = '{{ _("files") }}';
+    var lblAvg = '{{ _("avg") }}';
+    var lblRowNA = '{{ _("Row count unavailable") }}';
+    var lblPerRow = '{{ _("row") }}';
+    var lblNoIssues = '{{ _("No issues found for the selected schema.") }}';
+    var lblNoIssuesTable = '{{ _("No type issues in this table.") }}';
+    var lblIssuesBadge = '{{ _("issues") }}';
+    var lblCategory = '{{ _("Category") }}';
+    var lblCrossTable = '{{ _("Cross-Table Issues") }}';
+    var lblRecommendation = '{{ _("Recommendation") }}';
+    var lblInvolvedTypes = '{{ _("Involved types") }}';
+    var lblPastAnalysesSection = '{{ _("Past Analyses (related to this schema)") }}';
+    var lblQueriesUnit = '{{ _("queries") }}';
+    var lblAnalyzedAtCol = '{{ _("Analyzed At") }}';
+    var lblQueryCol = '{{ _("Query") }}';
+    var lblTablesCol = '{{ _("Tables") }}';
+    var lblJoinIssuesCol = '{{ _("JOIN Issues") }}';
+    var lblLinkCol = '{{ _("Link") }}';
+    var lblNoPastAnalyses = '{{ _("No past analyses found for this schema.") }}';
+    var lblJoinMismatch = '{{ _("JOIN Type Mismatch (from past analyses)") }}';
+    var lblQueryId = '{{ _("Query ID") }}';
+    var lblLeftJoinCol = '{{ _("Left table.column (type)") }}';
+    var lblRightJoinCol = '{{ _("Right table.column (type)") }}';
+    var lblPastQueriesScanned = '{{ _("Past queries scanned") }}';
+    var lblNoJoinCast = '{{ _("No JOIN type mismatches found in recent profiler queries.") }}';
+    var lblTablesLower = '{{ _("tables") }}';
+    var lblSelectPastPlaceholder = '{{ _("-- Select from past analyses --") }}';
+    var lblDash = '—';
+
+    function isColumnTypeIssue(is) {
+        return !is.category || is.category === 'column_type';
+    }
+
+    function isConfirmed(is) {
+        if (!isColumnTypeIssue(is)) return false;
+        return confirmedPairs.has(issueKey(is.table_name, is.column_name));
+    }
+
+    function generateMigrationDML() {
+        if (!lastPayload) return '';
+        var cat = lastPayload.catalog;
+        var sch = lastPayload.schema;
+        var parts = [];
+        (lastPayload.by_table || []).forEach(function(bt) {
+            var tbl = bt.table_name;
+            var cols = bt.columns || [];
+            if (!cols.length) return;
+            var issueMap = {};
+            (lastPayload.issues || []).forEach(function(is) {
+                if (is.table_name !== tbl || !isConfirmed(is)) return;
+                if (!isColumnTypeIssue(is)) return;
+                issueMap[is.column_name] = is.recommended_type;
+            });
+            if (!Object.keys(issueMap).length) return;
+            var lines = [];
+            cols.forEach(function(c) {
+                var name = c.name;
+                var rec = issueMap[name];
+                if (rec) {
+                    lines.push('  CAST(' + quoteId(name) + ' AS ' + rec + ') AS ' + quoteId(name));
+                } else {
+                    lines.push('  ' + quoteId(name));
+                }
+            });
+            var optimized = tbl + '_optimized';
+            var src = quoteId(cat) + '.' + quoteId(sch) + '.' + quoteId(tbl);
+            var dst = quoteId(cat) + '.' + quoteId(sch) + '.' + quoteId(optimized);
+            parts.push('CREATE OR REPLACE TABLE ' + dst + ' AS\nSELECT\n' + lines.join(',\n') + '\nFROM ' + src + ';');
+        });
+        return parts.join('\n\n');
+    }
+
+    function renderResults() {
+        var el = document.getElementById('saResults');
+        var banner = document.getElementById('saCandidateBanner');
+        var mig = document.getElementById('saMigrationWrap');
+        var sumEl = document.getElementById('saResultsSummary');
+        document.getElementById('saMigrationSql').style.display = 'none';
+        document.getElementById('saCopyBtn').style.display = 'none';
+        document.getElementById('saCopyDmlBtn').style.display = 'none';
+
+        if (!lastPayload) {
+            el.innerHTML = '';
+            banner.style.display = 'none';
+            mig.style.display = 'none';
+            sumEl.style.display = 'none';
+            return;
+        }
+
+        var byTable = lastPayload.by_table || [];
+        var allIssues = lastPayload.issues || [];
+        var crossIssues = lastPayload.cross_table_issues || [];
+        var joinIssues = lastPayload.join_cast_issues || [];
+        var scannedAnalyses = (lastPayload.scanned_analyses || []).slice().sort(function(a, b) {
+            return analyzedTs(b.analyzed_at) - analyzedTs(a.analyzed_at);
+        });
+        var joinScanCount = lastPayload.join_analysis_queries_scanned != null ? lastPayload.join_analysis_queries_scanned : 0;
+        var nTables = (lastPayload.tables_analyzed || []).length;
+        document.getElementById('saStatTables').textContent = String(nTables);
+        document.getElementById('saStatIssues').textContent = String(
+            allIssues.length + crossIssues.length + joinIssues.length
+        );
+        document.getElementById('saStatSavings').textContent = fmtBytes(lastPayload.total_estimated_savings_bytes);
+        sumEl.style.display = 'block';
+
+        var unconfirmed = allIssues.filter(function(is) {
+            if (!isColumnTypeIssue(is)) return false;
+            return !confirmedPairs.has(issueKey(is.table_name, is.column_name));
+        }).length;
+        banner.style.display = (allIssues.length && unconfirmed > 0) ? 'block' : 'none';
+
+        var nConfirmed = allIssues.filter(isConfirmed).length;
+        mig.style.display = sampledTables.size > 0 ? 'block' : 'none';
+        var migBtn = document.getElementById('saMigrationBtn');
+        var dmlBtn = document.getElementById('saDmlBtn');
+        migBtn.disabled = nConfirmed === 0;
+        dmlBtn.disabled = nConfirmed === 0;
+
+        var html = '';
+        var cat = lastPayload.catalog;
+        var sch = lastPayload.schema;
+
+        byTable.forEach(function(t) {
+            var issues = t.issues || [];
+            var tbl = t.table_name;
+            var columnIssues = issues.filter(isColumnTypeIssue);
+            var colsList = columnIssues.map(function(i) { return i.column_name; });
+            var nIss = issues.length;
+            var nColIss = columnIssues.length;
+
+            html += '<details class="sa-table-details"' + (nIss ? ' open' : '') + '>';
+            html += '<summary><span><i class="bi bi-chevron-right" style="font-size:0.75rem; opacity:0.7;"></i> ' + escHtml(tbl) + '</span>';
+            var fileBits = '';
+            if (t.num_files != null && t.size_in_bytes != null && t.num_files > 0) {
+                var avgB = t.size_in_bytes / t.num_files;
+                fileBits = ' | ' + Number(t.num_files).toLocaleString() + ' ' + lblFiles + ' | ' + lblAvg + ' ' + fmtBytes(avgB);
+            }
+            html += '<small style="color:hsl(var(--muted-foreground)); font-weight:400;">('
+                + (t.row_count != null ? Number(t.row_count).toLocaleString() + ' ' + lblRows : lblRowNA)
+                + fileBits + ')</small>';
+            if (nIss) {
+                html += '<span class="badge" style="font-size:0.65rem; background:hsl(var(--destructive)/0.25); color:hsl(var(--destructive));">' + nIss + ' ' + lblIssuesBadge + '</span>';
+            }
+            if (nColIss) {
+                html += '<button type="button" class="btn btn-sm sa-sample-btn" data-table="' + escHtml(tbl) + '" data-cols-enc="' + encodeURIComponent(JSON.stringify(colsList)) + '" '
+                    + 'style="background:hsl(var(--muted)); color:hsl(var(--foreground)); border:1px solid hsl(var(--border)); font-size:0.72rem; margin-left:auto;">';
+                html += '<i class="bi bi-database"></i> ' + lblSample + '</button>';
+            }
+            if (sampledTables.has(tbl) && nColIss) {
+                html += '<span class="small" style="color:hsl(var(--primary));"><i class="bi bi-check-circle"></i> ' + lblConfirmed + '</span>';
+            }
+            html += '</summary>';
+            html += '<div class="sa-details-body">';
+
+            if (!nIss) {
+                // Show all columns with OK status
+                var allCols = t.columns || [];
+                if (allCols.length) {
+                    html += '<div style="overflow-x:auto;">';
+                    html += '<table class="sa-data-table">';
+                    html += '<thead><tr><th>' + lblCol + '</th><th>Type</th><th>' + lblStatus + '</th></tr></thead><tbody>';
+                    allCols.forEach(function(c) {
+                        html += '<tr>';
+                        html += '<td style="font-family:var(--font-mono, monospace);">' + escHtml(c.name) + '</td>';
+                        html += '<td>' + escHtml(c.data_type) + '</td>';
+                        html += '<td><span class="badge" style="font-size:0.7rem; background:hsl(142 71% 45% / 0.25); color:hsl(142 71% 35%);">OK</span></td>';
+                        html += '</tr>';
+                    });
+                    html += '</tbody></table></div>';
+                } else {
+                    html += '<p style="margin:0; font-size:0.82rem; color:hsl(var(--muted-foreground));">' + lblNoIssuesTable + '</p>';
+                }
+            } else {
+                html += '<div style="overflow-x:auto;">';
+                html += '<table class="sa-data-table">';
+                html += '<thead><tr>';
+                html += '<th>' + lblCol + '</th><th>' + lblCategory + '</th><th>' + lblCur + '</th><th>' + lblRec + '</th><th>' + lblStatus + '</th><th>' + lblSev + '</th><th>' + lblSav + '</th><th>' + lblReason + '</th>';
+                html += '</tr></thead><tbody>';
+                issues.forEach(function(is) {
+                    var perRow = is.savings_per_row;
+                    var est = is.estimated_savings_bytes;
+                    var savTxt = fmtBytes(est != null ? est : null);
+                    if (est == null && perRow != null && isColumnTypeIssue(is)) {
+                        savTxt = fmtBytes(perRow) + '/' + lblPerRow;
+                    }
+                    if (!isColumnTypeIssue(is)) {
+                        savTxt = lblDash;
+                    }
+                    var conf = isConfirmed(is);
+                    var stLabel = conf ? lblConfirmed : lblCandidate;
+                    var stClass = conf ? 'background:hsl(var(--primary)/0.35); color:hsl(var(--primary));' : 'background:hsl(var(--muted));';
+                    if (!isColumnTypeIssue(is)) {
+                        stLabel = lblDash;
+                        stClass = 'background:hsl(var(--muted)); color:hsl(var(--muted-foreground));';
+                    }
+                    var cat = is.category || 'column_type';
+                    html += '<tr>';
+                    html += '<td style="font-family:var(--font-mono, monospace);">' + escHtml(is.column_name) + '</td>';
+                    html += '<td><span class="badge" style="font-size:0.65rem; background:hsl(var(--muted));">' + escHtml(cat) + '</span></td>';
+                    html += '<td>' + escHtml(is.current_type) + '</td>';
+                    html += '<td>' + escHtml(is.recommended_type) + '</td>';
+                    html += '<td><span class="badge" style="font-size:0.7rem; ' + stClass + '">' + escHtml(stLabel) + '</span></td>';
+                    html += '<td><span class="badge" style="font-size:0.7rem; ' + severityStyle(is.severity) + '">' + escHtml(is.severity) + '</span></td>';
+                    html += '<td>' + savTxt + '</td>';
+                    html += '<td style="white-space:normal; max-width:280px;">' + escHtml(is.reason) + '</td>';
+                    html += '</tr>';
+                });
+                html += '</tbody></table></div>';
+            }
+            html += '</div></details>';
+        });
+
+        if (crossIssues.length) {
+            html += '<div style="margin-top:1.5rem; padding:1rem; border-radius:var(--radius); border:1px solid hsl(var(--border)); background:hsl(var(--card));">';
+            html += '<h2 style="font-size:1rem; margin:0 0 0.75rem; font-weight:600;"><i class="bi bi-link-45deg"></i> ' + lblCrossTable + '</h2>';
+            html += '<div style="overflow-x:auto;"><table class="sa-data-table">';
+            html += '<thead><tr><th>' + lblCol + '</th><th>' + lblInvolvedTypes + '</th><th>' + lblRecommendation + '</th></tr></thead><tbody>';
+            crossIssues.forEach(function(x) {
+                var occ = x.occurrences || [];
+                var parts = occ.map(function(o) { return escHtml(o.table_name) + ': ' + escHtml(o.data_type); });
+                html += '<tr>';
+                html += '<td style="font-family:var(--font-mono, monospace);">' + escHtml(x.column_name) + '</td>';
+                html += '<td style="white-space:normal; max-width:420px;">' + parts.join('; ') + '</td>';
+                html += '<td style="white-space:normal; max-width:320px;">' + escHtml(x.recommendation || '') + '</td>';
+                html += '</tr>';
+            });
+            html += '</tbody></table></div></div>';
+        }
+
+        html += '<details class="sa-table-details" style="margin-top:1.5rem;" open>';
+        html += '<summary><span><i class="bi bi-chevron-right" style="font-size:0.75rem; opacity:0.7;"></i> ' + escHtml(lblPastAnalysesSection)
+            + ' (' + scannedAnalyses.length + ' ' + lblQueriesUnit + ')</span></summary>';
+        html += '<div class="sa-details-body">';
+        if (scannedAnalyses.length) {
+            html += '<div style="overflow-x:auto;"><table class="sa-data-table">';
+            html += '<thead><tr><th>' + lblAnalyzedAtCol + '</th><th>' + lblQueryCol + '</th><th>' + lblTablesCol + '</th><th>' + lblJoinIssuesCol + '</th><th>' + lblLinkCol + '</th></tr></thead><tbody>';
+            scannedAnalyses.forEach(function(row) {
+                var jc = Number(row.join_cast_issue_count) || 0;
+                var badgeStyle = jc > 0
+                    ? 'background:hsl(var(--destructive)/0.25); color:hsl(var(--destructive));'
+                    : 'background:hsl(var(--muted)); color:hsl(var(--muted-foreground));';
+                var tablesStr = (row.tables_referenced || []).join(', ');
+                var aidEnc = encodeURIComponent(String(row.analysis_id || ''));
+                html += '<tr>';
+                html += '<td style="white-space:nowrap;">' + fmtAnalyzedAt(row.analyzed_at) + '</td>';
+                html += '<td style="font-family:var(--font-mono, monospace); max-width:420px; white-space:normal; word-break:break-word;">' + escHtml(row.query_text || '') + '</td>';
+                html += '<td style="white-space:normal; max-width:280px;">' + escHtml(tablesStr) + '</td>';
+                html += '<td><span class="badge" style="font-size:0.65rem; ' + badgeStyle + '">' + jc + '</span></td>';
+                html += '<td><a href="/shared/' + aidEnc + '" target="_blank" rel="noopener noreferrer" class="btn btn-sm" style="padding:0.15rem 0.4rem; font-size:0.75rem; border:1px solid hsl(var(--border));" title="' + escHtml(lblLinkCol) + '"><i class="bi bi-box-arrow-up-right"></i></a></td>';
+                html += '</tr>';
+            });
+            html += '</tbody></table></div>';
+        } else {
+            html += '<p style="margin:0; font-size:0.82rem; color:hsl(var(--muted-foreground));">' + lblNoPastAnalyses + '</p>';
+        }
+        html += '</div></details>';
+
+        html += '<div style="margin-top:1.5rem; padding:1rem; border-radius:var(--radius); border:1px solid hsl(var(--border)); background:hsl(var(--card));">';
+        html += '<h2 style="font-size:1rem; margin:0 0 0.35rem; font-weight:600;"><i class="bi bi-diagram-3"></i> ' + lblJoinMismatch + '</h2>';
+        html += '<p style="font-size:0.78rem; color:hsl(var(--muted-foreground)); margin:0 0 0.75rem;">' + lblPastQueriesScanned + ': ' + joinScanCount + '</p>';
+        if (joinIssues.length) {
+            html += '<div style="overflow-x:auto;"><table class="sa-data-table">';
+            html += '<thead><tr><th>' + lblQueryId + '</th><th>' + lblLeftJoinCol + '</th><th>' + lblRightJoinCol + '</th><th>' + lblSev + '</th><th>' + lblRecommendation + '</th></tr></thead><tbody>';
+            joinIssues.forEach(function(j) {
+                var leftCell = escHtml(j.left_table) + '.' + escHtml(j.left_column) + ' (' + escHtml(j.left_type) + ')';
+                var rightCell = escHtml(j.right_table) + '.' + escHtml(j.right_column) + ' (' + escHtml(j.right_type) + ')';
+                html += '<tr>';
+                html += '<td style="font-family:var(--font-mono, monospace); font-size:0.75rem;">' + escHtml(j.query_id || '') + '</td>';
+                html += '<td style="white-space:normal; max-width:280px;">' + leftCell + '</td>';
+                html += '<td style="white-space:normal; max-width:280px;">' + rightCell + '</td>';
+                html += '<td><span class="badge" style="font-size:0.7rem; ' + severityStyle(j.severity) + '">' + escHtml(j.severity) + '</span></td>';
+                html += '<td style="white-space:normal; max-width:360px;">' + escHtml(j.recommendation || '') + '</td>';
+                html += '</tr>';
+            });
+            html += '</tbody></table></div>';
+        } else {
+            html += '<p style="margin:0; font-size:0.82rem; color:hsl(var(--muted-foreground));">' + lblNoJoinCast + '</p>';
+        }
+        html += '</div>';
+
+        if (!byTable.length && !crossIssues.length && !joinIssues.length && joinScanCount === 0) {
+            html = '<p style="color:hsl(var(--muted-foreground)); font-size:0.9rem;">' + lblNoIssues + '</p>';
+            banner.style.display = 'none';
+            mig.style.display = 'none';
+            sumEl.style.display = 'none';
+        } else if (!allIssues.length) {
+            banner.style.display = 'none';
+        }
+
+        el.innerHTML = html;
+
+        el.querySelectorAll('.sa-sample-btn').forEach(function(btn) {
+            btn.addEventListener('click', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                if (e.stopImmediatePropagation) e.stopImmediatePropagation();
+                var tbl = btn.getAttribute('data-table');
+                var enc = btn.getAttribute('data-cols-enc');
+                var cols;
+                try {
+                    cols = JSON.parse(decodeURIComponent(enc || '[]'));
+                } catch (err) {
+                    return;
+                }
+                runSample(cat, sch, tbl, cols, btn);
+            });
+        });
+    }
+
+    function runSample(catalog, schema, table, columns, btn) {
+        if (!columns || !columns.length) return;
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" style="width:0.7em;height:0.7em;border-width:2px;display:inline-block;border:2px solid currentColor;border-right-color:transparent;border-radius:50%;animation:spin 0.75s linear infinite;vertical-align:middle;"></span> Sampling...';
+        // Start async task
+        fetch('/api/v1/schema/sample', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ catalog: catalog, schema: schema, table: table, columns: columns })
+        }).then(function(r) {
+            if (!r.ok) throw new Error('Server returned ' + r.status);
+            return r.json();
+        }).then(function(startData) {
+            if (!startData.ok || !startData.task_id) {
+                throw new Error(startData.error || 'Failed to start sample');
+            }
+            // Poll for completion
+            var taskId = startData.task_id;
+            function poll() {
+                fetch('/api/v1/schema/sample/' + taskId).then(function(r) {
+                    if (!r.ok) throw new Error('Poll failed: ' + r.status);
+                    return r.json();
+                }).then(function(data) {
+                    if (data.status === 'running') {
+                        setTimeout(poll, 2000);
+                        return;
+                    }
+                    btn.disabled = false;
+                    btn.innerHTML = '<i class="bi bi-search"></i> Sample';
+                    if (data.status === 'failed') {
+                        alert(data.error || 'Sample failed');
+                        return;
+                    }
+                    // Completed
+                    sampledTables.add(table);
+                    (data.confirmed_updates || []).forEach(function(u) {
+                        if (u.table_name && u.column_name) {
+                            confirmedPairs.add(issueKey(u.table_name, u.column_name));
+                        }
+                    });
+                    (lastPayload.issues || []).forEach(function(is) {
+                        if (confirmedPairs.has(issueKey(is.table_name, is.column_name))) {
+                            is.confirmed = true;
+                        }
+                    });
+                    (lastPayload.by_table || []).forEach(function(bt) {
+                        (bt.issues || []).forEach(function(is) {
+                            if (confirmedPairs.has(issueKey(is.table_name, is.column_name))) {
+                                is.confirmed = true;
+                            }
+                        });
+                    });
+                    renderResults();
+                }).catch(function(e) {
+                    btn.disabled = false;
+                    btn.innerHTML = '<i class="bi bi-search"></i> Sample';
+                    alert(String(e));
+                });
+            }
+            poll();
+        }).catch(function(e) {
+            btn.disabled = false;
+            btn.innerHTML = '<i class="bi bi-search"></i> Sample';
+            alert(String(e));
+        });
+    }
+
+    var saPastSchemasList = [];
+    var saPastTablesList = [];
+    var saPastSchemasLoaded = false;
+    var saPastSchemasLoading = false;
+
+    function pad2(n) {
+        return n < 10 ? '0' + n : String(n);
+    }
+
+    function fmtLastYYYYMMDD(s) {
+        if (!s) return '';
+        var t = new Date(s);
+        if (isNaN(t.getTime())) {
+            var m = String(s).match(/^(\d{4}-\d{2}-\d{2})/);
+            return m ? m[1] : '';
+        }
+        return t.getFullYear() + '-' + pad2(t.getMonth() + 1) + '-' + pad2(t.getDate());
+    }
+
+    function populatePastSelect(schemas) {
+        var sel = document.getElementById('saPastSelect');
+        if (!sel) return;
+        sel.innerHTML = '';
+        var opt0 = document.createElement('option');
+        opt0.value = '';
+        opt0.disabled = true;
+        opt0.selected = true;
+        opt0.textContent = lblSelectPastPlaceholder;
+        sel.appendChild(opt0);
+        // Flatten: one option per catalog.schema.table
+        saPastTablesList = [];
+        (schemas || []).forEach(function(s) {
+            (s.tables || []).forEach(function(tbl) {
+                saPastTablesList.push({catalog: s.catalog, schema: s.schema, table: tbl});
+            });
+        });
+        // Deduplicate
+        var seen = {};
+        saPastTablesList = saPastTablesList.filter(function(t) {
+            var k = t.catalog.toLowerCase() + '.' + t.schema.toLowerCase() + '.' + t.table.toLowerCase();
+            if (seen[k]) return false;
+            seen[k] = true;
+            return true;
+        });
+        saPastTablesList.forEach(function(t, i) {
+            var opt = document.createElement('option');
+            opt.value = String(i);
+            opt.textContent = t.catalog + '.' + t.schema + '.' + t.table;
+            sel.appendChild(opt);
+        });
+    }
+
+    function loadPastSchemasSelect() {
+        if (saPastSchemasLoading || saPastSchemasLoaded) return;
+        saPastSchemasLoading = true;
+        fetch('/api/v1/schema/past-schemas').then(function(r) { return r.json(); }).then(function(data) {
+            if (!data.ok || !data.schemas) {
+                populatePastSelect([]);
+                return;
+            }
+            populatePastSelect(data.schemas);
+        }).catch(function() {
+            populatePastSelect([]);
+        }).finally(function() {
+            saPastSchemasLoading = false;
+            saPastSchemasLoaded = true;
+        });
+    }
+
+    function initPastSelect() {
+        loadPastSchemasSelect();
+        var sel = document.getElementById('saPastSelect');
+        if (!sel) return;
+        sel.addEventListener('focus', function() {
+            if (!saPastSchemasLoaded && !saPastSchemasLoading) {
+                loadPastSchemasSelect();
+            }
+        });
+        sel.addEventListener('change', function() {
+            var v = sel.value;
+            if (v === '') return;
+            var t = saPastTablesList[parseInt(v, 10)];
+            if (t) {
+                document.getElementById('saCatalog').value = t.catalog || '';
+                document.getElementById('saSchema').value = t.schema || '';
+                document.getElementById('saTables').value = t.table || '';
+            }
+            sel.selectedIndex = 0;
+        });
+    }
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initPastSelect);
+    } else {
+        initPastSelect();
+    }
+
+    document.getElementById('saAnalyzeBtn').addEventListener('click', function() {
+        var catalog = (document.getElementById('saCatalog').value || '').trim();
+        var schema = (document.getElementById('saSchema').value || '').trim();
+        var tablesRaw = (document.getElementById('saTables').value || '').trim();
+        var st = document.getElementById('saStatus');
+        var btn = document.getElementById('saAnalyzeBtn');
+        st.style.display = 'inline';
+        st.textContent = '…';
+        btn.disabled = true;
+        sampledTables.clear();
+        confirmedPairs.clear();
+        lastPayload = null;
+        renderResults();
+        document.getElementById('saResultsSummary').style.display = 'none';
+        document.getElementById('saDmlModal').classList.remove('show');
+
+        var body = { catalog: catalog, schema: schema };
+        if (tablesRaw) {
+            var tables = tablesRaw.split(',').map(function(s) { return s.trim(); }).filter(function(s) { return s.length > 0; });
+            if (tables.length) body.tables = tables;
+        }
+
+        fetch('/api/v1/schema/analyze', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(body)
+        }).then(function(r) { return r.json(); }).then(function(data) {
+            btn.disabled = false;
+            st.style.display = 'none';
+            if (!data.ok) {
+                document.getElementById('saResults').innerHTML =
+                    '<div style="color:hsl(var(--destructive)); padding:0.5rem;">' + escHtml(data.error || 'Error') + '</div>';
+                return;
+            }
+            lastPayload = data;
+            renderResults();
+        }).catch(function(e) {
+            btn.disabled = false;
+            st.style.display = 'none';
+            document.getElementById('saResults').innerHTML =
+                '<div style="color:hsl(var(--destructive));">' + escHtml(String(e)) + '</div>';
+        });
+    });
+
+    document.getElementById('saMigrationBtn').addEventListener('click', function() {
+        if (!lastPayload) return;
+        var cat = lastPayload.catalog;
+        var sch = lastPayload.schema;
+        var lines = [];
+        (lastPayload.issues || []).forEach(function(is) {
+            if (!isConfirmed(is) || !isColumnTypeIssue(is)) return;
+            var fqn = cat + '.' + sch + '.' + is.table_name;
+            lines.push('ALTER TABLE ' + fqn + ' ALTER COLUMN `' + is.column_name.replace(/`/g, '') + '` TYPE ' + is.recommended_type + ';');
+        });
+        if (!lines.length) return;
+        var pre = document.getElementById('saMigrationSql');
+        pre.textContent = lines.join('\n');
+        pre.style.display = 'block';
+        document.getElementById('saCopyBtn').style.display = 'inline-block';
+    });
+
+    document.getElementById('saCopyBtn').addEventListener('click', function() {
+        var t = document.getElementById('saMigrationSql').textContent;
+        navigator.clipboard.writeText(t).then(function() {});
+    });
+
+    document.getElementById('saDmlBtn').addEventListener('click', function() {
+        var sql = generateMigrationDML();
+        if (!sql) return;
+        document.getElementById('saMigrationDml').textContent = sql;
+        document.getElementById('saDmlModal').classList.add('show');
+        document.getElementById('saDmlModal').setAttribute('aria-hidden', 'false');
+        document.getElementById('saCopyDmlBtn').style.display = 'inline-block';
+    });
+
+    document.getElementById('saCopyDmlBtn').addEventListener('click', function() {
+        var t = document.getElementById('saMigrationDml').textContent;
+        navigator.clipboard.writeText(t).then(function() {});
+    });
+
+    document.getElementById('saDmlModalClose').addEventListener('click', function() {
+        document.getElementById('saDmlModal').classList.remove('show');
+        document.getElementById('saDmlModal').setAttribute('aria-hidden', 'true');
+    });
+    document.getElementById('saDmlModal').addEventListener('click', function(ev) {
+        if (ev.target.id === 'saDmlModal') {
+            document.getElementById('saDmlModal').classList.remove('show');
+            document.getElementById('saDmlModal').setAttribute('aria-hidden', 'true');
+        }
+    });
+})();
+</script>
+{% endblock %}

@@ -1,0 +1,1249 @@
+{% extends "base.html" %}
+{% block title %}{{ _('Spark Job Analysis') }} - Performance Toolkit{% endblock %}
+
+{% block content %}
+<style>.editable-cell:hover { background: hsl(var(--muted)/0.3); }</style>
+<div style="max-width:1400px; margin:0 auto; padding:1.5rem;">
+    <h5 style="margin-bottom:1rem;">
+        <i class="bi bi-speedometer2"></i>
+        {{ _('Spark Job Analysis') }}
+        {% if app_version %}<small class="text-muted ms-2" style="font-size: 0.65rem;">v{{ app_version }}</small>{% endif %}
+    </h5>
+    <!-- Settings (collapsible) -->
+    <details style="margin-bottom:1rem;">
+        <summary style="cursor:pointer; padding:0.5rem; font-size:0.85rem; color:hsl(var(--muted-foreground));">
+            <i class="bi bi-gear"></i> {{ _('Settings') }}
+        </summary>
+        <div style="padding:0.75rem; border:1px solid hsl(var(--border)); border-radius:var(--radius); margin-top:0.5rem;">
+            <p style="font-size:0.8rem; color:hsl(var(--muted-foreground)); margin-bottom:0.75rem;">
+                {{ _('Configure the catalog, schema, and table prefix for Spark Performance Gold tables.') }}
+            </p>
+            <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:0.75rem;">
+                <div><label class="form-label small text-muted">{{ _('Catalog') }}</label><input type="text" class="form-control" id="spCatalog"></div>
+                <div><label class="form-label small text-muted">{{ _('Schema') }}</label><input type="text" class="form-control" id="spSchema"></div>
+                <div><label class="form-label small text-muted">{{ _('Table Prefix') }}</label><input type="text" class="form-control" id="spPrefix"></div>
+            </div>
+            <details style="margin-top:0.75rem;">
+                <summary style="cursor:pointer; font-size:0.8rem; color:hsl(var(--muted-foreground));">
+                    {{ _('Advanced Settings (Optional)') }}
+                </summary>
+                <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:0.75rem; margin-top:0.5rem;">
+                    <div><label class="form-label small text-muted">{{ _('SQL Warehouse HTTP Path') }}</label><input type="text" class="form-control" id="spHttpPath" placeholder="(auto-configured)"></div>
+                    <div><label class="form-label small text-muted">{{ _('ETL Job ID') }}</label><input type="text" class="form-control" id="spEtlJobId" placeholder="(auto-configured)"></div>
+                    <div><label class="form-label small text-muted">{{ _('Create Report Job ID') }}</label><input type="text" class="form-control" id="spSummaryJobId" placeholder="(auto-configured)"></div>
+                </div>
+            </details>
+            <button type="button" class="btn btn-sm mt-2" onclick="saveSp()" style="background:hsl(var(--secondary)); color:hsl(var(--secondary-foreground)); border:1px solid hsl(var(--border));">
+                <i class="bi bi-save"></i> {{ _('Save') }}
+            </button>
+            <button type="button" class="btn btn-sm mt-2" onclick="resetSp()" style="background:transparent; color:hsl(var(--muted-foreground)); border:1px solid hsl(var(--border));">
+                <i class="bi bi-arrow-counterclockwise"></i> {{ _('Reset to Deploy Defaults') }}
+            </button>
+            <span id="spSt" class="small ms-2" style="display:none;"></span>
+        </div>
+    </details>
+
+    <!-- ETL Pipeline Trigger -->
+    <details style="margin-bottom:1rem;">
+        <summary style="cursor:pointer; padding:0.5rem; font-size:0.85rem; color:hsl(var(--muted-foreground));">
+            <i class="bi bi-play-circle"></i> {{ _('Run ETL Pipeline') }}
+        </summary>
+        <div style="padding:0.75rem; border:1px solid hsl(var(--border)); border-radius:var(--radius); margin-top:0.5rem;">
+            <p style="font-size:0.8rem; color:hsl(var(--muted-foreground)); margin-bottom:0.75rem;">
+                {{ _('Process Spark event logs through the ETL pipeline to generate Gold tables.') }}
+            </p>
+            <details style="font-size:0.78rem; color:hsl(var(--muted-foreground)); margin-bottom:0.75rem;">
+                <summary style="cursor:pointer;">{{ _('Path format and supported compute types') }}</summary>
+                <div style="margin-top:0.5rem; padding:0.5rem; background:hsl(var(--muted)/0.3); border-radius:var(--radius);">
+                    <p style="margin-bottom:0.5rem;">
+                        {{ _('Enter the Destination path from Compute > Advanced Options > Logging tab.') }}
+                    </p>
+                    <table style="font-size:0.75rem; width:100%; margin-bottom:0.5rem;">
+                        <tr>
+                            <td style="padding:2px 6px;"><strong>All-Purpose / Interactive</strong></td>
+                            <td style="padding:2px 6px;">{{ _('Copy the Destination path as-is. The cluster ID is automatically included.') }}<br>
+                                <code style="font-size:0.7rem;">dbfs:/Users/user@example.com/0413-042705-fimri42c</code></td>
+                        </tr>
+                        <tr>
+                            <td style="padding:2px 6px;"><strong>Jobs Compute</strong></td>
+                            <td style="padding:2px 6px;">{{ _('Append the cluster ID to the Destination path.') }}<br>
+                                <code style="font-size:0.7rem;">dbfs:/cluster-logs/0413-050000-abcde</code></td>
+                        </tr>
+                        <tr>
+                            <td style="padding:2px 6px;"><strong>DLT / SDP (Classic)</strong></td>
+                            <td style="padding:2px 6px;">{{ _('Append the cluster ID to the pipeline log path.') }}<br>
+                                <code style="font-size:0.7rem;">dbfs:/pipelines/pipeline-id/0413-060000-xyz12</code></td>
+                        </tr>
+                        <tr>
+                            <td style="padding:2px 6px;"><strong>Volumes</strong></td>
+                            <td style="padding:2px 6px;">
+                                <code style="font-size:0.7rem;">/Volumes/catalog/schema/vol/cluster_logs/0413-042705-fimri42c</code></td>
+                        </tr>
+                    </table>
+                    <p style="margin-bottom:0;">
+                        ✅ All-Purpose &nbsp; ✅ Jobs Compute &nbsp; ✅ DLT/SDP (Classic)<br>
+                        ⚠ <strong>Serverless</strong> — {{ _('No event logs. Use the SQL Analysis page with Query Profile JSON.') }}
+                    </p>
+                </div>
+            </details>
+            <div style="margin-bottom:0.75rem;">
+                <label class="form-label small text-muted">{{ _('Cluster Log Destination') }}</label>
+                <input type="text" class="form-control" id="etlDestination" placeholder="dbfs:/Users/user@example.com/0413-042705-fimri42c">
+            </div>
+            <div style="display:flex; gap:0.5rem; align-items:center; flex-wrap:wrap;">
+                <button type="button" class="btn btn-sm" onclick="triggerETL()"
+                    style="background:hsl(var(--primary)); color:hsl(var(--primary-foreground)); border:none;"
+                    id="etlRunBtn">
+                    <i class="bi bi-play-fill"></i> {{ _('Run ETL') }}
+                </button>
+                <span id="etlStatus" class="small" style="display:none;"></span>
+            </div>
+            <!-- ETL Progress -->
+            <div id="etlProgress" style="display:none; margin-top:0.75rem; padding:0.5rem 0.75rem; border-radius:var(--radius); border:1px solid hsl(var(--border)); font-size:0.8rem;">
+                <div style="display:flex; justify-content:space-between; align-items:center;">
+                    <span>
+                        <i class="bi bi-hourglass-split" id="etlIcon"></i>
+                        <span id="etlStateText">PENDING</span>
+                    </span>
+                    <a id="etlRunLink" href="#" target="_blank" style="color:hsl(var(--primary)); font-size:0.75rem; display:none;">
+                        {{ _('View in Databricks') }} <i class="bi bi-box-arrow-up-right"></i>
+                    </a>
+                </div>
+                <div id="etlMessage" style="color:hsl(var(--muted-foreground)); margin-top:0.25rem;"></div>
+            </div>
+        </div>
+    </details>
+
+    <!-- Create Report -->
+    <details style="margin-bottom:1rem;">
+        <summary style="cursor:pointer; padding:0.5rem; font-size:0.85rem; color:hsl(var(--muted-foreground));">
+            <i class="bi bi-stars"></i> {{ _('Create Report') }}
+        </summary>
+        <div style="padding:0.75rem; border:1px solid hsl(var(--border)); border-radius:var(--radius); margin-top:0.5rem;">
+            <p style="font-size:0.8rem; color:hsl(var(--muted-foreground)); margin-bottom:0.75rem;">
+                {{ _('Generate an LLM analysis report from Gold tables for the selected application.') }}
+            </p>
+            <div style="margin-bottom:0.75rem;">
+                <label class="form-label small text-muted">{{ _('App ID') }} ({{ _('Report Target Spark Application') }})</label>
+                <select class="form-control" id="reportAppId">
+                </select>
+            </div>
+            <details style="margin-top:0.75rem;">
+                <summary style="cursor:pointer; font-size:0.8rem; color:hsl(var(--muted-foreground));">
+                    {{ _('Experiment & Variant') }} (Optional)
+                </summary>
+                <div style="margin-top:0.5rem;">
+                    <p style="font-size:0.8rem; color:hsl(var(--muted-foreground)); margin-bottom:0.75rem;">
+                        {{ _('Tag this analysis for comparison. The same experiment_id groups related analyses together.') }}
+                    </p>
+                    <div style="display:grid; grid-template-columns:1fr 1fr; gap:0.75rem;">
+                        <div><label class="form-label small text-muted">{{ _('Experiment ID') }}</label><input type="text" class="form-control" id="sparkExperimentId" placeholder="e.g., shuffle_tuning_001"></div>
+                        <div><label class="form-label small text-muted">{{ _('Variant') }}</label><input type="text" class="form-control" id="sparkVariant" placeholder="e.g., baseline, optimized"></div>
+                    </div>
+                    <p style="font-size:0.75rem; color:hsl(var(--muted-foreground)); margin-top:0.5rem;">
+                        <i class="bi bi-info-circle"></i> {{ _('Variant "baseline" is automatically used as the comparison reference.') }}
+                    </p>
+                </div>
+            </details>
+            <div style="display:flex; gap:0.5rem; align-items:center; flex-wrap:wrap; margin-top:0.75rem;">
+                <button type="button" class="btn btn-sm" onclick="triggerSummary()"
+                    style="background:hsl(142 76% 36%); color:white; border:none;"
+                    id="summaryRunBtn">
+                    <i class="bi bi-stars"></i> {{ _('Create Report') }}
+                </button>
+                <select id="sparkPerfModel" style="font-size:0.75rem; padding:0.3rem 0.5rem; border-radius:var(--radius); border:1px solid hsl(var(--border)); background:hsl(var(--background)); color:hsl(var(--foreground));">
+                    {% for model in available_models %}
+                    <option value="{{ model.name }}" {% if 'sonnet-4-6' in model.name %}selected{% endif %}>{{ model.display_name }}</option>
+                    {% endfor %}
+                </select>
+                <!-- Language follows UI lang toggle (EN/JA in navbar) -->
+                <span id="summaryStatus" class="small" style="display:none;"></span>
+            </div>
+            <!-- Summary Progress -->
+            <div id="summaryProgress" style="display:none; margin-top:0.75rem; padding:0.5rem 0.75rem; border-radius:var(--radius); border:1px solid hsl(var(--border)); font-size:0.8rem;">
+                <div style="display:flex; justify-content:space-between; align-items:center;">
+                    <span>
+                        <i class="bi bi-hourglass-split" id="summaryIcon"></i>
+                        <span id="summaryStateText">PENDING</span>
+                        <span id="summaryElapsed" style="color:hsl(var(--muted-foreground)); margin-left:0.5rem; font-size:0.75rem;"></span>
+                    </span>
+                    <a id="summaryRunLink" href="#" target="_blank" style="color:hsl(var(--primary)); font-size:0.75rem; display:none;">
+                        {{ _('View in Databricks') }} <i class="bi bi-box-arrow-up-right"></i>
+                    </a>
+                </div>
+                <div id="summaryAppId" style="color:hsl(var(--muted-foreground)); margin-top:0.25rem; font-size:0.7rem; font-family:monospace; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;"></div>
+                <div id="summaryMessage" style="color:hsl(var(--muted-foreground)); margin-top:0.25rem;"></div>
+            </div>
+        </div>
+    </details>
+
+    <!-- App selector (table style) -->
+    <div style="margin-bottom:1rem;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.5rem;">
+            <label class="form-label small text-muted" style="margin:0;">{{ _('Spark Application List') }}</label>
+            <button class="btn btn-sm" onclick="loadApps()" style="background:hsl(var(--secondary)); color:hsl(var(--secondary-foreground)); border:1px solid hsl(var(--border));">
+                <i class="bi bi-arrow-clockwise"></i> {{ _('Refresh') }}
+            </button>
+        </div>
+        <!-- Delete bar -->
+        <div id="appDeleteBar" style="display:none; margin-bottom:0.5rem; display:flex; gap:0.75rem; align-items:center;">
+            <button onclick="deleteSelectedApps()" id="appDeleteBtn" disabled
+                class="btn btn-sm" style="background:hsl(var(--destructive)); color:white; border:none;">
+                <i class="bi bi-trash"></i> {{ _('Delete Selected') }} (<span id="appDeleteCount">0</span>)
+            </button>
+            <label style="font-size:0.8rem; cursor:pointer; display:flex; align-items:center; gap:0.3rem;">
+                <input type="checkbox" id="appSelectAll" onchange="toggleAppSelectAll()"> {{ _('Select All') }}
+            </label>
+            <span id="appDeleteStatus" class="small" style="display:none;"></span>
+        </div>
+
+        <div id="appListSection" style="display:none;">
+            <div style="overflow-x:auto; max-height:300px; border:1px solid hsl(var(--border)); border-radius:var(--radius); margin-bottom:0.5rem;">
+                <table id="spark-apps-table" style="width:100%; border-collapse:collapse; font-size:0.8rem;">
+                    <thead>
+                        <tr style="border-bottom:2px solid hsl(var(--border)); position:sticky; top:0; background:hsl(var(--background));">
+                            <th style="padding:0.5rem; text-align:center; width:40px;"><input type="checkbox" id="appSelectAllHeader" onchange="toggleAppSelectAll()"></th>
+                            <th data-sort="app_id" onclick="sortSparkApps('app_id')" style="padding:0.5rem; text-align:left; cursor:pointer;">{{ _('App ID') }}<span class="sort-ind"></span></th>
+                            <th data-sort="cluster_id" onclick="sortSparkApps('cluster_id')" style="padding:0.5rem; text-align:left; cursor:pointer;">{{ _('Cluster ID') }}<span class="sort-ind"></span></th>
+                            <th data-sort="app_name" onclick="sortSparkApps('app_name')" style="padding:0.5rem; text-align:left; cursor:pointer;">{{ _('Name') }}<span class="sort-ind"></span></th>
+                            <th data-sort="start_ts" onclick="sortSparkApps('start_ts')" style="padding:0.5rem; text-align:left; cursor:pointer;">{{ _('Started') }}<span class="sort-ind"></span></th>
+                            <th data-sort="duration_min" onclick="sortSparkApps('duration_min')" style="padding:0.5rem; text-align:right; cursor:pointer;">{{ _('Duration') }}<span class="sort-ind"></span></th>
+                            <th data-sort="total_jobs" onclick="sortSparkApps('total_jobs')" style="padding:0.5rem; text-align:right; cursor:pointer;">{{ _('Jobs') }}<span class="sort-ind"></span></th>
+                            <th data-sort="experiment_id" onclick="sortSparkApps('experiment_id')" style="padding:0.5rem; text-align:left; cursor:pointer;">{{ _('Experiment') }}<span class="sort-ind"></span></th>
+                            <th data-sort="variant" onclick="sortSparkApps('variant')" style="padding:0.5rem; text-align:left; cursor:pointer;">{{ _('Variant') }}<span class="sort-ind"></span></th>
+                            <th data-sort="output_lang" onclick="sortSparkApps('output_lang')" style="padding:0.5rem; text-align:center; cursor:pointer;">{{ _('Lang') }}<span class="sort-ind"></span></th>
+                            <th data-sort="etl_loaded_at" onclick="sortSparkApps('etl_loaded_at')" style="padding:0.5rem; text-align:left; cursor:pointer;">{{ _('ETL Run Time') }}<span class="sort-ind"></span></th>
+                            <th data-sort="report_created_at" onclick="sortSparkApps('report_created_at')" style="padding:0.5rem; text-align:left; cursor:pointer;">{{ _('Report Date') }}<span class="sort-ind"></span></th>
+                            <th data-sort="report_status" onclick="sortSparkApps('report_status')" style="padding:0.5rem; text-align:center; cursor:pointer;">{{ _('Status') }}<span class="sort-ind"></span></th>
+                            <th style="padding:0.5rem; text-align:center; width:4rem;"></th>
+                        </tr>
+                    </thead>
+                    <tbody id="appListBody"></tbody>
+                </table>
+            </div>
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-top:0.5rem;">
+                <div id="appListInfo" style="font-size:0.8rem; color:hsl(var(--muted-foreground));"></div>
+                <div id="appPagination" style="display:none; font-size:0.8rem; display:flex; gap:0.5rem; align-items:center;">
+                    <button class="btn btn-sm" id="appPrevBtn" onclick="loadApps(_appPage - 1)" style="background:hsl(var(--secondary)); color:hsl(var(--secondary-foreground)); border:1px solid hsl(var(--border)); padding:0.2rem 0.5rem;">
+                        ← {{ _('Prev') }}
+                    </button>
+                    <span id="appPageInfo" style="color:hsl(var(--muted-foreground));"></span>
+                    <button class="btn btn-sm" id="appNextBtn" onclick="loadApps(_appPage + 1)" style="background:hsl(var(--secondary)); color:hsl(var(--secondary-foreground)); border:1px solid hsl(var(--border)); padding:0.2rem 0.5rem;">
+                        {{ _('Next') }} →
+                    </button>
+                </div>
+            </div>
+        </div>
+        <div id="appListEmpty" style="display:none; text-align:center; padding:1rem; color:hsl(var(--muted-foreground)); font-size:0.85rem;">
+            {{ _('No applications found.') }}
+        </div>
+        <!-- Hidden select for backward compat -->
+        <select id="appSel" style="display:none;"></select>
+    </div>
+
+    <div id="spErr" style="display:none; padding:0.75rem; border-radius:var(--radius); background:hsl(var(--destructive)/0.1); color:hsl(var(--destructive)); margin-bottom:1rem;"></div>
+    <div id="spLoading" style="display:none; text-align:center; padding:2rem; color:hsl(var(--muted-foreground));">
+        <i class="bi bi-hourglass-split"></i> {{ _('Loading report...') }}
+    </div>
+
+    <!-- Report content (Markdown rendered) -->
+    <div id="reportContent" class="markdown-content spark-perf-report" style="display:none;"></div>
+
+    <!-- F. Streaming Analysis is included in the saved report Markdown (built by spark_perf_markdown.py) -->
+
+    <!-- Genie Chat Toggle -->
+    <button id="chatToggle" onclick="toggleChat()" style="position:fixed; bottom:1.5rem; right:1.5rem; z-index:999; background:hsl(var(--primary)); color:hsl(var(--primary-foreground)); border:none; border-radius:50%; width:3rem; height:3rem; font-size:1.2rem; cursor:pointer; box-shadow:0 2px 8px rgba(0,0,0,0.2); display:none;" title="Ask Genie">
+        <i class="bi bi-chat-dots"></i>
+    </button>
+
+    <!-- Genie Chat Panel -->
+    <div id="chatPanel" style="display:none; position:fixed; right:0; top:0; bottom:0; width:560px; background:hsl(var(--background)); border-left:2px solid hsl(var(--border)); z-index:1001; flex-direction:column; box-shadow:-4px 0 16px rgba(0,0,0,0.1);">
+        <!-- Header -->
+        <div style="padding:0.75rem 1rem; border-bottom:1px solid hsl(var(--border)); display:flex; justify-content:space-between; align-items:center; background:hsl(var(--muted)/0.3);">
+            <span style="font-weight:600; font-size:0.9rem;"><i class="bi bi-stars"></i> {{ _('Genie — Spark Analysis') }}</span>
+            <div style="display:flex; gap:0.5rem; align-items:center;">
+                <button onclick="clearChat()" style="background:none; border:none; cursor:pointer; color:hsl(var(--muted-foreground)); font-size:0.8rem;" title="{{ _('New Conversation') }}">
+                    <i class="bi bi-arrow-counterclockwise"></i>
+                </button>
+                <button onclick="toggleChat()" style="background:none; border:none; cursor:pointer; color:hsl(var(--muted-foreground)); font-size:1rem;">
+                    <i class="bi bi-x-lg"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- Messages -->
+        <div id="chatMessages" style="flex:1; overflow-y:auto; padding:0.75rem;">
+            <div style="text-align:center; color:hsl(var(--muted-foreground)); font-size:0.8rem; padding:2rem 1rem;">
+                <i class="bi bi-stars" style="font-size:2rem; display:block; margin-bottom:0.5rem;"></i>
+                {{ _("Ask questions about this Spark application's performance data.") }}
+                <br><br>
+                <span style="font-size:0.75rem;">{{ _('Examples:') }}<br>
+                "What are the top bottlenecks?"<br>
+                "Show stage execution times"<br>
+                "Which executors have high GC?"</span>
+            </div>
+        </div>
+
+        <!-- Input -->
+        <div style="padding:0.75rem; border-top:1px solid hsl(var(--border));">
+            <div style="display:flex; gap:0.5rem;">
+                <input type="text" id="chatInput" class="form-control" placeholder="{{ _('Ask about this application...') }}" style="font-size:0.85rem;"
+                    onkeydown="if(event.key==='Enter'&&!event.shiftKey&&!event.isComposing){event.preventDefault();sendChat();}">
+                <button id="chatSendBtn" onclick="sendChat()" class="btn btn-sm" style="background:hsl(var(--primary)); color:hsl(var(--primary-foreground)); border:none; padding:0.4rem 0.75rem;">
+                    <i class="bi bi-send"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// i18n strings for JavaScript
+const _i18n = {
+    saving: {{ _('Saving...') | tojson }},
+    saved: {{ _('Saved!') | tojson }},
+    saveFailed: {{ _('Save failed') | tojson }},
+    resetting: {{ _('Resetting...') | tojson }},
+    reset: {{ _('Reset!') | tojson }},
+    failed: {{ _('Failed') | tojson }},
+    error: {{ _('Error') | tojson }},
+    loadFailed: {{ _('Load failed') | tojson }},
+    starting: {{ _('Starting...') | tojson }},
+    startingReport: {{ _('Starting report generation...') | tojson }},
+    thinking: {{ _('Thinking...') | tojson }},
+    noAppsFound: {{ _('No applications found.') | tojson }},
+    loadingReport: {{ _('Loading report...') | tojson }},
+    reportTimedOut: {{ _('Report loading timed out') | tojson }},
+    reportFailed: {{ _('Report failed') | tojson }},
+    clusterLogRequired: {{ _('Cluster Log Destination is required') | tojson }},
+    invalidPath: {{ _('Invalid path. Expected format: /Volumes/.../cluster_logs/<cluster_id>') | tojson }},
+    noResponse: {{ _('(No response)') | tojson }},
+    timedOut: {{ _('Timed out waiting for response.') | tojson }},
+    queryFailed: {{ _('Query failed') | tojson }},
+    genieInitFailed: {{ _('Failed to initialize Genie') | tojson }},
+    genieConnFailed: {{ _('Genie connection failed') | tojson }},
+    askQuestions: {{ _("Ask questions about this Spark application's performance data.") | tojson }},
+    applications: {{ _('applications') | tojson }},
+    page: {{ _('Page') | tojson }},
+    showing: {{ _('Showing') | tojson }},
+    of: {{ _('of') | tojson }},
+    rows: {{ _('rows') | tojson }},
+};
+
+// Settings
+async function loadSp() {
+    try {
+        const r = await fetch('/api/v1/spark-perf/settings');
+        const d = await r.json();
+        document.getElementById('spCatalog').value = d.catalog || '';
+        document.getElementById('spSchema').value = d.schema || '';
+        document.getElementById('spPrefix').value = d.table_prefix || '';
+        document.getElementById('spHttpPath').value = d.http_path || '';
+        document.getElementById('spEtlJobId').value = d.etl_job_id || '';
+        document.getElementById('spSummaryJobId').value = d.summary_job_id || '';
+    } catch(e) {}
+}
+
+async function saveSp() {
+    const s = document.getElementById('spSt');
+    s.style.display = 'inline';
+    s.textContent = _i18n.saving;
+    try {
+        const r = await fetch('/api/v1/spark-perf/settings', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({
+                catalog: document.getElementById('spCatalog').value,
+                schema: document.getElementById('spSchema').value,
+                table_prefix: document.getElementById('spPrefix').value,
+                http_path: document.getElementById('spHttpPath').value,
+                etl_job_id: document.getElementById('spEtlJobId').value,
+                summary_job_id: document.getElementById('spSummaryJobId').value,
+            })
+        });
+        if (r.ok) {
+            s.textContent = _i18n.saved;
+            s.style.color = '';
+        } else {
+            const err = await r.json().catch(() => ({}));
+            s.textContent = err.description || err.error || _i18n.saveFailed;
+            s.style.color = 'hsl(var(--destructive))';
+        }
+    } catch(e) { s.textContent = _i18n.error; s.style.color = 'hsl(var(--destructive))'; }
+    setTimeout(() => { s.style.display = 'none'; s.style.color = ''; }, 5000);
+}
+
+async function resetSp() {
+    const s = document.getElementById('spSt');
+    s.style.display = 'inline';
+    s.textContent = _i18n.resetting;
+    s.style.color = 'hsl(var(--muted-foreground))';
+    try {
+        const r = await fetch('/api/v1/spark-perf/settings/reset', { method: 'POST' });
+        const data = await r.json();
+        if (r.ok) {
+            document.getElementById('spCatalog').value = data.settings.catalog || '';
+            document.getElementById('spSchema').value = data.settings.schema || '';
+            document.getElementById('spPrefix').value = data.settings.table_prefix || '';
+            document.getElementById('spHttpPath').value = data.settings.http_path || '';
+            document.getElementById('spEtlJobId').value = data.settings.etl_job_id || '';
+            document.getElementById('spSummaryJobId').value = data.settings.summary_job_id || '';
+            s.textContent = _i18n.reset;
+            s.style.color = 'hsl(var(--success))';
+            loadApps(1);
+        } else {
+            s.textContent = _i18n.failed;
+            s.style.color = 'hsl(var(--destructive))';
+        }
+    } catch(e) { s.textContent = _i18n.error; s.style.color = 'hsl(var(--destructive))'; }
+    setTimeout(() => { s.style.display = 'none'; s.style.color = ''; }, 3000);
+}
+
+let _selectedAppId = null;
+let _appPage = 1;
+let _appPageData = [];
+
+function _renderStatus(status) {
+    if (status === 'CURRENT') return '<span style="color:hsl(var(--success)); font-weight:600;">CURRENT</span>';
+    if (status === 'STALE') return '<span style="color:hsl(40 100% 50%); font-weight:600;">STALE</span>';
+    return '<span style="color:hsl(var(--muted-foreground));">NO_REPORT</span>';
+}
+
+function renderAppList() {
+    const tbody = document.getElementById('appListBody');
+    tbody.innerHTML = '';
+    _appPageData.forEach(x => {
+        const tr = document.createElement('tr');
+        const isSelected = x.app_id === _selectedAppId;
+        tr.style.borderBottom = '1px solid hsl(var(--border))';
+        tr.style.cursor = 'pointer';
+        if (isSelected) tr.style.background = 'hsl(var(--primary) / 0.08)';
+        tr.onmouseover = function() { if (!isSelected) this.style.background = 'hsl(var(--muted) / 0.3)'; };
+        tr.onmouseout = function() { if (!isSelected) this.style.background = ''; };
+        tr.onclick = function() { selectApp(x.app_id); };
+
+        const dur = x.duration_min ? x.duration_min.toFixed(1) + ' min' : '-';
+        const started = x.start_ts || '-';
+        tr.innerHTML = `
+            <td style="padding:0.4rem; text-align:center;" onclick="event.stopPropagation();"><input type="checkbox" class="app-row-check" data-id="${esc(x.app_id)}" onchange="updateAppDeleteCount()"></td>
+            <td style="padding:0.4rem; font-family:'JetBrains Mono',monospace; font-size:0.7rem;">${esc(x.app_id)}</td>
+            <td style="padding:0.4rem; font-family:'JetBrains Mono',monospace; font-size:0.7rem;">${esc(x.cluster_id) || '-'}</td>
+            <td style="padding:0.4rem;">${esc(x.app_name) || '-'}</td>
+            <td style="padding:0.4rem; font-size:0.75rem;">${fmtGMT(started)}</td>
+            <td style="padding:0.4rem; text-align:right;">${dur}</td>
+            <td style="padding:0.4rem; text-align:right;">${x.total_jobs || 0}${x.has_streaming_queries ? ' <span title="Streaming" style="color:hsl(var(--primary)); font-weight:bold; font-size:0.7rem;">S</span>' : ''}</td>
+            <td style="padding:0.4rem; font-size:0.75rem; cursor:pointer;" class="editable-cell" onclick="event.stopPropagation(); editAppCell(this,'experiment_id','${esc(x.app_id)}')" title="{{ _('Click to edit') }}">${esc(x.experiment_id) || '-'}</td>
+            <td style="padding:0.4rem; font-size:0.75rem; cursor:pointer;" class="editable-cell" onclick="event.stopPropagation(); editAppCell(this,'variant','${esc(x.app_id)}')" title="{{ _('Click to edit') }}">${esc(x.variant) || '-'}</td>
+            <td style="padding:0.4rem; text-align:center;">${x.output_lang ? '<span style="display:inline-block; padding:0.1rem 0.4rem; border-radius:0.25rem; font-size:0.65rem; font-weight:600; background:hsl(var(--primary)/0.1); color:hsl(var(--primary));">' + x.output_lang.toUpperCase() + '</span>' : '-'}</td>
+            <td style="padding:0.4rem; font-size:0.7rem;">${x.etl_loaded_at ? fmtGMT(x.etl_loaded_at) : '-'}</td>
+            <td style="padding:0.4rem; font-size:0.7rem;">${x.report_created_at ? fmtGMT(x.report_created_at) : '-'}</td>
+            <td style="padding:0.4rem; text-align:center; font-size:0.75rem;">${_renderStatus(x.report_status)}</td>
+            <td style="padding:0.4rem; text-align:center; white-space:nowrap;">${x.report_status === 'completed' ? '<a href="/spark-perf/report/' + esc(x.app_id) + '" style="color:hsl(var(--primary)); text-decoration:none;" title="{{ _('View Report') }}" onclick="event.stopPropagation();"><i class="bi bi-file-text"></i></a> <a href="/api/v1/spark-perf/narrative/' + esc(x.app_id) + '/download" style="color:hsl(var(--primary)); text-decoration:none; margin-left:0.3rem;" title="{{ _('Download Markdown') }}" onclick="event.stopPropagation();"><i class="bi bi-download"></i></a>' : ''}</td>
+        `;
+        tbody.appendChild(tr);
+    });
+}
+
+function sortSparkApps(key) { sortTableData('spark-apps-table', key, _appPageData, renderAppList); }
+
+// Inline edit for experiment/variant in app list
+function editAppCell(td, field, appId) {
+    if (td.querySelector('input')) return;
+    const current = td.textContent.trim();
+    const val = current === '-' ? '' : current;
+    const input = document.createElement('input');
+    input.type = 'text';
+    input.value = val;
+    input.style.cssText = 'width:100%; font-size:0.8rem; padding:0.2rem; border:1px solid hsl(var(--primary)); border-radius:3px; background:hsl(var(--background)); color:hsl(var(--foreground));';
+    input.onkeydown = async (e) => {
+        if (e.key === 'Enter') { e.preventDefault(); await saveAppCell(td, field, appId, input.value.trim()); }
+        else if (e.key === 'Escape') { td.textContent = current; }
+    };
+    input.onblur = async () => {
+        if (input.value.trim() !== val) await saveAppCell(td, field, appId, input.value.trim());
+        else td.textContent = current;
+    };
+    td.textContent = '';
+    td.appendChild(input);
+    input.focus();
+    input.select();
+}
+
+async function saveAppCell(td, field, appId, newVal) {
+    try {
+        const r = await fetch('/api/v1/spark-perf/narratives/update', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({ app_id: appId, [field]: newVal }),
+        });
+        const data = await r.json();
+        if (data.ok) {
+            td.textContent = newVal || '-';
+            td.style.background = 'hsl(var(--success)/0.1)';
+            setTimeout(() => { td.style.background = ''; }, 1500);
+            const item = _appPageData.find(x => x.app_id === appId);
+            if (item) item[field] = newVal || null;
+        } else {
+            td.textContent = newVal || '-';
+            td.style.background = 'hsl(var(--destructive)/0.1)';
+            setTimeout(() => { td.style.background = ''; }, 2000);
+        }
+    } catch(e) {
+        td.textContent = newVal || '-';
+        td.style.background = 'hsl(var(--destructive)/0.1)';
+        setTimeout(() => { td.style.background = ''; }, 2000);
+    }
+}
+
+async function loadApps(page) {
+    _appPage = page || 1;
+    const section = document.getElementById('appListSection');
+    const empty = document.getElementById('appListEmpty');
+    const info = document.getElementById('appListInfo');
+    const pagination = document.getElementById('appPagination');
+    section.style.display = 'none';
+    empty.style.display = 'none';
+    pagination.style.display = 'none';
+
+    try {
+        const r = await fetch('/api/v1/spark-perf/applications?page=' + _appPage + '&page_size=20');
+        const data = await r.json();
+        if (data.error) {
+            document.getElementById('spErr').textContent = data.error;
+            document.getElementById('spErr').style.display = 'block';
+            return;
+        }
+        const a = data.items || [];
+        if (a.length === 0 && _appPage === 1) {
+            empty.style.display = 'block';
+            return;
+        }
+
+        _appPageData = a;
+        renderAppList();
+
+        section.style.display = 'block';
+        document.getElementById('appDeleteBar').style.display = 'flex';
+        const start = (data.page - 1) * data.page_size + 1;
+        const end = start + a.length - 1;
+        info.textContent = start + '-' + end + ' ' + _i18n.of + ' ' + data.total + ' ' + _i18n.applications;
+
+        // Pagination controls
+        if (data.total_pages > 1) {
+            pagination.style.display = 'flex';
+            document.getElementById('appPrevBtn').disabled = (_appPage <= 1);
+            document.getElementById('appNextBtn').disabled = (_appPage >= data.total_pages);
+            document.getElementById('appPageInfo').textContent = _i18n.page + ' ' + data.page + ' / ' + data.total_pages;
+        }
+
+        // Update hidden select for backward compat
+        const sel = document.getElementById('appSel');
+        sel.innerHTML = '';
+        a.forEach(x => {
+            const o = document.createElement('option');
+            o.value = x.app_id;
+            sel.appendChild(o);
+        });
+
+        // Update App ID dropdown for Create Report (no ALL option)
+        const reportAppSel = document.getElementById('reportAppId');
+        reportAppSel.innerHTML = '';
+        a.forEach(x => {
+            const o = document.createElement('option');
+            o.value = x.app_id;
+            const dur = x.duration_min ? x.duration_min.toFixed(1) + ' min' : '';
+            const cid = x.cluster_id ? ' [' + x.cluster_id + ']' : '';
+            o.textContent = x.app_id + cid + ' (' + (x.app_name || '') + (dur ? ', ' + dur : '') + (x.variant ? ' [' + x.variant + ']' : '') + ')';
+            reportAppSel.appendChild(o);
+        });
+    } catch(e) {
+        document.getElementById('spErr').textContent = _i18n.loadFailed + ': ' + e.message;
+        document.getElementById('spErr').style.display = 'block';
+    }
+}
+
+function esc(s) { if (!s) return ''; const d = document.createElement('div'); d.textContent = String(s); return d.innerHTML; }
+
+function selectApp(appId) {
+    _selectedAppId = appId;
+    document.getElementById('appSel').value = appId;
+    document.getElementById('chatToggle').style.display = 'block';
+    const reportSel = document.getElementById('reportAppId');
+    if (reportSel && reportSel.querySelector('option[value="' + appId + '"]')) {
+        reportSel.value = appId;
+    }
+    // Highlight selected row
+    document.querySelectorAll('#appListBody tr').forEach(tr => {
+        tr.style.background = '';
+    });
+    event.currentTarget.closest('tr').style.background = 'hsl(var(--primary) / 0.08)';
+    loadReport();
+}
+
+async function loadReport() {
+    const appId = document.getElementById('appSel').value;
+    if (!appId) return;
+
+    const content = document.getElementById('reportContent');
+    const loading = document.getElementById('spLoading');
+    const err = document.getElementById('spErr');
+
+    content.style.display = 'none';
+    err.style.display = 'none';
+    loading.style.display = 'block';
+
+    try {
+        const _model = document.getElementById('sparkPerfModel').value;
+        const _lang = document.documentElement.lang || '{{ current_lang }}';
+        const _ctrl = new AbortController();
+        const _timer = setTimeout(() => _ctrl.abort(), 600000);  // 10 min timeout (matches LLM timeout)
+        const r = await fetch('/api/v1/spark-perf/report?app_id=' + encodeURIComponent(appId) + '&lang=' + _lang + '&model=' + encodeURIComponent(_model), { signal: _ctrl.signal });
+        clearTimeout(_timer);
+        const data = await r.json();
+        loading.style.display = 'none';
+
+        if (data.error) {
+            err.textContent = data.error;
+            err.style.display = 'block';
+            return;
+        }
+
+        // Render Markdown
+        content.innerHTML = DOMPurify.sanitize(marked.parse(data.report));
+        content.style.display = 'block';
+        renderMermaidBlocks(content, 'mermaid-sp');
+
+        // Post-process: convert key-value bullet lists into tables
+        _enhanceReport(content);
+
+        // SQL syntax highlighting
+        if (window.hljs) {
+            content.querySelectorAll('pre code').forEach(block => {
+                const text = block.textContent || '';
+                if (/\b(SELECT|INSERT|UPDATE|DELETE|CREATE|ALTER|SET|FROM|WHERE|JOIN)\b/i.test(text)) {
+                    if (!block.classList.contains('language-sql')) block.classList.add('language-sql');
+                    hljs.highlightElement(block);
+                }
+            });
+        }
+
+    } catch(e) {
+        loading.style.display = 'none';
+        const msg = e.name === 'AbortError' ? _i18n.reportTimedOut : _i18n.reportFailed + ': ' + e.message;
+        err.textContent = msg;
+        err.style.display = 'block';
+    }
+}
+
+// --- ETL Pipeline & Summary ---
+let _etlPollTimer = null;
+
+async function triggerETL() {
+    const dest = document.getElementById('etlDestination').value.trim().replace(/\/+$/, '');
+    if (!dest) {
+        alert(_i18n.clusterLogRequired);
+        return;
+    }
+    // Split destination: last segment is cluster_id, rest is log_root
+    const lastSlash = dest.lastIndexOf('/');
+    if (lastSlash <= 0) {
+        alert(_i18n.invalidPath);
+        return;
+    }
+    const logRoot = dest.substring(0, lastSlash);
+    const clusterId = dest.substring(lastSlash + 1);
+
+    const btn = document.getElementById('etlRunBtn');
+    const status = document.getElementById('etlStatus');
+    btn.disabled = true;
+    status.style.display = 'inline';
+    status.textContent = _i18n.starting;
+    status.style.color = 'hsl(var(--muted-foreground))';
+
+    try {
+        const r = await fetch('/api/v1/spark-perf/etl-runs', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({log_root: logRoot, cluster_id: clusterId}),
+        });
+        const data = await r.json();
+        if (data.error) {
+            status.textContent = data.error;
+            status.style.color = 'hsl(var(--destructive))';
+            btn.disabled = false;
+            return;
+        }
+        status.style.display = 'none';
+        showETLProgress(data.run_id, data.run_page_url, 'PENDING');
+        pollETL(data.run_id);
+    } catch(e) {
+        status.textContent = _i18n.failed + ': ' + e.message;
+        status.style.color = 'hsl(var(--destructive))';
+        btn.disabled = false;
+    }
+}
+
+function showETLProgress(runId, runPageUrl, state, message) {
+    const panel = document.getElementById('etlProgress');
+    panel.style.display = 'block';
+
+    const stateText = document.getElementById('etlStateText');
+    const icon = document.getElementById('etlIcon');
+    const msg = document.getElementById('etlMessage');
+    const link = document.getElementById('etlRunLink');
+
+    stateText.textContent = state;
+    msg.textContent = message || '';
+
+    if (state === 'TERMINATED') {
+        icon.className = 'bi bi-check-circle-fill';
+        panel.style.borderColor = 'hsl(var(--success))';
+    } else if (state === 'INTERNAL_ERROR' || state === 'SKIPPED') {
+        icon.className = 'bi bi-x-circle-fill';
+        panel.style.borderColor = 'hsl(var(--destructive))';
+    } else {
+        icon.className = 'bi bi-hourglass-split';
+        panel.style.borderColor = 'hsl(var(--border))';
+    }
+
+    if (runPageUrl) {
+        link.href = runPageUrl;
+        link.style.display = 'inline';
+    }
+
+    // Persist to localStorage
+    localStorage.setItem('sp_etl_status', JSON.stringify({state, message: message||'', runPageUrl: runPageUrl||'', runId}));
+}
+
+async function pollETL(runId) {
+    if (_etlPollTimer) clearInterval(_etlPollTimer);
+    let _etlErrorCount = 0;
+    _etlPollTimer = setInterval(async () => {
+        try {
+            const r = await fetch('/api/v1/spark-perf/etl-runs/' + runId + '/status');
+            if (!r.ok) { _etlErrorCount++; } else { _etlErrorCount = 0; }
+            if (_etlErrorCount >= 5) {
+                clearInterval(_etlPollTimer); _etlPollTimer = null;
+                document.getElementById('etlRunBtn').disabled = false;
+                return;
+            }
+            const data = await r.json();
+            showETLProgress(runId, data.run_page_url, data.state, data.state_message);
+
+            if (data.state === 'TERMINATED' || data.state === 'INTERNAL_ERROR' || data.state === 'SKIPPED') {
+                clearInterval(_etlPollTimer);
+                _etlPollTimer = null;
+                document.getElementById('etlRunBtn').disabled = false;
+
+                if (data.result_state === 'SUCCESS') {
+                    document.getElementById('etlStateText').textContent = 'SUCCESS';
+                    loadApps();
+                } else {
+                    document.getElementById('etlStateText').textContent = data.result_state || data.state;
+                }
+            }
+        } catch(e) {
+            _etlErrorCount++;
+            if (_etlErrorCount >= 5) {
+                clearInterval(_etlPollTimer); _etlPollTimer = null;
+                document.getElementById('etlRunBtn').disabled = false;
+            }
+        }
+    }, 5000);
+}
+
+async function triggerSummary() {
+    const btn = document.getElementById('summaryRunBtn');
+    const status = document.getElementById('summaryStatus');
+    btn.disabled = true;
+    status.style.display = 'inline';
+    status.textContent = _i18n.startingReport;
+    status.style.color = 'hsl(var(--muted-foreground))';
+
+    try {
+        const r = await fetch('/api/v1/spark-perf/summary-runs', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({
+                app_id: document.getElementById('reportAppId').value.trim(),
+                model_endpoint: document.getElementById('sparkPerfModel').value,
+                output_language: document.documentElement.lang || '{{ current_lang }}',
+                experiment_id: document.getElementById('sparkExperimentId').value.trim(),
+                variant: document.getElementById('sparkVariant').value.trim(),
+            }),
+        });
+        const data = await r.json();
+        if (data.error) {
+            status.textContent = data.error;
+            status.style.color = 'hsl(var(--destructive))';
+            btn.disabled = false;
+            return;
+        }
+        status.style.display = 'none';
+        var _appId = document.getElementById('reportAppId').value.trim();
+        _showSummaryProgress(data.report_id, '', 'PENDING', 'Queued...', 0, _appId, 0, 'queued');
+        _pollSummary(data.report_id);
+    } catch(e) {
+        status.textContent = _i18n.failed + ': ' + e.message;
+        status.style.color = 'hsl(var(--destructive))';
+        btn.disabled = false;
+    }
+}
+
+var _currentStage = '';
+var _currentPromptTokens = null;
+function _showSummaryProgress(reportId, runPageUrl, state, msg, elapsedSec, appId, stageElapsedSec, stage, promptTokens) {
+    _currentPromptTokens = promptTokens;
+    _currentStage = stage || '';
+    const prog = document.getElementById('summaryProgress');
+    prog.style.display = 'block';
+    document.getElementById('summaryStateText').textContent = msg || state;
+    if (msg) document.getElementById('summaryMessage').textContent = '';
+    const link = document.getElementById('summaryRunLink');
+    if (runPageUrl) { link.href = runPageUrl; link.style.display = 'inline'; }
+    else { link.style.display = 'none'; }
+    const icon = document.getElementById('summaryIcon');
+    if (state === 'COMPLETED') icon.className = 'bi bi-check-circle-fill';
+    else if (state === 'FAILED') icon.className = 'bi bi-x-circle-fill';
+    else icon.className = 'bi bi-hourglass-split';
+
+    // Elapsed time display: total + per-stage for LLM calls
+    const elapsedEl = document.getElementById('summaryElapsed');
+    if (state === 'COMPLETED' && elapsedSec != null) {
+        elapsedEl.textContent = '(total: ' + elapsedSec + 's)';
+    } else if (elapsedSec != null) {
+        var stageTime = (typeof stageElapsedSec === 'number') ? stageElapsedSec : 0;
+        var isLlmCall = (typeof _currentStage === 'string' && _currentStage.startsWith('llm_call'));
+        if (isLlmCall && stageTime > 0) {
+            var tokenInfo = _currentPromptTokens ? 'tokens: ~' + _currentPromptTokens.toLocaleString() + ' | ' : '';
+            elapsedEl.textContent = '(' + tokenInfo + 'step: ' + stageTime + 's / 600s | total: ' + elapsedSec + 's)';
+        } else {
+            elapsedEl.textContent = '(total: ' + elapsedSec + 's)';
+        }
+    } else {
+        elapsedEl.textContent = '';
+    }
+
+    // App ID display
+    var appIdEl = document.getElementById('summaryAppId');
+    if (appId) {
+        appIdEl.textContent = 'App: ' + appId;
+        appIdEl.title = appId;
+    }
+
+    // Persist to localStorage
+    localStorage.setItem('sp_summary_status', JSON.stringify({state, message: msg||'', reportId, appId: appId||''}));
+}
+
+let _summaryPollTimer = null;
+function _pollSummary(reportId) {
+    if (_summaryPollTimer) clearInterval(_summaryPollTimer);
+    let _sumErrorCount = 0;
+    _summaryPollTimer = setInterval(async () => {
+        try {
+            const r = await fetch('/api/v1/spark-perf/summary-runs/' + reportId + '/status');
+            if (r.status === 404) {
+                // Report ID not found (server restarted during generation)
+                clearInterval(_summaryPollTimer); _summaryPollTimer = null;
+                document.getElementById('summaryRunBtn').disabled = false;
+                _showSummaryProgress(reportId, '', 'FAILED', 'Report lost (server restarted). Please retry.', null, null);
+                localStorage.removeItem('sp_summary_status');
+                return;
+            }
+            if (!r.ok) { _sumErrorCount++; } else { _sumErrorCount = 0; }
+            if (_sumErrorCount >= 5) {
+                clearInterval(_summaryPollTimer); _summaryPollTimer = null;
+                document.getElementById('summaryRunBtn').disabled = false;
+                localStorage.removeItem('sp_summary_status');
+                return;
+            }
+            const data = await r.json();
+            _showSummaryProgress(reportId, '', data.state, data.stage_message || data.state, data.elapsed_sec, data.app_id, data.stage_elapsed_sec, data.stage, data.prompt_tokens);
+            if (data.state === 'COMPLETED' || data.state === 'FAILED') {
+                clearInterval(_summaryPollTimer);
+                _summaryPollTimer = null;
+                document.getElementById('summaryRunBtn').disabled = false;
+                localStorage.removeItem('sp_summary_status');
+                if (data.result_state === 'SUCCESS') {
+                    document.getElementById('summaryStateText').textContent = 'SUCCESS';
+                    loadApps();
+                } else if (data.state === 'FAILED') {
+                    document.getElementById('summaryStateText').textContent = data.state_message || 'FAILED';
+                }
+            }
+        } catch(e) {
+            _sumErrorCount++;
+            if (_sumErrorCount >= 5) {
+                clearInterval(_summaryPollTimer); _summaryPollTimer = null;
+                document.getElementById('summaryRunBtn').disabled = false;
+                localStorage.removeItem('sp_summary_status');
+            }
+        }
+    }, 2000);
+}
+
+// --- Report Enhancement: convert bullet lists to tables + operator badges ---
+function _enhanceReport(root) {
+    // Convert <ul> blocks where every <li> is "**Key**: Value" into a table
+    root.querySelectorAll('ul').forEach(ul => {
+        const items = Array.from(ul.children).filter(c => c.tagName === 'LI');
+        if (items.length < 2) return;
+        // Check if all items match the "**Key**: Value" pattern
+        const kvPattern = /^<strong>([^<]+)<\/strong>\s*[:：]\s*/;
+        const parsed = items.map(li => {
+            const m = li.innerHTML.match(kvPattern);
+            if (!m) return null;
+            return { key: m[1], value: li.innerHTML.replace(kvPattern, '') };
+        });
+        if (parsed.some(p => p === null)) return;
+
+        const table = document.createElement('table');
+        parsed.forEach(p => {
+            const tr = document.createElement('tr');
+            const th = document.createElement('th');
+            th.innerHTML = p.key;
+            const td = document.createElement('td');
+            td.innerHTML = p.value;
+            tr.appendChild(th);
+            tr.appendChild(td);
+            table.appendChild(tr);
+        });
+        ul.replaceWith(table);
+    });
+
+    // Wrap comma-separated operator names in <code> badges
+    _badgeifyOperators(root);
+}
+
+/** Detect cells containing comma-separated PascalCase operator names and wrap each in <code>. */
+function _badgeifyOperators(root) {
+    const opPattern = /^[A-Z][a-zA-Z]+$/;
+    root.querySelectorAll('table td:last-child').forEach(td => {
+        // Skip if already contains <code> or other markup beyond plain text
+        if (td.querySelector('code, a, strong, em')) return;
+        const raw = td.textContent.trim();
+        if (!raw) return;
+        const parts = raw.split(/,\s*/);
+        // At least 2 comma-separated tokens, all matching PascalCase operator names
+        if (parts.length < 2 || !parts.every(p => opPattern.test(p.trim()))) return;
+        td.innerHTML = parts.map(p => '<code>' + esc(p.trim()) + '</code>').join(' ');
+    });
+}
+
+// --- App Delete ---
+function updateAppDeleteCount() {
+    const checked = document.querySelectorAll('.app-row-check:checked');
+    document.getElementById('appDeleteCount').textContent = checked.length;
+    document.getElementById('appDeleteBtn').disabled = checked.length === 0;
+}
+
+function toggleAppSelectAll() {
+    const allChecked = document.getElementById('appSelectAllHeader').checked;
+    document.querySelectorAll('.app-row-check').forEach(cb => cb.checked = allChecked);
+    if (document.getElementById('appSelectAll')) document.getElementById('appSelectAll').checked = allChecked;
+    updateAppDeleteCount();
+}
+
+async function deleteSelectedApps() {
+    const checked = document.querySelectorAll('.app-row-check:checked');
+    const appIds = Array.from(checked).map(cb => cb.dataset.id);
+    if (appIds.length === 0) return;
+    if (!confirm(_i18n.deleteConfirm || `Delete ${appIds.length} application(s) and ALL related data (Silver/Gold/Narrative)?`)) return;
+
+    const status = document.getElementById('appDeleteStatus');
+    status.style.display = 'inline';
+    status.textContent = _i18n.deleting || 'Deleting...';
+    status.style.color = '';
+    document.getElementById('appDeleteBtn').disabled = true;
+    sessionStorage.setItem('sparkAppDeleting', JSON.stringify({count: appIds.length, ts: Date.now()}));
+
+    try {
+        const r = await fetch('/api/v1/spark-perf/applications/delete', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({app_ids: appIds}),
+        });
+        const data = await r.json();
+        sessionStorage.removeItem('sparkAppDeleting');
+        if (data.error) {
+            status.textContent = data.error;
+            status.style.color = 'hsl(var(--destructive))';
+        } else {
+            status.textContent = `Deleted ${appIds.length} app(s) from ${data.tables_cleaned} tables`;
+            status.style.color = 'hsl(var(--success))';
+            loadApps();
+        }
+    } catch(e) {
+        sessionStorage.removeItem('sparkAppDeleting');
+        status.textContent = _i18n.error + ': ' + e.message;
+        status.style.color = 'hsl(var(--destructive))';
+    }
+    setTimeout(() => { status.style.display = 'none'; status.style.color = ''; }, 5000);
+}
+
+// --- Genie Chat ---
+let _chatOpen = false;
+let _chatConversationId = null;
+let _chatSpaceReady = false;
+
+function toggleChat() {
+    _chatOpen = !_chatOpen;
+    const panel = document.getElementById('chatPanel');
+    panel.style.display = _chatOpen ? 'flex' : 'none';
+    if (_chatOpen && !_chatSpaceReady) {
+        _ensureGenieSpace();
+    }
+}
+
+function clearChat() {
+    _chatConversationId = null;
+    const msgs = document.getElementById('chatMessages');
+    msgs.innerHTML = `<div style="text-align:center; color:hsl(var(--muted-foreground)); font-size:0.8rem; padding:2rem 1rem;">
+        <i class="bi bi-stars" style="font-size:2rem; display:block; margin-bottom:0.5rem;"></i>
+        ${_i18n.askQuestions}
+    </div>`;
+}
+
+async function _ensureGenieSpace() {
+    try {
+        const r = await fetch('/api/v1/genie/ensure-space', {method: 'POST', headers: {'Content-Type': 'application/json'}});
+        const data = await r.json();
+        if (data.error) {
+            _appendChatMsg('system', _i18n.genieInitFailed + ': ' + data.error);
+            return;
+        }
+        _chatSpaceReady = true;
+    } catch(e) {
+        _appendChatMsg('system', _i18n.genieConnFailed + ': ' + e.message);
+    }
+}
+
+async function sendChat() {
+    const input = document.getElementById('chatInput');
+    const msg = input.value.trim();
+    if (!msg) return;
+
+    input.value = '';
+    document.getElementById('chatSendBtn').disabled = true;
+
+    // Wait for Genie Space to be ready (first message may arrive before ensure-space completes)
+    if (!_chatSpaceReady) {
+        _appendChatMsg('system', '<i class="bi bi-hourglass-split"></i> Initializing Genie...');
+        await _ensureGenieSpace();
+        // Remove init message
+        const msgs2 = document.getElementById('chatMessages');
+        const lastSys = msgs2.querySelector('.chat-msg-system:last-child');
+        if (lastSys && lastSys.textContent.includes('Initializing')) lastSys.remove();
+        if (!_chatSpaceReady) {
+            document.getElementById('chatSendBtn').disabled = false;
+            return;
+        }
+    }
+
+    // Clear welcome message on first send
+    const msgs = document.getElementById('chatMessages');
+    if (!_chatConversationId && msgs.querySelector('[style*="text-align:center"]')) {
+        msgs.innerHTML = '';
+    }
+
+    _appendChatMsg('user', msg);
+    const thinkingId = _appendChatMsg('assistant', '<i class="bi bi-hourglass-split"></i> ' + _i18n.thinking);
+
+    try {
+        let convId = _chatConversationId;
+        let msgId;
+
+        if (!convId) {
+            const r = await fetch('/api/v1/genie/conversations', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({message: msg, app_id: _selectedAppId || ''}),
+            });
+            const data = await r.json();
+            if (data.error) { _replaceChatMsg(thinkingId, 'Error: ' + data.error); return; }
+            convId = data.conversation_id;
+            msgId = data.message_id;
+            _chatConversationId = convId;
+        } else {
+            const r = await fetch('/api/v1/genie/conversations/' + convId + '/messages', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({message: msg, app_id: _selectedAppId || ''}),
+            });
+            const data = await r.json();
+            if (data.error) { _replaceChatMsg(thinkingId, 'Error: ' + data.error); return; }
+            msgId = data.message_id;
+        }
+
+        // Poll for result
+        await _pollGenieMessage(convId, msgId, thinkingId);
+    } catch(e) {
+        _replaceChatMsg(thinkingId, 'Error: ' + e.message);
+    } finally {
+        document.getElementById('chatSendBtn').disabled = false;
+    }
+}
+
+async function _pollGenieMessage(convId, msgId, thinkingId) {
+    for (let i = 0; i < 60; i++) {  // Max 2 min
+        await new Promise(r => setTimeout(r, 2000));
+        try {
+            const r = await fetch('/api/v1/genie/conversations/' + convId + '/messages/' + msgId + '/status');
+            const data = await r.json();
+
+            if (data.status === 'COMPLETED') {
+                // Strip context injection prefix from response text
+                let responseText = (data.text || '').replace(/^\[Context:.*?\]\s*/s, '').replace(/^\[app_id=.*?\]\s*/s, '').trim();
+                let html = responseText ? DOMPurify.sanitize(marked.parse(responseText)) : '';
+
+                // Fetch query results for attachments
+                for (const att of (data.attachments || [])) {
+                    if (att.type === 'QUERY' && att.id) {
+                        if (data.sql) {
+                            html += '<details style="margin-top:0.5rem;"><summary style="font-size:0.75rem; cursor:pointer; color:hsl(var(--muted-foreground));">SQL</summary><pre style="font-size:0.7rem; padding:0.5rem; background:hsl(240 10% 8%); color:hsl(0 0% 90%); border-radius:4px; overflow-x:auto;">' + esc(data.sql) + '</pre></details>';
+                        }
+                        try {
+                            const rr = await fetch('/api/v1/genie/conversations/' + convId + '/messages/' + msgId + '/results/' + att.id);
+                            const qr = await rr.json();
+                            if (qr.columns && qr.rows) {
+                                html += _renderQueryTable(qr.columns, qr.rows);
+                            }
+                        } catch(e) {}
+                    }
+                }
+
+                _replaceChatMsg(thinkingId, html || _i18n.noResponse);
+                return;
+            } else if (data.status === 'FAILED' || data.status === 'CANCELLED') {
+                _replaceChatMsg(thinkingId, _i18n.queryFailed + ': ' + (data.text || data.status));
+                return;
+            }
+            // Still IN_PROGRESS, continue polling
+        } catch(e) {
+            // Network error, retry
+        }
+    }
+    _replaceChatMsg(thinkingId, _i18n.timedOut);
+}
+
+function _renderQueryTable(columns, rows) {
+    if (!columns.length) return '';
+    const maxRows = 50;
+    let html = '<div style="overflow-x:auto; margin-top:0.5rem; border:1px solid hsl(var(--border)); border-radius:4px; max-height:300px; overflow-y:auto;">';
+    html += '<table style="width:100%; border-collapse:collapse; font-size:0.75rem;">';
+    html += '<thead><tr>';
+    columns.forEach(c => { html += '<th style="padding:0.3rem 0.5rem; text-align:left; border-bottom:1px solid hsl(var(--border)); background:hsl(var(--muted)/0.5); white-space:nowrap; font-size:0.7rem; text-transform:uppercase; letter-spacing:0.03em;">' + esc(c) + '</th>'; });
+    html += '</tr></thead><tbody>';
+    const displayRows = rows.slice(0, maxRows);
+    displayRows.forEach(row => {
+        html += '<tr>';
+        row.forEach(cell => { html += '<td style="padding:0.25rem 0.5rem; border-bottom:1px solid hsl(var(--border)/0.5); white-space:nowrap;">' + esc(cell != null ? String(cell) : '') + '</td>'; });
+        html += '</tr>';
+    });
+    html += '</tbody></table></div>';
+    if (rows.length > maxRows) {
+        html += '<div style="font-size:0.7rem; color:hsl(var(--muted-foreground)); padding:0.25rem;">' + _i18n.showing + ' ' + maxRows + ' ' + _i18n.of + ' ' + rows.length + ' ' + _i18n.rows + '</div>';
+    }
+    return html;
+}
+
+let _chatMsgCounter = 0;
+function _appendChatMsg(role, content) {
+    const id = 'chat-msg-' + (++_chatMsgCounter);
+    const msgs = document.getElementById('chatMessages');
+    const div = document.createElement('div');
+    div.id = id;
+    div.style.cssText = role === 'user'
+        ? 'margin-bottom:0.75rem; text-align:right;'
+        : role === 'system'
+        ? 'margin-bottom:0.75rem; text-align:center;'
+        : 'margin-bottom:0.75rem;';
+
+    const bubble = document.createElement('div');
+    bubble.style.cssText = role === 'user'
+        ? 'display:inline-block; max-width:85%; padding:0.5rem 0.75rem; border-radius:0.75rem 0.75rem 0 0.75rem; background:hsl(var(--primary)); color:hsl(var(--primary-foreground)); font-size:0.85rem; text-align:left;'
+        : role === 'system'
+        ? 'display:inline-block; padding:0.3rem 0.5rem; font-size:0.75rem; color:hsl(var(--destructive));'
+        : 'display:inline-block; max-width:95%; padding:0.5rem 0.75rem; border-radius:0.75rem 0.75rem 0.75rem 0; background:hsl(var(--muted)/0.5); font-size:0.85rem;';
+
+    bubble.innerHTML = content;
+    div.appendChild(bubble);
+    msgs.appendChild(div);
+    msgs.scrollTop = msgs.scrollHeight;
+    return id;
+}
+
+function _replaceChatMsg(id, content) {
+    const el = document.getElementById(id);
+    if (el) {
+        const bubble = el.querySelector('div');
+        if (bubble) bubble.innerHTML = content;
+        document.getElementById('chatMessages').scrollTop = document.getElementById('chatMessages').scrollHeight;
+    }
+}
+
+// Init
+document.addEventListener('DOMContentLoaded', () => {
+    loadSp();
+    loadApps();
+
+    // Restore delete-in-progress state
+    try {
+        const del = JSON.parse(sessionStorage.getItem('sparkAppDeleting'));
+        if (del && del.ts && (Date.now() - del.ts < 10 * 60 * 1000)) {
+            const status = document.getElementById('appDeleteStatus');
+            status.style.display = 'inline';
+            status.textContent = `Deleting ${del.count} app(s)...`;
+            document.getElementById('appDeleteBtn').disabled = true;
+            // Poll until apps list changes
+            const startCount = _appPageData.length;
+            (async function pollDelete() {
+                await new Promise(r => setTimeout(r, 3000));
+                try {
+                    await loadApps();
+                    if (_appPageData.length !== startCount || !sessionStorage.getItem('sparkAppDeleting')) {
+                        sessionStorage.removeItem('sparkAppDeleting');
+                        status.textContent = 'Deleted';
+                        status.style.color = 'hsl(var(--success))';
+                        document.getElementById('appDeleteBtn').disabled = false;
+                        setTimeout(() => { status.style.display = 'none'; }, 3000);
+                        return;
+                    }
+                } catch(e) {}
+                if (Date.now() - del.ts < 10 * 60 * 1000) pollDelete();
+                else { sessionStorage.removeItem('sparkAppDeleting'); status.style.display = 'none'; document.getElementById('appDeleteBtn').disabled = false; }
+            })();
+        }
+    } catch(e) {}
+
+    // Restore last ETL/Summary job status from localStorage
+    // If still RUNNING/PENDING, resume polling to get final status
+    try {
+        const etl = JSON.parse(localStorage.getItem('sp_etl_status'));
+        if (etl && etl.state) {
+            showETLProgress(etl.runId, etl.runPageUrl, etl.state, etl.message);
+            if (etl.runId && !['TERMINATED','INTERNAL_ERROR','SKIPPED','SUCCESS'].includes(etl.state)) {
+                pollETL(etl.runId);
+            }
+        }
+    } catch(e) {}
+    try {
+        const sum = JSON.parse(localStorage.getItem('sp_summary_status'));
+        if (sum && sum.state) {
+            // Clear stale completed/failed states
+            if (['COMPLETED','FAILED','TERMINATED','INTERNAL_ERROR','SKIPPED','SUCCESS'].includes(sum.state)) {
+                localStorage.removeItem('sp_summary_status');
+            } else if (sum.reportId) {
+                _showSummaryProgress(sum.reportId, '', sum.state, sum.message, null, sum.appId);
+                _pollSummary(sum.reportId);
+            } else {
+                // Legacy format (runId) — clear it
+                localStorage.removeItem('sp_summary_status');
+            }
+        }
+    } catch(e) { localStorage.removeItem('sp_summary_status'); }
+});
+</script>
+{% endblock %}

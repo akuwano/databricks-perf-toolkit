@@ -1,0 +1,59 @@
+bundle:
+  name: dbsql-profiler-analyzer
+
+sync:
+  include:
+    - app/runtime-config.json
+
+include:
+  - resources/*.yml
+  - local-override*.yml
+
+variables:
+  sparkperf_catalog:
+    description: "Catalog for Spark Perf Gold tables"
+    default: "main"
+  sparkperf_schema:
+    description: "Schema for Spark Perf Gold tables"
+    default: "default"
+  dbsql_catalog:
+    description: "Catalog for DBSQL Profiler tables"
+    default: "main"
+  dbsql_schema:
+    description: "Schema for DBSQL Profiler tables"
+    default: "default"
+  warehouse_id:
+    description: "SQL Warehouse ID"
+    default: ""
+  log_root:
+    description: "Spark event log root path"
+    default: ""
+  cluster_id:
+    description: "Cluster ID for event logs"
+    default: ""
+  table_prefix:
+    description: "Table name prefix for Spark Perf tables"
+    default: "PERF_"
+  model_endpoint:
+    description: "LLM model serving endpoint"
+    default: "databricks-claude-sonnet-4-5"
+  output_language:
+    description: "Output language for LLM summary"
+    default: "ja"
+  dashboard_id:
+    description: "Lakeview dashboard ID (optional)"
+    default: ""
+  app_name:
+    description: "Databricks App name"
+    default: "dbsql-profiler-analyzer"
+
+targets:
+  dev:
+    default: true
+    mode: development
+
+  staging:
+    mode: production
+
+  prod:
+    mode: production

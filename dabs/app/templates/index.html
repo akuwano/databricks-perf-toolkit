@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+
+{% block title %}Performance Toolkit{% endblock %}
+
+{% block content %}
+<div style="max-width:900px; margin:0 auto; padding:2rem 1rem;">
+    <div style="text-align:center; margin-bottom:2rem;">
+        <h1 style="font-size:1.75rem; font-weight:700; margin-bottom:0.5rem;">Performance Toolkit</h1>
+        <p style="color:hsl(var(--muted-foreground)); font-size:0.9rem;">
+            {{ _('Performance analysis and optimization platform for Databricks SQL / Spark workloads') }}
+        </p>
+    </div>
+
+    <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:1.5rem;">
+        <!-- Query Analysis -->
+        <a href="/analyze" class="card" style="text-decoration:none; cursor:pointer; transition:border-color 0.2s;">
+            <div class="card-body" style="padding:1.5rem;">
+                <div style="margin-bottom:1rem;">
+                    <i class="bi bi-search" style="font-size:2rem; color:hsl(var(--primary));"></i>
+                </div>
+                <h2 style="font-size:1.1rem; font-weight:600; margin-bottom:0.5rem; color:hsl(var(--foreground));">{{ _('Query Analysis') }}</h2>
+                <p style="font-size:0.85rem; color:hsl(var(--muted-foreground)); margin:0; line-height:1.6;">
+                    {{ _('Upload a query profile to get bottleneck detection, LLM-powered root cause analysis, and optimization recommendations.') }}
+                </p>
+            </div>
+        </a>
+
+        <!-- Compare & Optimize -->
+        <a href="/compare" class="card" style="text-decoration:none; cursor:pointer; transition:border-color 0.2s;">
+            <div class="card-body" style="padding:1.5rem;">
+                <div style="margin-bottom:1rem;">
+                    <i class="bi bi-arrow-left-right" style="font-size:2rem; color:hsl(142 76% 36%);"></i>
+                </div>
+                <h2 style="font-size:1.1rem; font-weight:600; margin-bottom:0.5rem; color:hsl(var(--foreground));">{{ _('Compare & Optimize') }}</h2>
+                <p style="font-size:0.85rem; color:hsl(var(--muted-foreground)); margin:0; line-height:1.6;">
+                    {{ _('Compare before/after profiles — hint changes, warehouse sizing, Photon tuning — with AI-powered regression detection.') }}
+                </p>
+            </div>
+        </a>
+
+        <!-- Spark Job Analysis -->
+        <a href="/spark-perf" class="card" style="text-decoration:none; cursor:pointer; transition:border-color 0.2s;">
+            <div class="card-body" style="padding:1.5rem;">
+                <div style="margin-bottom:1rem;">
+                    <i class="bi bi-speedometer2" style="font-size:2rem; color:hsl(0 84.2% 60.2%);"></i>
+                </div>
+                <h2 style="font-size:1.1rem; font-weight:600; margin-bottom:0.5rem; color:hsl(var(--foreground));">{{ _('Spark Job Analysis') }}</h2>
+                <p style="font-size:0.85rem; color:hsl(var(--muted-foreground)); margin:0; line-height:1.6;">
+                    {{ _('Analyze Spark event logs — bottleneck classification, skew/shuffle/GC, Spot loss, executor diagnostics.') }}
+                </p>
+            </div>
+        </a>
+    </div>
+</div>
+{% endblock %}

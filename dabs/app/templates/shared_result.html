@@ -1,0 +1,675 @@
+{% extends "base.html" %}
+{% block title %}{{ _('Shared Analysis') }} - Performance Toolkit{% endblock %}
+
+{% block extra_css %}
+<style>
+@keyframes spin { to { transform: rotate(360deg); } }
+</style>
+{% endblock %}
+
+{% block content %}
+<div style="max-width: 1400px; margin: 0 auto; padding: 2rem;">
+    <!-- Shared banner -->
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; padding: 0.75rem 1rem; border-radius: var(--radius); background: hsl(var(--info) / 0.1); border: 1px solid hsl(var(--info) / 0.3);">
+        <div>
+            <i class="bi bi-share" style="color: hsl(var(--info));"></i>
+            <strong>{{ _('Shared Analysis') }}</strong>
+            <span style="color: hsl(var(--muted-foreground)); font-size: 0.8rem; margin-left: 0.5rem;">
+                ID: {{ analysis_id[:12] }}...
+                {% if source == 'delta' %}
+                <span style="background: hsl(var(--success) / 0.15); color: hsl(var(--success)); padding: 0.1rem 0.4rem; border-radius: 3px; font-size: 0.7rem;">{{ _('Persisted') }}</span>
+                {% else %}
+                <span style="background: hsl(var(--warning) / 0.15); color: hsl(var(--warning)); padding: 0.1rem 0.4rem; border-radius: 3px; font-size: 0.7rem;">{{ _('Session only') }}</span>
+                {% endif %}
+            </span>
+        </div>
+        <div class="no-print" style="display: flex; gap: 0.5rem;">
+            <button onclick="copyShareLink()" style="padding: 0.4rem 0.75rem; border-radius: var(--radius); background: hsl(var(--secondary)); color: hsl(var(--secondary-foreground)); border: none; cursor: pointer; font-size: 0.8rem;" title="Copy share link">
+                <i class="bi bi-link-45deg"></i> <span id="copy-link-text">{{ _('Copy Link') }}</span>
+            </button>
+            <button onclick="copySlackSummary()" style="padding: 0.4rem 0.75rem; border-radius: var(--radius); background: hsl(var(--secondary)); color: hsl(var(--secondary-foreground)); border: none; cursor: pointer; font-size: 0.8rem;" title="Copy Slack summary">
+                <i class="bi bi-chat-square-text"></i> <span id="copy-summary-text">{{ _('Slack Summary') }}</span>
+            </button>
+            <button onclick="window.print()" style="padding: 0.4rem 0.75rem; border-radius: var(--radius); background: hsl(var(--secondary)); color: hsl(var(--secondary-foreground)); border: none; cursor: pointer; font-size: 0.8rem;" title="Print / Save as PDF">
+                <i class="bi bi-printer"></i> {{ _('Print') }}
+            </button>
+        </div>
+    </div>
+
+    <!-- Key metrics summary -->
+    {% if analysis %}
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 0.75rem; margin-bottom: 1.5rem;">
+        <div style="padding: 0.75rem; border-radius: var(--radius); background: hsl(var(--card)); border: 1px solid hsl(var(--border));">
+            <div style="font-size: 0.7rem; color: hsl(var(--muted-foreground)); text-transform: uppercase;">{{ _('Total Time') }}</div>
+            <div style="font-size: 1.2rem; font-weight: 600;">{{ "%.1f"|format(analysis.query_metrics.total_time_ms / 1000) }}s</div>
+        </div>
+        <div style="padding: 0.75rem; border-radius: var(--radius); background: hsl(var(--card)); border: 1px solid hsl(var(--border));">
+            <div style="font-size: 0.7rem; color: hsl(var(--muted-foreground)); text-transform: uppercase;">{{ _('Cache Hit') }}</div>
+            <div style="font-size: 1.2rem; font-weight: 600;">{{ "%.1f"|format(analysis.bottleneck_indicators.cache_hit_ratio * 100) }}%</div>
+        </div>
+        <div style="padding: 0.75rem; border-radius: var(--radius); background: hsl(var(--card)); border: 1px solid hsl(var(--border));">
+            <div style="font-size: 0.7rem; color: hsl(var(--muted-foreground)); text-transform: uppercase;">{{ _('Photon') }}</div>
+            <div style="font-size: 1.2rem; font-weight: 600;">{{ "%.1f"|format(analysis.bottleneck_indicators.photon_ratio * 100) }}%</div>
+        </div>
+        <div style="padding: 0.75rem; border-radius: var(--radius); background: hsl(var(--card)); border: 1px solid hsl(var(--border));">
+            <div style="font-size: 0.7rem; color: hsl(var(--muted-foreground)); text-transform: uppercase;">{{ _('Spill') }}</div>
+            <div style="font-size: 1.2rem; font-weight: 600;">
+                {% set spill_gb = analysis.bottleneck_indicators.spill_bytes / 1073741824 %}
+                {% if spill_gb >= 1 %}{{ "%.1f"|format(spill_gb) }} GB{% elif analysis.bottleneck_indicators.spill_bytes >= 1048576 %}{{ "%.0f"|format(analysis.bottleneck_indicators.spill_bytes / 1048576) }} MB{% else %}0{% endif %}
+            </div>
+        </div>
+        {% if critical_alert_count > 0 %}
+        <div style="padding: 0.75rem; border-radius: var(--radius); background: hsl(var(--destructive) / 0.1); border: 1px solid hsl(var(--destructive) / 0.3);">
+            <div style="font-size: 0.7rem; color: hsl(var(--destructive)); text-transform: uppercase;">{{ _('Critical') }}</div>
+            <div style="font-size: 1.2rem; font-weight: 600; color: hsl(var(--destructive));">{{ critical_alert_count }}</div>
+        </div>
+        {% endif %}
+        {% if action_card_count > 0 %}
+        <div style="padding: 0.75rem; border-radius: var(--radius); background: hsl(var(--warning) / 0.1); border: 1px solid hsl(var(--warning) / 0.3);">
+            <div style="font-size: 0.7rem; color: hsl(var(--warning)); text-transform: uppercase;">{{ _('Actions') }}</div>
+            <div style="font-size: 1.2rem; font-weight: 600; color: hsl(var(--warning));">{{ action_card_count }}</div>
+        </div>
+        {% endif %}
+    </div>
+    {% endif %}
+
+    <!-- Report content -->
+    {% if report %}
+    <div class="card" style="padding: 1.5rem;">
+        <div id="report-content" class="markdown-content"></div>
+    </div>
+    {% else %}
+    <div style="text-align: center; padding: 2rem; color: hsl(var(--muted-foreground));">
+        {{ _('No report available for this analysis.') }}
+    </div>
+    {% endif %}
+</div>
+
+<!-- Genie Chat Toggle -->
+<button id="chatToggle" onclick="toggleChat()" style="position:fixed; bottom:1.5rem; right:1.5rem; z-index:999; background:hsl(var(--primary)); color:hsl(var(--primary-foreground)); border:none; border-radius:50%; width:3rem; height:3rem; font-size:1.2rem; cursor:pointer; box-shadow:0 2px 8px rgba(0,0,0,0.2);" title="Ask Genie">
+    <i class="bi bi-chat-dots"></i>
+</button>
+
+<!-- Genie Chat Panel -->
+<div id="chatPanel" style="display:none; position:fixed; right:0; top:0; bottom:0; width:560px; background:hsl(var(--background)); border-left:2px solid hsl(var(--border)); z-index:1001; flex-direction:column; box-shadow:-4px 0 16px rgba(0,0,0,0.1);">
+    <!-- Header -->
+    <div style="padding:0.75rem 1rem; border-bottom:1px solid hsl(var(--border)); display:flex; justify-content:space-between; align-items:center; background:hsl(var(--muted)/0.3);">
+        <span style="font-weight:600; font-size:0.9rem;"><i class="bi bi-stars"></i> Genie — DBSQL Analysis</span>
+        <div style="display:flex; gap:0.5rem; align-items:center;">
+            <select id="chatModel" style="background:transparent; color:hsl(var(--muted-foreground)); border:1px solid hsl(var(--border)); border-radius:4px; padding:0.15rem 0.3rem; font-size:0.7rem; max-width:140px;" title="{{ _('Model for Rewrite') }}">
+                {% for model in available_models|default([]) %}
+                <option value="{{ model.name }}" {% if 'sonnet' in model.name %}selected{% endif %}>{{ model.display_name }}</option>
+                {% endfor %}
+            </select>
+            <button id="rewriteBtn" onclick="startRewrite()" style="padding:0.15rem 0.5rem; border-radius:4px; border:1px solid hsl(var(--primary)/0.5); background:hsl(var(--primary)/0.1); color:hsl(var(--primary)); cursor:pointer; font-size:0.7rem; font-weight:600;" title="{{ _('Generate optimized SQL from analysis') }}">
+                <i class="bi bi-pencil-square"></i> {{ _('Rewrite') }}
+            </button>
+            <button onclick="clearChat()" style="background:none; border:none; cursor:pointer; color:hsl(var(--muted-foreground)); font-size:0.8rem;" title="{{ _('New Conversation') }}">
+                <i class="bi bi-arrow-counterclockwise"></i>
+            </button>
+            <button onclick="toggleChat()" style="background:none; border:none; cursor:pointer; color:hsl(var(--muted-foreground)); font-size:1rem;">
+                <i class="bi bi-x-lg"></i>
+            </button>
+        </div>
+    </div>
+
+    <!-- Messages -->
+    <div id="chatMessages" style="flex:1; overflow-y:auto; padding:0.75rem;">
+        <div style="text-align:center; color:hsl(var(--muted-foreground)); font-size:0.8rem; padding:2rem 1rem;">
+            <i class="bi bi-stars" style="font-size:2rem; display:block; margin-bottom:0.5rem;"></i>
+            {{ _('Ask questions about this DBSQL query analysis data.') }}
+            <br><br>
+            <span style="font-size:0.75rem;">{{ _('Examples:') }}<br>
+            "{{ _('What are the recommended actions?') }}"<br>
+            "{{ _('Show table scan details') }}"<br>
+            "{{ _('Which operators are hot?') }}"</span>
+        </div>
+    </div>
+
+    <!-- Input -->
+    <div style="padding:0.75rem; border-top:1px solid hsl(var(--border));">
+        <div style="display:flex; gap:0.5rem;">
+            <input type="text" id="chatInput" class="form-control" placeholder="{{ _('Ask about this analysis...') }}" style="font-size:0.85rem;"
+                onkeydown="if(event.key==='Enter'&&!event.shiftKey&&!event.isComposing){event.preventDefault();sendChat();}">
+            <button id="chatSendBtn" onclick="sendChat()" class="btn btn-sm" style="background:hsl(var(--primary)); color:hsl(var(--primary-foreground)); border:none; padding:0.4rem 0.75rem;">
+                <i class="bi bi-send"></i>
+            </button>
+        </div>
+    </div>
+</div>
+
+<script>
+const analysisId = {{ analysis_id|tojson }};
+const reportMarkdown = {{ report|tojson }};
+let _rewriteRunning = false;
+let _lastRewriteSql = '';
+
+document.addEventListener('DOMContentLoaded', function() {
+    // Render markdown report (marked.js loads at end of base.html)
+    if (reportMarkdown && typeof marked !== 'undefined') {
+        const content = document.getElementById('report-content');
+        if (content) {
+            const html = marked.parse(reportMarkdown);
+            content.innerHTML = typeof DOMPurify !== 'undefined' ? DOMPurify.sanitize(html) : html;
+            renderMermaidBlocks(content, 'mermaid-shared');
+            if (typeof hljs !== 'undefined') {
+                content.querySelectorAll('pre code').forEach(block => hljs.highlightElement(block));
+            }
+            // Wrap h2 sections in collapsible <details>
+            (function(container) {
+                if (!container) return;
+                const OPEN_KEYWORDS = [
+                    'Executive Summary', 'エグゼクティブサマリー',
+                    'Top Alerts', 'トップアラート',
+                    'Action Plan', 'アクションプラン',
+                    'Recommended Actions', '推奨アクション',
+                    'Root Cause', '根本原因',
+                    'Recommendation', '推奨',
+                    'Performance Metrics', 'パフォーマンスメトリクス',
+                    'Hot Operator', 'ホットオペレータ',
+                ];
+                const h2s = Array.from(container.querySelectorAll('h2'));
+                h2s.forEach(h2 => {
+                    const title = h2.textContent || '';
+                    const shouldOpen = OPEN_KEYWORDS.some(k => title.includes(k));
+                    const content = [];
+                    let next = h2.nextSibling;
+                    while (next && !(next.nodeType === 1 && (next.tagName === 'H2' || next.tagName === 'H1'))) {
+                        // Absorb <hr> within sections (LLM output may contain --- dividers)
+                        content.push(next);
+                        next = next.nextSibling;
+                    }
+                    const prevHr = h2.previousElementSibling;
+                    if (prevHr && prevHr.tagName === 'HR') prevHr.remove();
+                    const details = document.createElement('details');
+                    if (shouldOpen) details.setAttribute('open', '');
+                    const summary = document.createElement('summary');
+                    const label = document.createElement('span');
+                    label.className = 'section-title';
+                    label.textContent = h2.textContent;
+                    summary.appendChild(label);
+                    details.appendChild(summary);
+                    const body = document.createElement('div');
+                    body.className = 'details-body';
+                    content.forEach(n => body.appendChild(n));
+                    details.appendChild(body);
+                    h2.replaceWith(details);
+                });
+            })(content);
+        }
+    }
+});
+
+function copyShareLink() {
+    const url = window.location.href;
+    navigator.clipboard.writeText(url).then(() => {
+        const el = document.getElementById('copy-link-text');
+        el.textContent = 'Copied!';
+        setTimeout(() => { el.textContent = 'Copy Link'; }, 2000);
+    });
+}
+
+async function copySlackSummary() {
+    try {
+        const resp = await fetch('/api/v1/shared/' + analysisId + '/summary?base_url=' + encodeURIComponent(window.location.origin));
+        if (!resp.ok) throw new Error('Failed');
+        const text = await resp.text();
+        await navigator.clipboard.writeText(text);
+        const el = document.getElementById('copy-summary-text');
+        el.textContent = 'Copied!';
+        setTimeout(() => { el.textContent = 'Slack Summary'; }, 2000);
+    } catch (e) {
+        alert('Failed to copy summary: ' + e.message);
+    }
+}
+
+// --- Genie Chat ---
+function esc(s) { if (!s) return ''; const d = document.createElement('div'); d.textContent = String(s); return d.innerHTML; }
+
+let _chatOpen = false;
+let _chatConversationId = null;
+let _chatSpaceReady = false;
+
+function toggleChat() {
+    _chatOpen = !_chatOpen;
+    const panel = document.getElementById('chatPanel');
+    panel.style.display = _chatOpen ? 'flex' : 'none';
+    if (_chatOpen && !_chatSpaceReady) {
+        _ensureGenieSpace();
+    }
+}
+
+function clearChat() {
+    _chatConversationId = null;
+    const msgs = document.getElementById('chatMessages');
+    msgs.innerHTML = '<div style="text-align:center; color:hsl(var(--muted-foreground)); font-size:0.8rem; padding:2rem 1rem;">' +
+        '<i class="bi bi-stars" style="font-size:2rem; display:block; margin-bottom:0.5rem;"></i>' +
+        '{{ _("Ask questions about this DBSQL query analysis data.") }}</div>';
+}
+
+async function _ensureGenieSpace() {
+    try {
+        const r = await fetch('/api/v1/genie/dbsql/ensure-space', {method: 'POST', headers: {'Content-Type': 'application/json'}});
+        const data = await r.json();
+        if (data.error) {
+            _appendChatMsg('system', 'Failed to initialize Genie: ' + data.error);
+            return;
+        }
+        _chatSpaceReady = true;
+    } catch(e) {
+        _appendChatMsg('system', 'Genie connection failed: ' + e.message);
+    }
+}
+
+async function sendChat() {
+    const input = document.getElementById('chatInput');
+    const msg = input.value.trim();
+    if (!msg) return;
+
+    input.value = '';
+    document.getElementById('chatSendBtn').disabled = true;
+
+    // Wait for Genie Space to be ready (first message may arrive before ensure-space completes)
+    if (!_chatSpaceReady) {
+        _appendChatMsg('system', '<i class="bi bi-hourglass-split"></i> Initializing Genie...');
+        await _ensureGenieSpace();
+        // Remove init message
+        const msgs2 = document.getElementById('chatMessages');
+        const lastSys = msgs2.querySelector('.chat-msg-system:last-child');
+        if (lastSys && lastSys.textContent.includes('Initializing')) lastSys.remove();
+        if (!_chatSpaceReady) {
+            document.getElementById('chatSendBtn').disabled = false;
+            return;
+        }
+    }
+
+    const msgs = document.getElementById('chatMessages');
+    if (!_chatConversationId && msgs.querySelector('[style*="text-align:center"]')) {
+        msgs.innerHTML = '';
+    }
+
+    _appendChatMsg('user', msg);
+    const thinkingId = _appendChatMsg('assistant', '<i class="bi bi-hourglass-split"></i> Thinking...');
+
+    try {
+        let convId = _chatConversationId;
+        let msgId;
+
+        if (!convId) {
+            const _reportEl = document.getElementById('report-content');
+            const _reportText = _reportEl ? _reportEl.textContent.substring(0, 500) : '';
+            const r = await fetch('/api/v1/genie/dbsql/conversations', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({message: msg, analysis_id: analysisId || '', report_summary: _reportText}),
+            });
+            const data = await r.json();
+            if (data.error) { _replaceChatMsg(thinkingId, 'Error: ' + data.error); return; }
+            convId = data.conversation_id;
+            msgId = data.message_id;
+            _chatConversationId = convId;
+        } else {
+            const r = await fetch('/api/v1/genie/dbsql/conversations/' + convId + '/messages', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({message: msg, analysis_id: analysisId || ''}),
+            });
+            const data = await r.json();
+            if (data.error) { _replaceChatMsg(thinkingId, 'Error: ' + data.error); return; }
+            msgId = data.message_id;
+        }
+
+        await _pollGenieMessage(convId, msgId, thinkingId);
+    } catch(e) {
+        _replaceChatMsg(thinkingId, 'Error: ' + e.message);
+    } finally {
+        document.getElementById('chatSendBtn').disabled = false;
+    }
+}
+
+async function _pollGenieMessage(convId, msgId, thinkingId) {
+    for (let i = 0; i < 60; i++) {
+        await new Promise(r => setTimeout(r, 2000));
+        try {
+            const r = await fetch('/api/v1/genie/dbsql/conversations/' + convId + '/messages/' + msgId + '/status');
+            const data = await r.json();
+
+            if (data.status === 'COMPLETED') {
+                let responseText = (data.text || '').replace(/^\[Context:.*?\]\s*/s, '').replace(/^\[analysis_id=.*?\]\s*/s, '').trim();
+                let html = responseText ? (typeof DOMPurify !== 'undefined' ? DOMPurify.sanitize(marked.parse(responseText)) : marked.parse(responseText)) : '';
+
+                for (const att of (data.attachments || [])) {
+                    if (att.type === 'QUERY' && att.id) {
+                        if (data.sql) {
+                            html += '<details style="margin-top:0.5rem;"><summary style="font-size:0.75rem; cursor:pointer; color:hsl(var(--muted-foreground));">SQL</summary><pre style="font-size:0.7rem; padding:0.5rem; background:hsl(240 10% 8%); color:hsl(0 0% 90%); border-radius:4px; overflow-x:auto;">' + esc(data.sql) + '</pre></details>';
+                        }
+                        try {
+                            const rr = await fetch('/api/v1/genie/dbsql/conversations/' + convId + '/messages/' + msgId + '/results/' + att.id);
+                            const qr = await rr.json();
+                            if (qr.columns && qr.rows) {
+                                html += _renderQueryTable(qr.columns, qr.rows);
+                            }
+                        } catch(e) {}
+                    }
+                }
+
+                _replaceChatMsg(thinkingId, html || '(No response)');
+                return;
+            } else if (data.status === 'FAILED' || data.status === 'CANCELLED') {
+                _replaceChatMsg(thinkingId, 'Query failed: ' + (data.text || data.status));
+                return;
+            }
+        } catch(e) {}
+    }
+    _replaceChatMsg(thinkingId, 'Timed out waiting for response.');
+}
+
+function _renderQueryTable(columns, rows) {
+    if (!columns.length) return '';
+    const maxRows = 50;
+    let html = '<div style="overflow-x:auto; margin-top:0.5rem; border:1px solid hsl(var(--border)); border-radius:4px; max-height:300px; overflow-y:auto;">';
+    html += '<table style="width:100%; border-collapse:collapse; font-size:0.75rem;">';
+    html += '<thead><tr>';
+    columns.forEach(c => { html += '<th style="padding:0.3rem 0.5rem; text-align:left; border-bottom:1px solid hsl(var(--border)); background:hsl(var(--muted)/0.5); white-space:nowrap; font-size:0.7rem; text-transform:uppercase; letter-spacing:0.03em;">' + esc(c) + '</th>'; });
+    html += '</tr></thead><tbody>';
+    const displayRows = rows.slice(0, maxRows);
+    displayRows.forEach(row => {
+        html += '<tr>';
+        row.forEach(cell => { html += '<td style="padding:0.25rem 0.5rem; border-bottom:1px solid hsl(var(--border)/0.5); white-space:nowrap;">' + esc(cell != null ? String(cell) : '') + '</td>'; });
+        html += '</tr>';
+    });
+    html += '</tbody></table></div>';
+    if (rows.length > maxRows) {
+        html += '<div style="font-size:0.7rem; color:hsl(var(--muted-foreground)); padding:0.25rem;">Showing ' + maxRows + ' of ' + rows.length + ' rows</div>';
+    }
+    return html;
+}
+
+let _chatMsgCounter = 0;
+function _appendChatMsg(role, content) {
+    const id = 'chat-msg-' + (++_chatMsgCounter);
+    const msgs = document.getElementById('chatMessages');
+    const div = document.createElement('div');
+    div.id = id;
+    div.style.cssText = role === 'user'
+        ? 'margin-bottom:0.75rem; text-align:right;'
+        : role === 'system'
+        ? 'margin-bottom:0.75rem; text-align:center;'
+        : 'margin-bottom:0.75rem;';
+
+    const bubble = document.createElement('div');
+    bubble.style.cssText = role === 'user'
+        ? 'display:inline-block; max-width:85%; padding:0.5rem 0.75rem; border-radius:0.75rem 0.75rem 0 0.75rem; background:hsl(var(--primary)); color:hsl(var(--primary-foreground)); font-size:0.85rem; text-align:left;'
+        : role === 'system'
+        ? 'display:inline-block; padding:0.3rem 0.5rem; font-size:0.75rem; color:hsl(var(--destructive));'
+        : 'display:inline-block; max-width:95%; padding:0.5rem 0.75rem; border-radius:0.75rem 0.75rem 0.75rem 0; background:hsl(var(--muted)/0.5); font-size:0.85rem;';
+
+    bubble.innerHTML = content;
+    div.appendChild(bubble);
+    msgs.appendChild(div);
+    msgs.scrollTop = msgs.scrollHeight;
+    return id;
+}
+
+function _replaceChatMsg(id, content) {
+    const el = document.getElementById(id);
+    if (el) {
+        const bubble = el.querySelector('div');
+        if (bubble) bubble.innerHTML = content;
+        document.getElementById('chatMessages').scrollTop = document.getElementById('chatMessages').scrollHeight;
+    }
+}
+
+// --- SQL Rewrite (button-triggered, not keyword-based) ---
+async function startRewrite() {
+    if (_rewriteRunning) return;
+    _rewriteRunning = true;
+    const btn = document.getElementById('rewriteBtn');
+    btn.disabled = true;
+    btn.style.opacity = '0.5';
+
+    // Open chat panel if closed
+    if (!_chatOpen) toggleChat();
+
+    const msgs = document.getElementById('chatMessages');
+    if (msgs.querySelector('[style*="text-align:center"]')) msgs.innerHTML = '';
+
+    _appendChatMsg('user', '{{ _("Rewrite this query") }}');
+    const thinkingId = _appendChatMsg('assistant', '<span style="display:inline-block;width:0.8em;height:0.8em;border:2px solid currentColor;border-right-color:transparent;border-radius:50%;animation:spin 0.75s linear infinite;vertical-align:middle;"></span> {{ _("Generating SQL rewrite...") }}');
+
+    try {
+        const r = await fetch('/api/v1/rewrite', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({analysis_id: analysisId, model: document.getElementById('chatModel').value}),
+        });
+        if (!r.ok) {
+            const text = await r.text();
+            try { const j = JSON.parse(text); _replaceChatMsg(thinkingId, 'Error: ' + esc(j.error || text)); }
+            catch { _replaceChatMsg(thinkingId, 'Error: ' + esc(text.substring(0, 200))); }
+            return;
+        }
+        const startData = await r.json();
+        if (startData.error) { _replaceChatMsg(thinkingId, 'Error: ' + esc(startData.error)); return; }
+
+        const taskId = startData.task_id;
+        while (true) {
+            await new Promise(resolve => setTimeout(resolve, 2000));
+            try {
+                const pr = await fetch('/api/v1/rewrite/' + taskId);
+                if (!pr.ok) { const t = await pr.text(); _replaceChatMsg(thinkingId, 'Error: ' + esc(t.substring(0, 200))); break; }
+                const data = await pr.json();
+                if (data.status === 'running') continue;
+                if (data.status === 'failed') { _replaceChatMsg(thinkingId, 'Error: ' + esc(data.error || 'Rewrite failed')); break; }
+
+                let rewriteHtml = typeof marked !== 'undefined'
+                    ? (typeof DOMPurify !== 'undefined' ? DOMPurify.sanitize(marked.parse(data.rewrite || '')) : marked.parse(data.rewrite || ''))
+                    : esc(data.rewrite || '');
+                const rec = data.model_recommendation;
+                if (rec) {
+                    const est = rec.estimated_tokens ? rec.estimated_tokens.toLocaleString() : '?';
+                    const maxTok = rec.max_tokens ? rec.max_tokens.toLocaleString() : '?';
+                    let banner = '';
+                    if (rec.token_constrained) {
+                        banner = '<div style="padding:0.4rem 0.6rem; margin-bottom:0.5rem; border-radius:4px; background:hsl(var(--destructive)/0.1); border:1px solid hsl(var(--destructive)/0.3); font-size:0.75rem;">'
+                            + '<i class="bi bi-exclamation-triangle"></i> '
+                            + '{{ _("Token limit: query needs ~") }}' + est + '{{ _(" tokens but max is ") }}' + maxTok + '{{ _(".") }} '
+                            + '{{ _("Diff-format rewrite generated. Apply changes to the original query using the merge steps below.") }}'
+                            + '</div>';
+                    } else if (rec.recommended_model && rec.recommended_model !== data.model_used) {
+                        const recModel = esc(rec.recommended_model);
+                        banner = '<div style="padding:0.4rem 0.6rem; margin-bottom:0.5rem; border-radius:4px; background:hsl(var(--warning,40 90% 50%)/0.15); border:1px solid hsl(var(--warning,40 90% 50%)/0.3); font-size:0.75rem;">'
+                            + '<i class="bi bi-exclamation-triangle"></i> '
+                            + '{{ _("Query length requires ~") }}' + est + ' {{ _("output tokens.") }} '
+                            + '<strong>' + recModel + '</strong> {{ _("is recommended.") }}'
+                            + '</div>';
+                    }
+                    if (banner) rewriteHtml = banner + rewriteHtml;
+                }
+                // Store rewrite SQL for potential fix requests (last code block = main SQL)
+                _lastRewriteSql = '';
+                const _tmpDiv = document.createElement('div');
+                _tmpDiv.innerHTML = rewriteHtml;
+                const _codeBlocks = _tmpDiv.querySelectorAll('pre code');
+                if (_codeBlocks.length) _lastRewriteSql = _codeBlocks[_codeBlocks.length - 1].textContent;
+                const currentSql = _lastRewriteSql;
+
+                // Refine (optional) + validation status below result
+                rewriteHtml += '<div style="margin-top:0.5rem; display:flex; justify-content:flex-end; gap:0.3rem; align-items:center;" data-rewrite-actions>'
+                    + '<button onclick="_showFixInput(this)" style="padding:0.2rem 0.5rem; border-radius:4px; border:1px solid hsl(var(--border)); background:hsl(var(--muted)/0.3); color:hsl(var(--muted-foreground)); cursor:pointer; font-size:0.7rem;">'
+                    + '<i class="bi bi-pencil"></i> {{ _("Refine") }}'
+                    + '</button></div>'
+                    + '<div data-rewrite-validate-status style="font-size:0.7rem; margin-top:0.35rem; min-height:1em;"></div>';
+
+                _replaceChatMsg(thinkingId, rewriteHtml);
+                const el = document.getElementById(thinkingId);
+                if (el) {
+                    if (typeof hljs !== 'undefined') el.querySelectorAll('pre code').forEach(block => hljs.highlightElement(block));
+                    if (typeof _addCopyButtons === 'function') _addCopyButtons(el);
+                }
+                _validateRewrite(thinkingId, currentSql);
+                break;
+            } catch(pe) { continue; }
+        }
+    } catch(e) {
+        _replaceChatMsg(thinkingId, 'Error: ' + esc(e.message));
+    } finally {
+        _rewriteRunning = false;
+        btn.disabled = false;
+        btn.style.opacity = '1';
+    }
+}
+
+// --- Fix rewrite based on user feedback ---
+function _showFixInput(btn) {
+    const old = document.querySelector('#chatMessages [data-fix-input]');
+    if (old) {
+        const row = old.closest('div[style*="margin-top"]');
+        if (row) row.remove();
+    }
+    const wrapper = btn.parentElement;
+    wrapper.innerHTML = '<div style="margin-top:0.5rem;">'
+        + '<input type="text" data-fix-input class="form-control" placeholder="{{ _("e.g. keep table aliases, use column name user_id, reduce CTEs...") }}" style="font-size:0.8rem; margin-bottom:0.3rem;"'
+        + ' onkeydown="if(event.key===\'Enter\'&&!event.shiftKey&&!event.isComposing){event.preventDefault();requestRewriteFix();}">'
+        + '<button onclick="requestRewriteFix()" style="padding:0.2rem 0.5rem; border-radius:4px; border:1px solid hsl(var(--primary)/0.5); background:hsl(var(--primary)/0.1); color:hsl(var(--primary)); cursor:pointer; font-size:0.7rem;">'
+        + '<i class="bi bi-send"></i> {{ _("Send Fix Request") }}</button></div>';
+    const inp = wrapper.querySelector('[data-fix-input]');
+    if (inp) inp.focus();
+}
+
+let _fixRunning = false;
+async function requestRewriteFix() {
+    if (_fixRunning) return;
+    const feedbackInput = document.querySelector('#chatMessages [data-fix-input]');
+    const feedback = feedbackInput ? feedbackInput.value.trim() : '';
+    if (!feedback || !_lastRewriteSql) return;
+
+    _fixRunning = true;
+    feedbackInput.disabled = true;
+    _appendChatMsg('user', feedback);
+    const thinkingId = _appendChatMsg('assistant', '<span style="display:inline-block;width:0.8em;height:0.8em;border:2px solid currentColor;border-right-color:transparent;border-radius:50%;animation:spin 0.75s linear infinite;vertical-align:middle;"></span> {{ _("Fixing rewrite...") }}');
+
+    try {
+        const r = await fetch('/api/v1/rewrite', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({
+                analysis_id: analysisId,
+                model: document.getElementById('chatModel').value,
+                feedback: feedback,
+                previous_rewrite: _lastRewriteSql,
+            }),
+        });
+        if (!r.ok) {
+            const text = await r.text();
+            try { const j = JSON.parse(text); _replaceChatMsg(thinkingId, 'Error: ' + esc(j.error || text)); }
+            catch { _replaceChatMsg(thinkingId, 'Error: ' + esc(text.substring(0, 200))); }
+            return;
+        }
+        const startData = await r.json();
+        if (startData.error) { _replaceChatMsg(thinkingId, 'Error: ' + esc(startData.error)); return; }
+
+        const taskId = startData.task_id;
+        while (true) {
+            await new Promise(resolve => setTimeout(resolve, 2000));
+            try {
+                const pr = await fetch('/api/v1/rewrite/' + taskId);
+                if (!pr.ok) { const t = await pr.text(); _replaceChatMsg(thinkingId, 'Error: ' + esc(t.substring(0, 200))); break; }
+                const data = await pr.json();
+                if (data.status === 'running') continue;
+                if (data.status === 'failed') { _replaceChatMsg(thinkingId, 'Error: ' + esc(data.error || 'Fix failed')); break; }
+
+                let fixHtml = typeof marked !== 'undefined'
+                    ? (typeof DOMPurify !== 'undefined' ? DOMPurify.sanitize(marked.parse(data.rewrite || '')) : marked.parse(data.rewrite || ''))
+                    : esc(data.rewrite || '');
+
+                // Update stored SQL for next fix (last code block = main SQL)
+                _lastRewriteSql = '';
+                const _tmpDiv2 = document.createElement('div');
+                _tmpDiv2.innerHTML = fixHtml;
+                const _cbs2 = _tmpDiv2.querySelectorAll('pre code');
+                if (_cbs2.length) _lastRewriteSql = _cbs2[_cbs2.length - 1].textContent;
+                const currentSql = _lastRewriteSql;
+
+                fixHtml += '<div style="margin-top:0.5rem; display:flex; justify-content:flex-end; gap:0.3rem; align-items:center;" data-rewrite-actions>'
+                    + '<button onclick="_showFixInput(this)" style="padding:0.2rem 0.5rem; border-radius:4px; border:1px solid hsl(var(--border)); background:hsl(var(--muted)/0.3); color:hsl(var(--muted-foreground)); cursor:pointer; font-size:0.7rem;">'
+                    + '<i class="bi bi-pencil"></i> {{ _("Refine") }}</button></div>'
+                    + '<div data-rewrite-validate-status style="font-size:0.7rem; margin-top:0.35rem; min-height:1em;"></div>';
+
+                _replaceChatMsg(thinkingId, fixHtml);
+                const el = document.getElementById(thinkingId);
+                if (el) {
+                    if (typeof hljs !== 'undefined') el.querySelectorAll('pre code').forEach(block => hljs.highlightElement(block));
+                    if (typeof _addCopyButtons === 'function') _addCopyButtons(el);
+                }
+                _validateRewrite(thinkingId, currentSql);
+                break;
+            } catch(pe) { continue; }
+        }
+    } catch(e) {
+        _replaceChatMsg(thinkingId, 'Error: ' + esc(e.message));
+    } finally {
+        _fixRunning = false;
+    }
+}
+
+// --- Validate rewritten SQL (EXPLAIN → sqlglot fallback) ---
+async function _validateRewrite(scopeMsgId, sql) {
+    if (!scopeMsgId || typeof sql !== 'string' || !sql.trim()) return;
+    const scope = document.getElementById(scopeMsgId);
+    if (!scope) return;
+    const statusEl = scope.querySelector('[data-rewrite-validate-status]');
+    if (!statusEl) return;
+    statusEl.innerHTML = '<span style="display:inline-block;width:0.7em;height:0.7em;border:2px solid currentColor;border-right-color:transparent;border-radius:50%;animation:spin 0.75s linear infinite;vertical-align:middle;"></span> {{ _("Validating...") }}';
+    statusEl.style.color = 'hsl(var(--muted-foreground))';
+
+    try {
+        const r = await fetch('/api/v1/rewrite/validate', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({sql: sql}),
+        });
+        const data = await r.json();
+        const method = data.method || '?';
+        const fallback = data.fallback_reason || '';
+
+        if (data.valid) {
+            statusEl.style.color = 'hsl(var(--success, 142 71% 45%))';
+            if (method === 'explain') {
+                statusEl.innerHTML = '<i class="bi bi-check-circle-fill"></i> {{ _("EXPLAIN passed") }}'
+                    + ' <span style="font-size:0.6rem; color:hsl(var(--muted-foreground));">'
+                    + '({{ _("syntax and logical plan OK. Table/schema existence depends on SP permissions.") }})</span>';
+            } else {
+                statusEl.innerHTML = '<i class="bi bi-check-circle-fill"></i> {{ _("Syntax OK (local)") }}';
+            }
+            if (fallback) {
+                statusEl.innerHTML += ' <span style="font-size:0.6rem; color:hsl(var(--muted-foreground));">'
+                    + '({{ _("EXPLAIN unavailable — local check only: ") }}' + esc(fallback).substring(0, 80) + ')</span>';
+            }
+        } else {
+            statusEl.style.color = 'hsl(var(--destructive))';
+            const errMsg = data.error || 'Unknown error';
+            statusEl.innerHTML = '<i class="bi bi-x-circle-fill"></i> '
+                + (method === 'explain' ? '{{ _("EXPLAIN error") }}' : '{{ _("Syntax error") }}');
+            // Show error details and pre-fill fix input
+            _appendChatMsg('system',
+                '<div style="font-size:0.75rem; padding:0.3rem 0.5rem; border-radius:4px; background:hsl(var(--destructive)/0.1); border:1px solid hsl(var(--destructive)/0.3);">'
+                + '<i class="bi bi-exclamation-triangle"></i> <strong>Validation Error (' + esc(method) + '):</strong><br>'
+                + '<code style="font-size:0.7rem; word-break:break-all;">' + esc(errMsg) + '</code></div>');
+            const actionsDiv = scope.querySelector('[data-rewrite-actions]');
+            if (actionsDiv) {
+                const fixBtn = actionsDiv.querySelector('button:last-child');
+                if (fixBtn) {
+                    _showFixInput(fixBtn);
+                    const fixInput = scope.querySelector('[data-fix-input]');
+                    if (fixInput) fixInput.value = errMsg.substring(0, 300);
+                }
+            }
+        }
+    } catch(e) {
+        statusEl.style.color = 'hsl(var(--destructive))';
+        statusEl.innerHTML = '<i class="bi bi-x-circle-fill"></i> ' + esc(e.message);
+    }
+}
+</script>
+{% endblock %}

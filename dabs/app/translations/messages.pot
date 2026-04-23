@@ -1,0 +1,1661 @@
+# Translations template for PROJECT.
+# Copyright (C) 2026 ORGANIZATION
+# This file is distributed under the same license as the PROJECT project.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2026.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: PROJECT VERSION\n"
+"Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
+"POT-Creation-Date: 2026-01-23 23:46+0900\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.17.0\n"
+
+#: app.py:527
+msgid "Analysis not found"
+msgstr ""
+
+#: app.py:536
+#, python-brace-format
+msgid "Analysis not ready. Status: {status}"
+msgstr ""
+
+#: core/analyzers.py:51
+#, python-brace-format
+msgid "Cache hit ratio is moderate ({ratio})"
+msgstr ""
+
+#: core/analyzers.py:56
+#, python-brace-format
+msgid "Cache hit ratio is low ({ratio})"
+msgstr ""
+
+#: core/analyzers.py:59
+msgid "Consider leveraging Delta cache by scaling up"
+msgstr ""
+
+#: core/analyzers.py:68
+#, python-brace-format
+msgid "Remote read ratio is very high ({ratio})"
+msgstr ""
+
+#: core/analyzers.py:71
+msgid "Consider enabling disk cache or scaling up cluster"
+msgstr ""
+
+#: core/analyzers.py:76
+#, python-brace-format
+msgid "Remote read ratio is high ({ratio})"
+msgstr ""
+
+#: core/analyzers.py:89
+#, python-brace-format
+msgid "Photon utilization has room for improvement ({ratio})"
+msgstr ""
+
+#: core/analyzers.py:94
+#, python-brace-format
+msgid "Photon utilization is low ({ratio})"
+msgstr ""
+
+#: core/analyzers.py:97
+msgid ""
+"Consider setting spark.sql.join.preferSortMergeJoin=false if Sort-Merge "
+"joins are used"
+msgstr ""
+
+#: core/analyzers.py:132
+#, python-brace-format
+msgid "Significant disk spill is occurring ({size})"
+msgstr ""
+
+#: core/analyzers.py:134
+msgid "Memory configuration and partition strategy need review"
+msgstr ""
+
+#: core/analyzers.py:136
+msgid "Consider expanding cluster size (increasing worker nodes)"
+msgstr ""
+
+#: core/analyzers.py:140
+#, python-brace-format
+msgid "Disk spill is occurring ({size})"
+msgstr ""
+
+#: core/analyzers.py:142 core/analyzers.py:236
+msgid "Please verify spark.sql.adaptive.skewJoin.enabled=true"
+msgstr ""
+
+#: core/analyzers.py:147
+#, python-brace-format
+msgid "Minor disk spill is occurring ({size})"
+msgstr ""
+
+#: core/analyzers.py:157
+#, python-brace-format
+msgid "File pruning efficiency is low ({ratio})"
+msgstr ""
+
+#: core/analyzers.py:160
+msgid "Please check partitioning or Z-Order configuration"
+msgstr ""
+
+#: core/analyzers.py:174
+#, python-brace-format
+msgid "Bytes pruning efficiency is low ({ratio})"
+msgstr ""
+
+#: core/analyzers.py:188 core/analyzers.py:196
+#, python-brace-format
+msgid "Shuffle operations account for {ratio} of total time"
+msgstr ""
+
+#: core/analyzers.py:191
+msgid ""
+"Consider increasing broadcast join threshold "
+"(spark.sql.autoBroadcastJoinThreshold) to 200MB"
+msgstr ""
+
+#: core/analyzers.py:203
+#, python-brace-format
+msgid ""
+"Shuffle operation (Node {node_id}) has low memory efficiency "
+"({size}/partition > 512MB threshold)"
+msgstr ""
+
+#: core/analyzers.py:213
+#, python-brace-format
+msgid "Consider using REPARTITION({partitions}, {attrs}) hint"
+msgstr ""
+
+#: core/analyzers.py:226
+#, python-brace-format
+msgid "Average partition size for AQEShuffleRead is large ({size} > 512MB)"
+msgstr ""
+
+#: core/analyzers.py:233
+#, python-brace-format
+msgid "Data skew detected ({count} partitions)"
+msgstr ""
+
+#: core/analyzers.py:259
+#, python-brace-format
+msgid "Cloud storage retry rate is high ({ratio})"
+msgstr ""
+
+#: core/analyzers.py:262
+msgid "Cloud storage access may be a bottleneck - check for throttling"
+msgstr ""
+
+#: core/analyzers.py:267
+#, python-brace-format
+msgid "Cloud storage retry rate is elevated ({ratio})"
+msgstr ""
+
+#: core/analyzers.py:274
+#, python-brace-format
+msgid "Sort-Merge join is used in {count} places (not supported by Photon)"
+msgstr ""
+
+#: core/analyzers.py:277
+msgid "Consider setting spark.sql.join.preferSortMergeJoin=false"
+msgstr ""
+
+#: core/analyzers.py:280
+msgid "Consider setting spark.databricks.adaptive.joinFallback=true"
+msgstr ""
+
+#: core/analyzers.py:331
+#, python-brace-format
+msgid "Tables missing optimizer statistics: {tables}"
+msgstr ""
+
+#: core/analyzers.py:335
+#, python-brace-format
+msgid "Run ANALYZE TABLE {table} COMPUTE STATISTICS FOR ALL COLUMNS"
+msgstr ""
+
+#: core/analyzers.py:340
+#, python-brace-format
+msgid "Tables with partial optimizer statistics: {tables}"
+msgstr ""
+
+#: core/analyzers.py:359
+#, python-brace-format
+msgid "Partition filter not used for table `{table}`"
+msgstr ""
+
+#: core/analyzers.py:362
+#, python-brace-format
+msgid "Check partitioning strategy for table `{table}`"
+msgstr ""
+
+#: core/analyzers.py:378
+msgid "Shuffle exchanges are occurring despite broadcast joins"
+msgstr ""
+
+#: core/analyzers.py:381
+msgid "Consider increasing spark.sql.autoBroadcastJoinThreshold to 200MB or more"
+msgstr ""
+
+#: core/analyzers.py:388
+#, python-brace-format
+msgid "Sort Merge Join detected in {count} places (not supported by Photon)"
+msgstr ""
+
+#: core/analyzers.py:392
+msgid "Set spark.sql.join.preferSortMergeJoin=false to avoid Sort Merge Join"
+msgstr ""
+
+#: core/analyzers.py:405
+msgid "Multiple aggregation stages but Partial/Final optimization not detected"
+msgstr ""
+
+#: core/analyzers.py:413
+#, python-brace-format
+msgid "Many Exchange operations ({count}) occurring with disk spill"
+msgstr ""
+
+#: core/analyzers.py:416
+msgid ""
+"Consider adjusting shuffle partition count: increase "
+"spark.sql.shuffle.partitions"
+msgstr ""
+
+#: core/analyzers.py:425
+msgid "EXPLAIN indicates query is not fully supported by Photon"
+msgstr ""
+
+#: core/analyzers.py:431
+msgid "EXPLAIN shows full Photon support but actual Photon utilization is low"
+msgstr ""
+
+#: core/analyzers.py:434
+msgid "Verify that the query is running on a Photon-enabled cluster"
+msgstr ""
+
+#: core/analyzers.py:597
+#, python-brace-format
+msgid "Disk spill: {size}"
+msgstr ""
+
+#: core/analyzers.py:599
+#, python-brace-format
+msgid "Spill operators: {ops}"
+msgstr ""
+
+#: core/analyzers.py:603
+msgid "I/O delay due to disk spill"
+msgstr ""
+
+#: core/analyzers.py:605
+msgid "Memory shortage or data skew"
+msgstr ""
+
+#: core/analyzers.py:606
+msgid "Expand cluster size or adjust partition count"
+msgstr ""
+
+#: core/analyzers.py:618
+#, python-brace-format
+msgid "Skewed partition count: {count}"
+msgstr ""
+
+#: core/analyzers.py:621
+#, python-brace-format
+msgid "Skewed key: {keys}"
+msgstr ""
+
+#: core/analyzers.py:624
+msgid "Processing imbalance due to data skew"
+msgstr ""
+
+#: core/analyzers.py:626
+msgid "Imbalance in join or aggregation key value distribution"
+msgstr ""
+
+#: core/analyzers.py:627
+msgid "Enable AQE skew join or use SALTING for key distribution"
+msgstr ""
+
+#: core/analyzers.py:639
+#, python-brace-format
+msgid "Photon utilization: {ratio}"
+msgstr ""
+
+#: core/analyzers.py:641
+#, python-brace-format
+msgid "Sort-Merge joins: {count} places"
+msgstr ""
+
+#: core/analyzers.py:644
+msgid "Low Photon utilization"
+msgstr ""
+
+#: core/analyzers.py:646
+msgid "Using Sort-Merge joins or Photon-unsupported functions"
+msgstr ""
+
+#: core/analyzers.py:647
+msgid "Settings to avoid Sort-Merge joins or query rewrite"
+msgstr ""
+
+#: core/analyzers.py:658
+#, python-brace-format
+msgid "Cache hit ratio: {ratio}"
+msgstr ""
+
+#: core/analyzers.py:660
+#, python-brace-format
+msgid "Read data size: {size}"
+msgstr ""
+
+#: core/analyzers.py:663
+msgid "Low cache hit ratio"
+msgstr ""
+
+#: core/analyzers.py:665
+msgid "First execution, insufficient cache size, or cluster restart"
+msgstr ""
+
+#: core/analyzers.py:666
+msgid "Verify cache effect by re-running same query, or scale up"
+msgstr ""
+
+#: core/analyzers.py:676
+#, python-brace-format
+msgid "Shuffle impact ratio: {ratio}"
+msgstr ""
+
+#: core/analyzers.py:679
+#, python-brace-format
+msgid "Inefficient shuffles: {count} places"
+msgstr ""
+
+#: core/analyzers.py:682
+msgid "Shuffle operations are dominant"
+msgstr ""
+
+#: core/analyzers.py:684
+msgid "Joins between large tables or insufficient broadcast threshold"
+msgstr ""
+
+#: core/analyzers.py:685
+msgid "Expand broadcast threshold or use REPARTITION hint"
+msgstr ""
+
+#: core/analyzers.py:696
+#, python-brace-format
+msgid "Filter efficiency: {ratio}"
+msgstr ""
+
+#: core/analyzers.py:699
+#, python-brace-format
+msgid "Read file count: {read} / {total}"
+msgstr ""
+
+#: core/analyzers.py:702
+msgid "Low file pruning efficiency"
+msgstr ""
+
+#: core/analyzers.py:704
+msgid ""
+"Mismatch between partition key and filter condition, or Z-Order not "
+"configured"
+msgstr ""
+
+#: core/analyzers.py:705
+msgid "Review table partitioning or apply Z-Order/Liquid Clustering"
+msgstr ""
+
+#: core/analyzers.py:718
+#, python-brace-format
+msgid "Execution time share: {share}%"
+msgstr ""
+
+#: core/analyzers.py:719
+#, python-brace-format
+msgid "Operator: {op}"
+msgstr ""
+
+#: core/analyzers.py:724
+#, python-brace-format, python-format
+msgid "Scan operation accounts for {share}% of total time"
+msgstr ""
+
+#: core/analyzers.py:726
+msgid "Large data read or insufficient column pruning"
+msgstr ""
+
+#: core/analyzers.py:727
+msgid "SELECT only required columns or add partition filter"
+msgstr ""
+
+#: core/analyzers.py:730
+#, python-brace-format
+msgid "time_share of Node {id} < 20%"
+msgstr ""
+
+#: core/analyzers.py:736
+#, python-brace-format, python-format
+msgid "Non-Photon join accounts for {share}% of total time"
+msgstr ""
+
+#: core/analyzers.py:738
+msgid "Sort-Merge join or unsupported join type"
+msgstr ""
+
+#: core/analyzers.py:739
+msgid "Change join type (Hash Join recommended)"
+msgstr ""
+
+#: core/analyzers.py:743
+#, python-brace-format
+msgid "Photon execution on Node {id}"
+msgstr ""
+
+#: core/i18n.py:438
+msgid "Queued..."
+msgstr ""
+
+#: core/i18n.py:439
+msgid "Analyzing metrics..."
+msgstr ""
+
+#: core/i18n.py:440
+msgid "Analyzing EXPLAIN..."
+msgstr ""
+
+#: core/i18n.py:441
+msgid "Stage 1/3: Initial LLM analysis..."
+msgstr ""
+
+#: core/i18n.py:442
+msgid "Stage 2/3: LLM review..."
+msgstr ""
+
+#: core/i18n.py:443
+msgid "Stage 3/3: LLM refinement..."
+msgstr ""
+
+#: core/i18n.py:444
+msgid "Generating report..."
+msgstr ""
+
+#: core/i18n.py:445
+msgid "Complete!"
+msgstr ""
+
+#: core/reporters.py:23 core/reporters.py:761 core/reporters.py:780
+#: core/reporters.py:823
+msgid "Low"
+msgstr ""
+
+#: core/reporters.py:25 core/reporters.py:760 core/reporters.py:779
+#: core/reporters.py:822
+msgid "Medium"
+msgstr ""
+
+#: core/reporters.py:27 core/reporters.py:759 core/reporters.py:777
+#: core/reporters.py:778 core/reporters.py:821
+msgid "High"
+msgstr ""
+
+#: core/reporters.py:29
+msgid "Very High"
+msgstr ""
+
+#: core/reporters.py:56
+msgid "Tables Used"
+msgstr ""
+
+#: core/reporters.py:57
+msgid "Table Name"
+msgstr ""
+
+#: core/reporters.py:57
+msgid "Alias"
+msgstr ""
+
+#: core/reporters.py:57
+msgid "Usage"
+msgstr ""
+
+#: core/reporters.py:63
+msgid "Target"
+msgstr ""
+
+#: core/reporters.py:63
+msgid "Source"
+msgstr ""
+
+#: core/reporters.py:71
+msgid "Query Structure"
+msgstr ""
+
+#: core/reporters.py:72
+msgid "Statement Type"
+msgstr ""
+
+#: core/reporters.py:75
+msgid "Join Count"
+msgstr ""
+
+#: core/reporters.py:77
+msgid "Join Types"
+msgstr ""
+
+#: core/reporters.py:80
+msgid "CTE Count"
+msgstr ""
+
+#: core/reporters.py:82
+msgid "CTE Names"
+msgstr ""
+
+#: core/reporters.py:85
+msgid "Subquery Count"
+msgstr ""
+
+#: core/reporters.py:88
+msgid "Aggregate Functions"
+msgstr ""
+
+#: core/reporters.py:91
+msgid "Window Functions"
+msgstr ""
+
+#: core/reporters.py:107
+msgid "Clauses Used"
+msgstr ""
+
+#: core/reporters.py:110
+msgid "Complexity"
+msgstr ""
+
+#: core/reporters.py:110
+msgid "Score"
+msgstr ""
+
+#: core/reporters.py:127
+msgid "Execution Plan Analysis (EXPLAIN)"
+msgstr ""
+
+#: core/reporters.py:132
+msgid "Physical Plan Summary"
+msgstr ""
+
+#: core/reporters.py:139
+msgid "Operator Type"
+msgstr ""
+
+#: core/reporters.py:139 core/reporters.py:548
+msgid "Count"
+msgstr ""
+
+#: core/reporters.py:149
+msgid "Table Scans"
+msgstr ""
+
+#: core/reporters.py:150
+msgid "Table"
+msgstr ""
+
+#: core/reporters.py:150
+msgid "Format"
+msgstr ""
+
+#: core/reporters.py:162
+msgid "(None)"
+msgstr ""
+
+#: core/reporters.py:171
+msgid "Join Operators"
+msgstr ""
+
+#: core/reporters.py:191
+msgid "Shuffle/Exchange"
+msgstr ""
+
+#: core/reporters.py:192
+msgid "Exchange operations"
+msgstr ""
+
+#: core/reporters.py:199
+msgid "Hash Partitioning detected"
+msgstr ""
+
+#: core/reporters.py:202
+msgid "Range Partitioning detected"
+msgstr ""
+
+#: core/reporters.py:205
+msgid "SinglePartition detected (for broadcast)"
+msgstr ""
+
+#: core/reporters.py:212
+msgid "Aggregation Operators"
+msgstr ""
+
+#: core/reporters.py:213
+msgid "Aggregation stages"
+msgstr ""
+
+#: core/reporters.py:218
+msgid "Using multi-stage aggregation (Partial -> Final)"
+msgstr ""
+
+#: core/reporters.py:224
+msgid "Optimized Logical Plan Summary"
+msgstr ""
+
+#: core/reporters.py:229
+msgid "Referenced tables"
+msgstr ""
+
+#: core/reporters.py:234
+msgid "Joins"
+msgstr ""
+
+#: core/reporters.py:239
+msgid "Filters"
+msgstr ""
+
+#: core/reporters.py:239
+msgid "pushdown applied"
+msgstr ""
+
+#: core/reporters.py:245 core/reporters.py:824
+msgid "Photon Support Status"
+msgstr ""
+
+#: core/reporters.py:254
+msgid "Optimizer Statistics"
+msgstr ""
+
+#: core/reporters.py:260
+msgid "Missing statistics"
+msgstr ""
+
+#: core/reporters.py:264
+msgid "Partial statistics"
+msgstr ""
+
+#: core/reporters.py:268
+msgid "Full statistics"
+msgstr ""
+
+#: core/reporters.py:277 core/reporters.py:422 core/reporters.py:726
+msgid "Good"
+msgstr ""
+
+#: core/reporters.py:278 core/reporters.py:420 core/reporters.py:506
+msgid "Warning"
+msgstr ""
+
+#: core/reporters.py:279
+msgid "Alert"
+msgstr ""
+
+#: core/reporters.py:280 core/reporters.py:418 core/reporters.py:726
+#: core/reporters.py:798
+msgid "Critical"
+msgstr ""
+
+#: core/reporters.py:302
+msgid "Indicator"
+msgstr ""
+
+#: core/reporters.py:302 core/reporters.py:357 core/reporters.py:409
+msgid "Value"
+msgstr ""
+
+#: core/reporters.py:302 core/reporters.py:409 core/reporters.py:496
+#: core/reporters.py:1015 templates/result.html:24
+msgid "Status"
+msgstr ""
+
+#: core/reporters.py:302
+msgid "Threshold"
+msgstr ""
+
+#: core/reporters.py:308 core/reporters.py:757 core/reporters.py:1006
+#: templates/result.html:52
+msgid "Cache Hit Ratio"
+msgstr ""
+
+#: core/reporters.py:313
+msgid "Remote Read Ratio"
+msgstr ""
+
+#: core/reporters.py:318 core/reporters.py:1006 templates/result.html:66
+msgid "Photon Utilization"
+msgstr ""
+
+#: core/reporters.py:324 core/reporters.py:1006 templates/result.html:94
+msgid "Disk Spill"
+msgstr ""
+
+#: core/reporters.py:329 core/reporters.py:728
+msgid "Filter Efficiency"
+msgstr ""
+
+#: core/reporters.py:334 core/reporters.py:729
+msgid "Bytes Pruning"
+msgstr ""
+
+#: core/reporters.py:339
+msgid "Shuffle Impact Ratio"
+msgstr ""
+
+#: core/reporters.py:355
+msgid "I/O Metrics"
+msgstr ""
+
+#: core/reporters.py:357 core/reporters.py:409 core/reporters.py:726
+msgid "Metric"
+msgstr ""
+
+#: core/reporters.py:357
+msgid "Details"
+msgstr ""
+
+#: core/reporters.py:361
+msgid "Total Read"
+msgstr ""
+
+#: core/reporters.py:365
+msgid "From Cache"
+msgstr ""
+
+#: core/reporters.py:369
+msgid "From Remote"
+msgstr ""
+
+#: core/reporters.py:374
+msgid "Files Read"
+msgstr ""
+
+#: core/reporters.py:375
+msgid "Files Pruned"
+msgstr ""
+
+#: core/reporters.py:375 core/reporters.py:380
+msgid "efficiency"
+msgstr ""
+
+#: core/reporters.py:380
+msgid "Bytes Pruned"
+msgstr ""
+
+#: core/reporters.py:384
+msgid "Rows Skipped (Predictive I/O)"
+msgstr ""
+
+#: core/reporters.py:386
+msgid "Batches Skipped (Predictive I/O)"
+msgstr ""
+
+#: core/reporters.py:407
+msgid "Cloud Storage Performance"
+msgstr ""
+
+#: core/reporters.py:413
+msgid "Total Requests"
+msgstr ""
+
+#: core/reporters.py:423
+msgid "Total Retries"
+msgstr ""
+
+#: core/reporters.py:426
+msgid "Avg Request Duration"
+msgstr ""
+
+#: core/reporters.py:430
+msgid "Retry Overhead"
+msgstr ""
+
+#: core/reporters.py:436
+msgid "Warning: Retry rate indicates possible storage throttling"
+msgstr ""
+
+#: core/reporters.py:455
+msgid "Spill Analysis"
+msgstr ""
+
+#: core/reporters.py:461
+msgid "Total Spill"
+msgstr ""
+
+#: core/reporters.py:461
+msgid "Max Spill Operator"
+msgstr ""
+
+#: core/reporters.py:464 core/reporters.py:649
+msgid "Rank"
+msgstr ""
+
+#: core/reporters.py:464 core/reporters.py:649
+msgid "Operator"
+msgstr ""
+
+#: core/reporters.py:464 core/reporters.py:649 core/reporters.py:794
+msgid "Spill"
+msgstr ""
+
+#: core/reporters.py:464
+msgid "Peak Memory"
+msgstr ""
+
+#: core/reporters.py:464 core/reporters.py:649
+msgid "Share"
+msgstr ""
+
+#: core/reporters.py:494
+msgid "AQE Shuffle Health"
+msgstr ""
+
+#: core/reporters.py:496 core/reporters.py:1077
+msgid "Node"
+msgstr ""
+
+#: core/reporters.py:496
+msgid "Partitions"
+msgstr ""
+
+#: core/reporters.py:496
+msgid "Data Size"
+msgstr ""
+
+#: core/reporters.py:496
+msgid "Avg Size"
+msgstr ""
+
+#: core/reporters.py:496
+msgid "Skewed"
+msgstr ""
+
+#: core/reporters.py:512
+msgid "OK"
+msgstr ""
+
+#: core/reporters.py:525
+msgid "Recommendation"
+msgstr ""
+
+#: core/reporters.py:544
+msgid "Photon Blockers"
+msgstr ""
+
+#: core/reporters.py:546
+msgid "Photon utilization is"
+msgstr ""
+
+#: core/reporters.py:546
+msgid "The following operations are not running on Photon"
+msgstr ""
+
+#: core/reporters.py:548
+msgid "Reason"
+msgstr ""
+
+#: core/reporters.py:548 core/reporters.py:584
+msgid "Impact"
+msgstr ""
+
+#: core/reporters.py:548 core/reporters.py:757 core/reporters.py:796
+msgid "Action"
+msgstr ""
+
+#: core/reporters.py:574
+msgid "Top Findings (Actions by Priority)"
+msgstr ""
+
+#: core/reporters.py:584
+msgid "Effort"
+msgstr ""
+
+#: core/reporters.py:584
+msgid "Priority Score"
+msgstr ""
+
+#: core/reporters.py:587
+msgid "Evidence"
+msgstr ""
+
+#: core/reporters.py:594
+msgid "Likely Cause"
+msgstr ""
+
+#: core/reporters.py:597
+msgid "Fix"
+msgstr ""
+
+#: core/reporters.py:607
+msgid "Validation Metric"
+msgstr ""
+
+#: core/reporters.py:628
+msgid "Hot Operators (Top Time-Consuming)"
+msgstr ""
+
+#: core/reporters.py:639
+msgid "scan"
+msgstr ""
+
+#: core/reporters.py:640
+msgid "join"
+msgstr ""
+
+#: core/reporters.py:641
+msgid "shuffle"
+msgstr ""
+
+#: core/reporters.py:642
+msgid "sort"
+msgstr ""
+
+#: core/reporters.py:643
+msgid "agg"
+msgstr ""
+
+#: core/reporters.py:644 core/reporters.py:696
+msgid "spill"
+msgstr ""
+
+#: core/reporters.py:646
+msgid "Main Bottleneck Type"
+msgstr ""
+
+#: core/reporters.py:649
+msgid "Time"
+msgstr ""
+
+#: core/reporters.py:649
+msgid "Rows (in/out)"
+msgstr ""
+
+#: core/reporters.py:649
+msgid "Photon"
+msgstr ""
+
+#: core/reporters.py:649 core/reporters.py:1056
+msgid "Type"
+msgstr ""
+
+#: core/reporters.py:690
+msgid "Warning: The following operators are critical bottlenecks"
+msgstr ""
+
+#: core/reporters.py:694
+msgid "time share"
+msgstr ""
+
+#: core/reporters.py:718
+msgid "Tuning Guide"
+msgstr ""
+
+#: core/reporters.py:719
+msgid "The following recommendations are based on detected bottlenecks."
+msgstr ""
+
+#: core/reporters.py:723
+msgid "I/O Optimization"
+msgstr ""
+
+#: core/reporters.py:724 core/reporters.py:755 core/reporters.py:771
+#: core/reporters.py:794 core/reporters.py:817 core/reporters.py:851
+msgid "Current Status"
+msgstr ""
+
+#: core/reporters.py:724
+msgid "Filter efficiency"
+msgstr ""
+
+#: core/reporters.py:724
+msgid "Bytes pruning"
+msgstr ""
+
+#: core/reporters.py:725 core/reporters.py:756 core/reporters.py:818
+msgid "Evaluation Criteria"
+msgstr ""
+
+#: core/reporters.py:726
+msgid "Needs Improvement"
+msgstr ""
+
+#: core/reporters.py:730 core/reporters.py:762
+msgid "Recommended Actions"
+msgstr ""
+
+#: core/reporters.py:731
+msgid "Partitioning"
+msgstr ""
+
+#: core/reporters.py:731
+msgid "Partition by frequently filtered columns (date columns recommended)"
+msgstr ""
+
+#: core/reporters.py:732
+msgid "Target partition count"
+msgstr ""
+
+#: core/reporters.py:733
+msgid "Run OPTIMIZE per partition to avoid small files"
+msgstr ""
+
+#: core/reporters.py:734
+msgid "Apply Z-Order for columns not suitable for partitioning"
+msgstr ""
+
+#: core/reporters.py:735 core/reporters.py:1092
+msgid "Recommended"
+msgstr ""
+
+#: core/reporters.py:735
+msgid "columns or less"
+msgstr ""
+
+#: core/reporters.py:736
+msgid "Place Z-Order target columns in first 32 columns"
+msgstr ""
+
+#: core/reporters.py:737
+msgid "Consider as alternative to partitioning + Z-Order"
+msgstr ""
+
+#: core/reporters.py:738
+msgid "Effective for reducing Shuffle operations"
+msgstr ""
+
+#: core/reporters.py:739
+msgid "Especially useful when memory usage exceeds 100GB"
+msgstr ""
+
+#: core/reporters.py:740
+msgid "Example SQL"
+msgstr ""
+
+#: core/reporters.py:754
+msgid "Cache Efficiency"
+msgstr ""
+
+#: core/reporters.py:755
+msgid "Cache hit ratio"
+msgstr ""
+
+#: core/reporters.py:755
+msgid "Remote read ratio"
+msgstr ""
+
+#: core/reporters.py:757 core/reporters.py:819
+msgid "Evaluation"
+msgstr ""
+
+#: core/reporters.py:759 core/reporters.py:821
+msgid "Good state"
+msgstr ""
+
+#: core/reporters.py:760
+msgid "Consider scale up"
+msgstr ""
+
+#: core/reporters.py:761
+msgid "Review cache strategy"
+msgstr ""
+
+#: core/reporters.py:763
+msgid "Re-run the same query to verify cache effect"
+msgstr ""
+
+#: core/reporters.py:764
+msgid "If cache hit remains low, consider scaling up the cluster"
+msgstr ""
+
+#: core/reporters.py:765
+msgid ""
+"Prioritize I/O optimization (partitioning/Liquid) to reduce data read "
+"first"
+msgstr ""
+
+#: core/reporters.py:770
+msgid "Shuffle Optimization"
+msgstr ""
+
+#: core/reporters.py:771
+msgid "Shuffle impact ratio"
+msgstr ""
+
+#: core/reporters.py:773
+msgid "Inefficient Shuffle Operations"
+msgstr ""
+
+#: core/reporters.py:773
+msgid "detected"
+msgstr ""
+
+#: core/reporters.py:774
+msgid "Memory Efficiency Criteria"
+msgstr ""
+
+#: core/reporters.py:775
+msgid "Memory/Partition"
+msgstr ""
+
+#: core/reporters.py:775
+msgid "Priority"
+msgstr ""
+
+#: core/reporters.py:775
+msgid "Recommended Action"
+msgstr ""
+
+#: core/reporters.py:777
+msgid "Scale up cluster or significantly increase partition count"
+msgstr ""
+
+#: core/reporters.py:778
+msgid "Increase partition count, adjust AQE settings"
+msgstr ""
+
+#: core/reporters.py:779
+msgid "Recommend partition count adjustment"
+msgstr ""
+
+#: core/reporters.py:780
+msgid "Efficient state"
+msgstr ""
+
+#: core/reporters.py:781
+msgid "REPARTITION Hints"
+msgstr ""
+
+#: core/reporters.py:793
+msgid "Disk Spill Countermeasures"
+msgstr ""
+
+#: core/reporters.py:795
+msgid "Severity Criteria"
+msgstr ""
+
+#: core/reporters.py:796
+msgid "Spill Amount"
+msgstr ""
+
+#: core/reporters.py:796
+msgid "Severity"
+msgstr ""
+
+#: core/reporters.py:798
+msgid "Memory configuration and partition strategy review required"
+msgstr ""
+
+#: core/reporters.py:799
+msgid "Important"
+msgstr ""
+
+#: core/reporters.py:799
+msgid "Optimization strongly recommended"
+msgstr ""
+
+#: core/reporters.py:800
+msgid "Caution"
+msgstr ""
+
+#: core/reporters.py:800
+msgid "Monitor and consider improvement"
+msgstr ""
+
+#: core/reporters.py:801
+msgid "Ideal"
+msgstr ""
+
+#: core/reporters.py:801
+msgid "Optimal state"
+msgstr ""
+
+#: core/reporters.py:802
+msgid "Countermeasures by Priority"
+msgstr ""
+
+#: core/reporters.py:803
+msgid "Emergency (High Priority)"
+msgstr ""
+
+#: core/reporters.py:804
+msgid "Scale up cluster (increase worker nodes)"
+msgstr ""
+
+#: core/reporters.py:805
+msgid "Change to high-memory instance type"
+msgstr ""
+
+#: core/reporters.py:806
+msgid "Short-term"
+msgstr ""
+
+#: core/reporters.py:809
+msgid "Medium-term"
+msgstr ""
+
+#: core/reporters.py:810
+msgid "Explicit partition specification (.repartition())"
+msgstr ""
+
+#: core/reporters.py:811
+msgid "JOIN strategy optimization (use Broadcast JOIN)"
+msgstr ""
+
+#: core/reporters.py:812
+msgid "Implement Liquid Clustering"
+msgstr ""
+
+#: core/reporters.py:816
+msgid "Photon Utilization Improvement"
+msgstr ""
+
+#: core/reporters.py:817
+msgid "Photon utilization"
+msgstr ""
+
+#: core/reporters.py:819
+msgid "Utilization"
+msgstr ""
+
+#: core/reporters.py:819
+msgid "Description"
+msgstr ""
+
+#: core/reporters.py:822
+msgid "Room for improvement"
+msgstr ""
+
+#: core/reporters.py:823
+msgid "Optimization required"
+msgstr ""
+
+#: core/reporters.py:825
+msgid "Join Type"
+msgstr ""
+
+#: core/reporters.py:825
+msgid "Photon Support"
+msgstr ""
+
+#: core/reporters.py:827 core/reporters.py:828 core/reporters.py:830
+msgid "Supported"
+msgstr ""
+
+#: core/reporters.py:829
+msgid "Not Supported"
+msgstr ""
+
+#: core/reporters.py:832
+msgid "Detected Photon Blockers"
+msgstr ""
+
+#: core/reporters.py:839
+msgid "Cluster Size Adjustment"
+msgstr ""
+
+#: core/reporters.py:840
+msgid "Scale Out"
+msgstr ""
+
+#: core/reporters.py:840
+msgid "When concurrent query count is high and queue waiting occurs"
+msgstr ""
+
+#: core/reporters.py:841
+msgid "DBSQL max concurrent queries per cluster"
+msgstr ""
+
+#: core/reporters.py:841
+msgid "fixed value"
+msgstr ""
+
+#: core/reporters.py:842
+msgid "Determine max cluster count based on queued query count"
+msgstr ""
+
+#: core/reporters.py:843
+msgid "Scale Up"
+msgstr ""
+
+#: core/reporters.py:843
+msgid "When performance degradation is caused by high-load queries"
+msgstr ""
+
+#: core/reporters.py:844
+msgid "CPU/Memory/Disk spill resource issues"
+msgstr ""
+
+#: core/reporters.py:845
+msgid "Low Delta cache hit ratio"
+msgstr ""
+
+#: core/reporters.py:846
+msgid "Scale up reduces cluster count, enabling effective Delta cache utilization"
+msgstr ""
+
+#: core/reporters.py:850
+msgid "Cloud Storage Bottleneck"
+msgstr ""
+
+#: core/reporters.py:851
+msgid "Retry ratio"
+msgstr ""
+
+#: core/reporters.py:852
+msgid "Judgment Criteria"
+msgstr ""
+
+#: core/reporters.py:853
+msgid "High retry count indicates cloud storage access is a bottleneck"
+msgstr ""
+
+#: core/reporters.py:854
+msgid "Ideal state is retry count = 0"
+msgstr ""
+
+#: core/reporters.py:855
+msgid "Metrics to Check"
+msgstr ""
+
+#: core/reporters.py:863
+msgid "No significant bottlenecks detected. Query performance appears optimal."
+msgstr ""
+
+#: core/reporters.py:880
+msgid "Recommended Spark Parameters"
+msgstr ""
+
+#: core/reporters.py:893
+msgid "Join Optimization"
+msgstr ""
+
+#: core/reporters.py:895
+msgid "Recommended based on detected join/shuffle issues"
+msgstr ""
+
+#: core/reporters.py:903
+msgid "AQE (Adaptive Query Execution) Settings"
+msgstr ""
+
+#: core/reporters.py:905
+msgid "Extended AQE settings recommended based on detected shuffle/spill issues"
+msgstr ""
+
+#: core/reporters.py:932
+msgid "Shuffle Partition Settings"
+msgstr ""
+
+#: core/reporters.py:933
+msgid "Significant shuffle impact detected. Consider partition count adjustment."
+msgstr ""
+
+#: core/reporters.py:954
+msgid "Validation Checklist"
+msgstr ""
+
+#: core/reporters.py:955
+msgid "Please verify the following metrics after optimization"
+msgstr ""
+
+#: core/reporters.py:970
+msgid "on re-run"
+msgstr ""
+
+#: core/reporters.py:1000
+msgid "Query Performance Report"
+msgstr ""
+
+#: core/reporters.py:1004
+msgid "Summary"
+msgstr ""
+
+#: core/reporters.py:1006 core/reporters.py:1018 templates/result.html:31
+msgid "Execution Time"
+msgstr ""
+
+#: core/reporters.py:1006
+msgid "Read Data"
+msgstr ""
+
+#: core/reporters.py:1012
+msgid "Basic Information"
+msgstr ""
+
+#: core/reporters.py:1014 templates/result.html:19
+msgid "Query ID"
+msgstr ""
+
+#: core/reporters.py:1016
+msgid "Total Execution Time"
+msgstr ""
+
+#: core/reporters.py:1017
+msgid "Compilation Time"
+msgstr ""
+
+#: core/reporters.py:1022 templates/result.html:45
+msgid "Bottleneck Indicators"
+msgstr ""
+
+#: core/reporters.py:1032
+msgid "Critical Issues"
+msgstr ""
+
+#: core/reporters.py:1043
+msgid "Warnings"
+msgstr ""
+
+#: core/reporters.py:1054
+msgid "Join Type Analysis"
+msgstr ""
+
+#: core/reporters.py:1056
+msgid "Join Operator"
+msgstr ""
+
+#: core/reporters.py:1056
+msgid "Type Support"
+msgstr ""
+
+#: core/reporters.py:1056
+msgid "Photon Execution"
+msgstr ""
+
+#: core/reporters.py:1073
+msgid "Shuffle Operations Requiring Optimization"
+msgstr ""
+
+#: core/reporters.py:1078
+msgid "Memory Usage"
+msgstr ""
+
+#: core/reporters.py:1078
+msgid "per partition"
+msgstr ""
+
+#: core/reporters.py:1079
+msgid "Optimization Priority"
+msgstr ""
+
+#: core/reporters.py:1113 core/reporters.py:1151
+msgid "LLM Analysis Report"
+msgstr ""
+
+#: core/reporters.py:1123
+msgid "Initial Analysis"
+msgstr ""
+
+#: core/reporters.py:1132
+msgid "Review"
+msgstr ""
+
+#: core/reporters.py:1141
+msgid "Final Analysis"
+msgstr ""
+
+#: core/reporters.py:1160
+msgid "Review Result"
+msgstr ""
+
+#: core/reporters.py:1178
+msgid "This report was generated using Databricks Foundation Model APIs."
+msgstr ""
+
+#: templates/base.html:820 templates/index.html:3
+msgid "Upload"
+msgstr ""
+
+#: templates/base.html:830
+msgid "Toggle theme"
+msgstr ""
+
+#: templates/error.html:3 templates/index.html:228
+msgid "Error"
+msgstr ""
+
+#: templates/error.html:11
+msgid "An error occurred"
+msgstr ""
+
+#: templates/error.html:15
+msgid "Return to Home"
+msgstr ""
+
+#: templates/index.html:30
+msgid "Query Profile Analysis"
+msgstr ""
+
+#: templates/index.html:35
+msgid ""
+"Upload a Databricks SQL query profile JSON to analyze performance metrics"
+" and get optimization recommendations."
+msgstr ""
+
+#: templates/index.html:42
+msgid "Drag and drop JSON file"
+msgstr ""
+
+#: templates/index.html:43
+msgid "or click to select"
+msgstr ""
+
+#: templates/index.html:64
+msgid "EXPLAIN Analysis (Optional)"
+msgstr ""
+
+#: templates/index.html:70
+msgid ""
+"Adding EXPLAIN EXTENDED output enables detailed analysis based on the "
+"execution plan."
+msgstr ""
+
+#: templates/index.html:75
+msgid "EXPLAIN file (.txt)"
+msgstr ""
+
+#: templates/index.html:80
+msgid "or"
+msgstr ""
+
+#: templates/index.html:84
+msgid "Paste EXPLAIN text"
+msgstr ""
+
+#: templates/index.html:106
+msgid "LLM Analysis Options"
+msgstr ""
+
+#: templates/index.html:114
+msgid "Skip LLM analysis (metrics only)"
+msgstr ""
+
+#: templates/index.html:120
+msgid "Primary Model"
+msgstr ""
+
+#: templates/index.html:128
+msgid "Review Model"
+msgstr ""
+
+#: templates/index.html:136
+msgid "Refine Model"
+msgstr ""
+
+#: templates/index.html:138
+msgid "Same as Primary"
+msgstr ""
+
+#: templates/index.html:154
+msgid "Start Analysis"
+msgstr ""
+
+#: templates/index.html:166
+msgid "Metrics"
+msgstr ""
+
+#: templates/index.html:167
+msgid "Cache hit ratio, Photon utilization, Shuffle impact"
+msgstr ""
+
+#: templates/index.html:173
+msgid "LLM Analysis"
+msgstr ""
+
+#: templates/index.html:174
+msgid "3-stage analysis: Initial -> Review -> Refine"
+msgstr ""
+
+#: templates/index.html:180 templates/result.html:137
+msgid "Export"
+msgstr ""
+
+#: templates/index.html:181
+msgid "Download report in Markdown"
+msgstr ""
+
+#: templates/index.html:192
+msgid "Analyzing..."
+msgstr ""
+
+#: templates/index.html:225
+#, python-brace-format
+msgid "File loaded: {name}"
+msgstr ""
+
+#: templates/index.html:226
+#, python-brace-format
+msgid "Text input: {lines} lines"
+msgstr ""
+
+#: templates/index.html:227
+msgid "Please select a JSON file"
+msgstr ""
+
+#: templates/index.html:229
+msgid "Analysis failed"
+msgstr ""
+
+#: templates/index.html:230
+msgid "Server returned non-JSON response. Check console."
+msgstr ""
+
+#: templates/index.html:231
+msgid "Starting analysis..."
+msgstr ""
+
+#: templates/result.html:3
+msgid "Analysis Result"
+msgstr ""
+
+#: templates/result.html:14
+msgid "Query Information"
+msgstr ""
+
+#: templates/result.html:32
+msgid "seconds"
+msgstr ""
+
+#: templates/result.html:34
+msgid "File"
+msgstr ""
+
+#: templates/result.html:80
+msgid "Shuffle Impact"
+msgstr ""
+
+#: templates/result.html:110
+msgid "Detected Issues"
+msgstr ""
+
+#: templates/result.html:143
+msgid "Download as Markdown"
+msgstr ""
+
+#: templates/result.html:147
+msgid "Print / Save as PDF"
+msgstr ""
+
+#: templates/result.html:159
+msgid "Analysis Report"
+msgstr ""
+
+#: templates/result.html:164
+msgid "LLM Analyzed"
+msgstr ""
+
+#: templates/result.html:169
+msgid "Metrics Only"
+msgstr ""
+

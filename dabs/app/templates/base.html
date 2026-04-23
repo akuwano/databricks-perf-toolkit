@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html lang="{{ current_lang|default('en') }}" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Performance Toolkit{% endblock %}</title>
+    <style>
+    /* Compact tables in markdown report content */
+    .markdown-content table { table-layout: auto; width: 100%; max-width: 100%; }
+    .markdown-content th, .markdown-content td { padding: 0.3rem 0.5rem; font-size: 0.8rem; white-space: nowrap; }
+    .markdown-content td:nth-child(2), .markdown-content td:nth-child(3) { white-space: normal; word-break: break-word; }
+    .markdown-content td:last-child, .markdown-content th:last-child { white-space: normal; }
+    /* Code block copy button */
+    pre { position: relative; }
+    .code-copy-btn {
+        position: absolute; top: 0.3rem; right: 0.3rem;
+        background: hsl(var(--muted) / 0.6); color: hsl(var(--muted-foreground));
+        border: none; border-radius: 4px; padding: 0.2rem 0.4rem;
+        font-size: 0.7rem; cursor: pointer; opacity: 0; transition: opacity 0.15s;
+        z-index: 5;
+    }
+    pre:hover .code-copy-btn { opacity: 1; }
+    .code-copy-btn:hover { background: hsl(var(--primary) / 0.3); color: hsl(var(--primary)); }
+    /* Chat panel resize handle */
+    #chatPanel .chat-resize-handle {
+        position: absolute; left: -4px; top: 0; bottom: 0; width: 8px;
+        cursor: col-resize; z-index: 10;
+    }
+    #chatPanel .chat-resize-handle:hover,
+    #chatPanel .chat-resize-handle.dragging {
+        background: hsl(var(--primary) / 0.3);
+    }
+    @media print {
+        body { font-size: 9px !important; }
+        .container, [style*="max-width"] { max-width: 100% !important; width: 100% !important; }
+        .no-print, #chatToggle, #chatPanel, nav, .navbar { display: none !important; }
+        .markdown-content table { width: auto !important; max-width: 100% !important; }
+        .markdown-content th, .markdown-content td { white-space: normal !important; word-break: break-word !important; font-size: 7px !important; }
+        .card { break-inside: avoid; }
+        pre { white-space: pre-wrap !important; word-break: break-all !important; font-size: 7px !important; }
+    }
+    </style>
+
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.2/font/bootstrap-icons.css" rel="stylesheet">
+    <!-- Highlight.js for SQL syntax highlighting (light theme) -->
+    <link id="hljs-theme-light" rel="stylesheet" href="https://cdn.jsdelivr.net/npm/highlight.js@11.9.0/styles/github.min.css">
+    <!-- Highlight.js for SQL syntax highlighting (dark theme) -->
+    <link id="hljs-theme-dark" rel="stylesheet" href="https://cdn.jsdelivr.net/npm/highlight.js@11.9.0/styles/github-dark.min.css">
+
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/variables.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/layout.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/components.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/markdown.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/print.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+    <nav class="navbar">
+        <div class="container">
+            <a class="navbar-brand" href="/">
+                <i class="bi bi-activity"></i>
+                Performance Toolkit
+            </a>
+            <ul class="navbar-nav">
+                <li class="nav-item">
+                    <a class="nav-link" href="/analyze">
+                        <i class="bi bi-upload"></i> {{ _('SQL Analysis') }}
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="/history">
+                        <i class="bi bi-file-text"></i> {{ _('View Report') }}
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="/compare">
+                        <i class="bi bi-arrow-left-right"></i> {{ _('Compare') }}
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="/spark-perf">
+                        <i class="bi bi-speedometer2"></i> {{ _('Spark Job Analysis') }}
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="/schema-analysis">
+                        <i class="bi bi-table"></i> {{ _('Schema Analysis') }}
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <div class="lang-toggle" id="langToggle">
+                        <button class="lang-btn {% if current_lang == 'en' %}active{% endif %}" data-lang="en" title="English">EN</button>
+                        <button class="lang-btn {% if current_lang == 'ja' %}active{% endif %}" data-lang="ja" title="Japanese">JA</button>
+                    </div>
+                </li>
+                <li class="nav-item">
+                    <button class="theme-toggle" id="themeToggle" title="{{ _('Toggle theme') }}">
+                        <i class="bi bi-moon-fill"></i>
+                    </button>
+                </li>
+            </ul>
+        </div>
+    </nav>
+
+    <main class="container" style="margin-top: 2rem; margin-bottom: 2rem;">
+        {% block content %}{% endblock %}
+    </main>
+
+    <footer>
+        <div class="container">
+            Powered by Databricks Foundation Model APIs
+        </div>
+    </footer>
+
+    <!-- Marked.js for Markdown rendering -->
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <!-- DOMPurify for XSS protection -->
+    <script src="https://cdn.jsdelivr.net/npm/dompurify@3.2.4/dist/purify.min.js"></script>
+    <!-- Highlight.js for SQL syntax highlighting (common languages bundle includes SQL) -->
+    <script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/highlight.min.js"></script>
+    <!-- Mermaid.js for flowchart diagrams -->
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+    <script>
+        mermaid.initialize({
+            startOnLoad: false,
+            theme: document.documentElement.dataset.theme === 'dark' ? 'dark' : 'default',
+            flowchart: { useMaxWidth: true, htmlLabels: true },
+            securityLevel: 'strict',
+        });
+    </script>
+
+    <!-- Shared Mermaid rendering helper -->
+    <script>
+    /**
+     * Render all Mermaid code blocks inside a container element.
+     * Call after inserting Markdown-rendered HTML into the DOM.
+     * @param {HTMLElement} container - The DOM element containing rendered Markdown
+     * @param {string} [idPrefix='mermaid'] - Prefix for generated SVG IDs
+     */
+    async function renderMermaidBlocks(container, idPrefix) {
+        if (!window.mermaid || !container) return;
+        idPrefix = idPrefix || 'mermaid';
+        const codeBlocks = container.querySelectorAll('pre code.language-mermaid');
+        for (let i = 0; i < codeBlocks.length; i++) {
+            const codeBlock = codeBlocks[i];
+            const mermaidCode = codeBlock.textContent;
+            const wrapper = document.createElement('div');
+            wrapper.className = 'mermaid-wrapper';
+            wrapper.innerHTML =
+                '<div class="mermaid-toolbar">' +
+                    '<button data-action="zoom-in" title="{{ _("Zoom In") }}"><i class="bi bi-zoom-in"></i></button>' +
+                    '<button data-action="zoom-out" title="{{ _("Zoom Out") }}"><i class="bi bi-zoom-out"></i></button>' +
+                    '<span class="mermaid-zoom-label">100%</span>' +
+                    '<button data-action="fit" title="{{ _("Fit") }}"><i class="bi bi-arrows-fullscreen"></i></button>' +
+                    '<button data-action="reset" title="{{ _("Reset") }}"><i class="bi bi-arrow-counterclockwise"></i></button>' +
+                '</div>' +
+                '<div class="mermaid-viewport">' +
+                    '<div class="mermaid-container"></div>' +
+                '</div>';
+            try {
+                var result = await mermaid.render(idPrefix + '-' + i, mermaidCode);
+                wrapper.querySelector('.mermaid-container').innerHTML = result.svg;
+                initMermaidZoomPan(wrapper);
+            } catch (e) {
+                console.warn('Mermaid rendering failed, showing code fallback:', e);
+                wrapper.innerHTML = '<pre><code>' + codeBlock.textContent + '</code></pre>';
+            }
+            var pre = codeBlock.closest('pre');
+            if (pre && pre.parentNode) {
+                pre.parentNode.replaceChild(wrapper, pre);
+            }
+        }
+    }
+
+    function initMermaidZoomPan(wrapper) {
+        var viewport = wrapper.querySelector('.mermaid-viewport');
+        var container = wrapper.querySelector('.mermaid-container');
+        var zoomLabel = wrapper.querySelector('.mermaid-zoom-label');
+        var scale = 1, panX = 0, panY = 0;
+        var isDragging = false, startX = 0, startY = 0;
+        var MIN_SCALE = 0.1, MAX_SCALE = 5;
+
+        function applyTransform(smooth) {
+            container.style.transition = smooth ? 'transform 0.2s ease' : 'none';
+            container.style.transform = 'translate(' + panX + 'px, ' + panY + 'px) scale(' + scale + ')';
+            zoomLabel.textContent = Math.round(scale * 100) + '%';
+        }
+
+        function fitToViewport() {
+            var svg = container.querySelector('svg');
+            if (!svg) return;
+            var vw = viewport.clientWidth, vh = viewport.clientHeight;
+            var sw = svg.getBoundingClientRect().width / scale;
+            var sh = svg.getBoundingClientRect().height / scale;
+            if (sw === 0 || sh === 0) return;
+            scale = Math.min(vw / sw, vh / sh, 1) * 0.95;
+            panX = 0; panY = 0;
+            applyTransform(true);
+        }
+
+        viewport.addEventListener('wheel', function(e) {
+            e.preventDefault();
+            var delta = e.deltaY > 0 ? 0.9 : 1.1;
+            scale = Math.max(MIN_SCALE, Math.min(MAX_SCALE, scale * delta));
+            applyTransform(false);
+        }, { passive: false });
+
+        viewport.addEventListener('mousedown', function(e) {
+            isDragging = true; startX = e.clientX - panX; startY = e.clientY - panY;
+            viewport.style.cursor = 'grabbing';
+        });
+        document.addEventListener('mousemove', function(e) {
+            if (!isDragging) return;
+            panX = e.clientX - startX; panY = e.clientY - startY;
+            applyTransform(false);
+        });
+        document.addEventListener('mouseup', function() {
+            isDragging = false; viewport.style.cursor = 'grab';
+        });
+
+        wrapper.querySelectorAll('.mermaid-toolbar button').forEach(function(btn) {
+            btn.addEventListener('click', function() {
+                var action = btn.dataset.action;
+                if (action === 'zoom-in') { scale = Math.min(MAX_SCALE, scale * 1.2); applyTransform(true); }
+                else if (action === 'zoom-out') { scale = Math.max(MIN_SCALE, scale * 0.8); applyTransform(true); }
+                else if (action === 'fit') { fitToViewport(); }
+                else if (action === 'reset') { scale = 1; panX = 0; panY = 0; applyTransform(true); }
+            });
+        });
+
+        viewport.style.cursor = 'grab';
+        setTimeout(fitToViewport, 100);
+    }
+    </script>
+
+    <script src="{{ url_for('static', filename='js/theme.js') }}"></script>
+
+    <!-- Shared table sort utility -->
+    <script>
+    // Format datetime to unified GMT display: "YYYY-MM-DD HH:MM:SS GMT"
+    function fmtGMT(s) {
+        if (!s) return '-';
+        try {
+            const d = new Date(String(s));
+            if (isNaN(d.getTime())) return String(s);
+            const pad = n => String(n).padStart(2, '0');
+            return d.getUTCFullYear() + '-' + pad(d.getUTCMonth()+1) + '-' + pad(d.getUTCDate()) + ' ' +
+                   pad(d.getUTCHours()) + ':' + pad(d.getUTCMinutes()) + ':' + pad(d.getUTCSeconds()) + ' GMT';
+        } catch(e) { return String(s); }
+    }
+
+    const _sortState = {};
+    function sortTableData(tableId, key, dataArr, renderFn) {
+        const prev = _sortState[tableId];
+        const dir = (prev && prev.key === key && prev.dir === 'asc') ? 'desc' : 'asc';
+        _sortState[tableId] = { key, dir };
+        const _dateKeys = new Set(['start_ts', 'end_ts', 'etl_loaded_at', 'report_created_at', 'created_at', 'updated_at', 'analyzed_at']);
+        dataArr.sort((a, b) => {
+            let va = a[key], vb = b[key];
+            if (va == null && vb == null) return 0;
+            if (va == null) return 1;
+            if (vb == null) return -1;
+            // Date columns: compare as timestamps
+            if (_dateKeys.has(key)) {
+                const da = new Date(String(va)).getTime() || 0;
+                const db = new Date(String(vb)).getTime() || 0;
+                return dir === 'asc' ? da - db : db - da;
+            }
+            if (typeof va === 'string') va = va.toLowerCase();
+            if (typeof vb === 'string') vb = vb.toLowerCase();
+            if (va < vb) return dir === 'asc' ? -1 : 1;
+            if (va > vb) return dir === 'asc' ? 1 : -1;
+            return 0;
+        });
+        renderFn();
+        // Update sort indicators
+        const table = document.getElementById(tableId);
+        if (table) {
+            table.querySelectorAll('th[data-sort]').forEach(th => {
+                const ind = th.querySelector('.sort-ind');
+                if (ind) ind.textContent = th.dataset.sort === key ? (dir === 'asc' ? ' \u25B2' : ' \u25BC') : '';
+            });
+        }
+    }
+    </script>
+
+    <!-- Chat panel resize handle (auto-injects into #chatPanel if present) -->
+    <script>
+    (function() {
+        const panel = document.getElementById('chatPanel');
+        if (!panel) return;
+        const handle = document.createElement('div');
+        handle.className = 'chat-resize-handle';
+        panel.prepend(handle);
+
+        const MIN_W = 360, MAX_W = Math.min(1000, window.innerWidth * 0.8);
+        let startX, startW;
+
+        handle.addEventListener('mousedown', function(e) {
+            e.preventDefault();
+            startX = e.clientX;
+            startW = panel.offsetWidth;
+            handle.classList.add('dragging');
+            document.addEventListener('mousemove', onDrag);
+            document.addEventListener('mouseup', onUp);
+        });
+
+        function onDrag(e) {
+            const w = Math.max(MIN_W, Math.min(MAX_W, startW + (startX - e.clientX)));
+            panel.style.width = w + 'px';
+        }
+        function onUp() {
+            handle.classList.remove('dragging');
+            document.removeEventListener('mousemove', onDrag);
+            document.removeEventListener('mouseup', onUp);
+        }
+    })();
+    </script>
+
+    <!-- Code block copy buttons (auto-injects into all <pre> blocks) -->
+    <script>
+    function _addCopyButtons(root) {
+        (root || document).querySelectorAll('pre:not(.copy-ready)').forEach(pre => {
+            pre.classList.add('copy-ready');
+            const btn = document.createElement('button');
+            btn.className = 'code-copy-btn no-print';
+            btn.innerHTML = '<i class="bi bi-clipboard"></i>';
+            btn.title = 'Copy';
+            btn.addEventListener('click', function() {
+                const code = pre.querySelector('code');
+                const text = (code || pre).textContent;
+                navigator.clipboard.writeText(text).then(() => {
+                    btn.innerHTML = '<i class="bi bi-check-lg"></i>';
+                    setTimeout(() => { btn.innerHTML = '<i class="bi bi-clipboard"></i>'; }, 1500);
+                });
+            });
+            pre.appendChild(btn);
+        });
+    }
+    document.addEventListener('DOMContentLoaded', () => _addCopyButtons());
+    </script>
+
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

@@ -1,0 +1,535 @@
+{% extends "base.html" %}
+{% block title %}{{ _('Analysis History') }} - Performance Toolkit{% endblock %}
+
+{% block content %}
+<style>.editable-cell:hover { background: hsl(var(--muted)/0.3); }</style>
+<div style="max-width: 1400px; margin: 0 auto; padding: 2rem;">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+        <h1 style="font-size: 1.5rem; font-weight: 600;">{{ _('Analysis History') }}</h1>
+        <div style="display: flex; gap: 0.5rem;">
+            <a href="/" class="btn btn-sm" style="background:hsl(var(--secondary)); color:hsl(var(--secondary-foreground)); border:1px solid hsl(var(--border)); text-decoration:none;">
+                <i class="bi bi-house"></i> {{ _('Home') }}
+            </a>
+            <a href="/compare" class="btn btn-sm" style="background:hsl(var(--primary)); color:hsl(var(--primary-foreground)); border:none; text-decoration:none;">
+                <i class="bi bi-arrow-left-right"></i> {{ _('Compare') }}
+            </a>
+        </div>
+    </div>
+
+    <div style="display:flex; gap:0.5rem; margin-bottom:1.5rem;">
+        <button id="tabSqlHist" onclick="switchHistTab('sql')" class="btn btn-sm"
+            style="background:hsl(var(--primary)); color:hsl(var(--primary-foreground)); border:none; padding:0.4rem 1rem; border-radius:var(--radius); font-weight:500; cursor:pointer;">
+            <i class="bi bi-database"></i> SQL {{ _('History') }}
+        </button>
+        <button id="tabSparkHist" onclick="switchHistTab('spark')" class="btn btn-sm"
+            style="background:hsl(var(--secondary)); color:hsl(var(--secondary-foreground)); border:1px solid hsl(var(--border)); padding:0.4rem 1rem; border-radius:var(--radius); font-weight:500; cursor:pointer;">
+            <i class="bi bi-lightning"></i> Spark {{ _('History') }}
+        </button>
+    </div>
+
+    <div id="sqlHistSection">
+    <!-- Filters -->
+    <div style="display: flex; gap: 0.75rem; margin-bottom: 1rem; flex-wrap: wrap; align-items: end;">
+        <div>
+            <label class="form-label small text-muted">{{ _('Fingerprint') }}</label>
+            <input type="text" id="filter-fingerprint" placeholder="Query Fingerprint" class="form-control" style="width:180px; font-size:0.8rem;">
+        </div>
+        <div>
+            <label class="form-label small text-muted">{{ _('Experiment') }}</label>
+            <input type="text" id="filter-experiment" placeholder="Experiment ID" class="form-control" style="width:180px; font-size:0.8rem;">
+        </div>
+        <div>
+            <label class="form-label small text-muted">{{ _('Variant') }}</label>
+            <input type="text" id="filter-variant" placeholder="Variant" class="form-control" style="width:120px; font-size:0.8rem;">
+        </div>
+        <button onclick="loadHistory(0)" class="btn btn-sm" style="background:hsl(var(--primary)); color:hsl(var(--primary-foreground)); border:none; height:38px;">
+            <i class="bi bi-search"></i> {{ _('Search') }}
+        </button>
+    </div>
+
+    <!-- Delete bar -->
+    <div id="delete-bar" style="display:none; margin-bottom:0.75rem; display:flex; gap:0.75rem; align-items:center;">
+        <button onclick="deleteSelected()" id="delete-btn" disabled
+            class="btn btn-sm" style="background:hsl(var(--destructive)); color:white; border:none;">
+            <i class="bi bi-trash"></i> {{ _('Delete Selected') }} (<span id="delete-count">0</span>)
+        </button>
+        <label style="font-size:0.8rem; cursor:pointer; display:flex; align-items:center; gap:0.3rem;">
+            <input type="checkbox" id="select-all" onchange="toggleSelectAll()"> {{ _('Select All') }}
+        </label>
+        <span id="delete-status" class="small" style="display:none;"></span>
+    </div>
+
+    <!-- Results -->
+    <div id="history-loading" style="display:none; text-align:center; padding:2rem; color:hsl(var(--muted-foreground));">{{ _('Loading...') }}</div>
+    <div id="history-empty" style="display:none; text-align:center; padding:2rem; color:hsl(var(--muted-foreground));">{{ _('No analyses found. Run an analysis with --persist to save results.') }}</div>
+    <div id="history-error" style="display:none; padding:0.75rem; border-radius:var(--radius); background:hsl(var(--destructive)/0.1); color:hsl(var(--destructive)); margin-bottom:1rem;"></div>
+
+    <div id="list-section" style="display:none;">
+        <div style="overflow-x:auto; max-height:500px; border:1px solid hsl(var(--border)); border-radius:var(--radius); margin-bottom:0.5rem;">
+            <table id="sql-hist-table" style="width:100%; border-collapse:collapse; font-size:0.8rem;">
+                <thead>
+                    <tr style="border-bottom:2px solid hsl(var(--border)); position:sticky; top:0; background:hsl(var(--background));">
+                        <th style="padding:0.5rem; text-align:center; width:40px;"><input type="checkbox" id="select-all-header" onchange="toggleSelectAll()"></th>
+                        <th data-sort="analyzed_at" onclick="sortSqlHist('analyzed_at')" style="padding:0.5rem; text-align:left; cursor:pointer;">{{ _('Analyzed At') }}<span class="sort-ind"></span></th>
+                        <th data-sort="query_id" onclick="sortSqlHist('query_id')" style="padding:0.5rem; text-align:left; cursor:pointer;">{{ _('Query ID') }}<span class="sort-ind"></span></th>
+                        <th data-sort="query_fingerprint" onclick="sortSqlHist('query_fingerprint')" style="padding:0.5rem; text-align:left; cursor:pointer;">{{ _('Fingerprint') }}<span class="sort-ind"></span></th>
+                        <th data-sort="experiment_id" onclick="sortSqlHist('experiment_id')" style="padding:0.5rem; text-align:left; cursor:pointer;">{{ _('Experiment') }}<span class="sort-ind"></span></th>
+                        <th data-sort="variant" onclick="sortSqlHist('variant')" style="padding:0.5rem; text-align:left; cursor:pointer;">{{ _('Variant') }}<span class="sort-ind"></span></th>
+                        <th data-sort="total_time_ms" onclick="sortSqlHist('total_time_ms')" style="padding:0.5rem; text-align:right; cursor:pointer;">{{ _('Duration') }}<span class="sort-ind"></span></th>
+                        <th data-sort="estimated_cost_usd" onclick="sortSqlHist('estimated_cost_usd')" style="padding:0.5rem; text-align:right; cursor:pointer;">{{ _('Est. Cost') }}<span class="sort-ind"></span></th>
+                        <th data-sort="warehouse_name" onclick="sortSqlHist('warehouse_name')" style="padding:0.5rem; text-align:left; cursor:pointer;">{{ _('Warehouse') }}<span class="sort-ind"></span></th>
+                        <th data-sort="critical_alert_count" onclick="sortSqlHist('critical_alert_count')" style="padding:0.5rem; text-align:center; cursor:pointer;">{{ _('Alerts') }}<span class="sort-ind"></span></th>
+                        <th data-sort="lang" onclick="sortSqlHist('lang')" style="padding:0.5rem; text-align:center; cursor:pointer;">{{ _('Lang') }}<span class="sort-ind"></span></th>
+                        <th data-sort="has_explain" onclick="sortSqlHist('has_explain')" style="padding:0.5rem; text-align:center; cursor:pointer;" title="{{ _('Whether EXPLAIN text was attached at analysis time') }}">{{ _('EXPLAIN') }}<span class="sort-ind"></span></th>
+                        <th style="padding:0.5rem; text-align:center;">{{ _('Report') }}</th>
+                    </tr>
+                </thead>
+                <tbody id="history-body"></tbody>
+            </table>
+        </div>
+        <!-- Pagination -->
+        <div style="display:flex; justify-content:space-between; align-items:center; font-size:0.8rem; color:hsl(var(--muted-foreground));">
+            <span id="page-info"></span>
+            <div style="display:flex; gap:0.5rem;">
+                <button id="btn-prev" onclick="loadHistory(currentPage-1)" disabled class="btn btn-sm" style="background:hsl(var(--secondary)); color:hsl(var(--secondary-foreground)); border:1px solid hsl(var(--border));">{{ _('Prev') }}</button>
+                <button id="btn-next" onclick="loadHistory(currentPage+1)" class="btn btn-sm" style="background:hsl(var(--secondary)); color:hsl(var(--secondary-foreground)); border:1px solid hsl(var(--border));">{{ _('Next') }}</button>
+            </div>
+        </div>
+    </div>
+    </div>
+
+    <div id="sparkHistSection" style="display:none;">
+        <!-- Spark Filters -->
+        <div style="display:flex; gap:0.75rem; margin-bottom:1rem; flex-wrap:wrap; align-items:end;">
+            <div>
+                <label class="form-label small text-muted">Cluster ID</label>
+                <input type="text" id="spark-hist-cluster" placeholder="Cluster ID" class="form-control" style="width:200px; font-size:0.8rem;">
+            </div>
+            <div>
+                <label class="form-label small text-muted">{{ _('Experiment') }}</label>
+                <input type="text" id="spark-hist-experiment" placeholder="Experiment ID" class="form-control" style="width:180px; font-size:0.8rem;">
+            </div>
+            <div>
+                <label class="form-label small text-muted">{{ _('Variant') }}</label>
+                <input type="text" id="spark-hist-variant" placeholder="Variant" class="form-control" style="width:150px; font-size:0.8rem;">
+            </div>
+            <button onclick="loadSparkHistory()" class="btn btn-sm" style="background:hsl(var(--primary)); color:hsl(var(--primary-foreground)); border:none; height:38px;">
+                <i class="bi bi-search"></i> {{ _('Search') }}
+            </button>
+        </div>
+
+        <!-- Spark status -->
+        <div id="spark-hist-loading" style="display:none; text-align:center; padding:2rem; color:hsl(var(--muted-foreground));">{{ _('Loading...') }}</div>
+        <div id="spark-hist-empty" style="display:none; text-align:center; padding:2rem; color:hsl(var(--muted-foreground));">{{ _('No Spark analyses found.') }}</div>
+        <div id="spark-hist-error" style="display:none; padding:0.75rem; border-radius:var(--radius); background:hsl(var(--destructive)/0.1); color:hsl(var(--destructive)); margin-bottom:1rem;"></div>
+
+        <!-- Spark delete bar -->
+        <div id="spark-delete-bar" style="display:none; margin-bottom:0.75rem; display:flex; gap:0.75rem; align-items:center;">
+            <button onclick="deleteSparkSelected()" id="spark-delete-btn" disabled
+                class="btn btn-sm" style="background:hsl(var(--destructive)); color:white; border:none;">
+                <i class="bi bi-trash"></i> {{ _('Delete Selected') }} (<span id="spark-delete-count">0</span>)
+            </button>
+            <label style="font-size:0.8rem; cursor:pointer; display:flex; align-items:center; gap:0.3rem;">
+                <input type="checkbox" id="spark-select-all" onchange="toggleSparkSelectAll()"> {{ _('Select All') }}
+            </label>
+            <span id="spark-delete-status" class="small" style="display:none;"></span>
+        </div>
+
+        <!-- Spark list -->
+        <div id="spark-hist-section" style="display:none;">
+            <div style="overflow-x:auto; max-height:500px; border:1px solid hsl(var(--border)); border-radius:var(--radius); margin-bottom:0.5rem;">
+                <table id="spark-hist-table" style="width:100%; border-collapse:collapse; font-size:0.8rem;">
+                    <thead>
+                        <tr style="border-bottom:2px solid hsl(var(--border)); position:sticky; top:0; background:hsl(var(--background));">
+                            <th style="padding:0.5rem; text-align:center; width:40px;"><input type="checkbox" id="spark-select-all-header" onchange="toggleSparkSelectAll()"></th>
+                            <th data-sort="analyzed_at" onclick="sortSparkHist('analyzed_at')" style="padding:0.5rem; text-align:left; cursor:pointer;">{{ _('Analyzed At') }}<span class="sort-ind"></span></th>
+                            <th data-sort="app_id" onclick="sortSparkHist('app_id')" style="padding:0.5rem; text-align:left; cursor:pointer;">App ID<span class="sort-ind"></span></th>
+                            <th data-sort="total_jobs" onclick="sortSparkHist('total_jobs')" style="padding:0.5rem; text-align:right; cursor:pointer;">{{ _('Jobs') }}<span class="sort-ind"></span></th>
+                            <th data-sort="experiment_id" onclick="sortSparkHist('experiment_id')" style="padding:0.5rem; text-align:left; cursor:pointer;">{{ _('Experiment') }}<span class="sort-ind"></span></th>
+                            <th data-sort="variant" onclick="sortSparkHist('variant')" style="padding:0.5rem; text-align:left; cursor:pointer;">{{ _('Variant') }}<span class="sort-ind"></span></th>
+                            <th data-sort="duration_min" onclick="sortSparkHist('duration_min')" style="padding:0.5rem; text-align:right; cursor:pointer;">{{ _('Duration') }}<span class="sort-ind"></span></th>
+                            <th data-sort="estimated_cost_usd" onclick="sortSparkHist('estimated_cost_usd')" style="padding:0.5rem; text-align:right; cursor:pointer;">{{ _('Est. Cost') }}<span class="sort-ind"></span></th>
+                            <th data-sort="cluster_id" onclick="sortSparkHist('cluster_id')" style="padding:0.5rem; text-align:left; cursor:pointer;">Cluster ID<span class="sort-ind"></span></th>
+                            <th data-sort="bottleneck_count" onclick="sortSparkHist('bottleneck_count')" style="padding:0.5rem; text-align:center; cursor:pointer;">{{ _('Alerts') }}<span class="sort-ind"></span></th>
+                            <th data-sort="output_lang" onclick="sortSparkHist('output_lang')" style="padding:0.5rem; text-align:center; cursor:pointer;">{{ _('Lang') }}<span class="sort-ind"></span></th>
+                            <th style="padding:0.5rem; text-align:center;">{{ _('Report') }}</th>
+                        </tr>
+                    </thead>
+                    <tbody id="spark-hist-body"></tbody>
+                </table>
+            </div>
+            <div id="spark-hist-info" style="font-size:0.8rem; color:hsl(var(--muted-foreground));"></div>
+        </div>
+    </div>
+</div>
+
+<script>
+const PAGE_SIZE = 20;
+let currentPage = 0;
+let allData = [];
+
+function esc(s){if(!s)return'';const d=document.createElement('div');d.textContent=String(s);return d.innerHTML;}
+function fmtBytes(b) { if(b==null)return'-'; if(Math.abs(b)>=1073741824)return(b/1073741824).toFixed(1)+' GB'; if(Math.abs(b)>=1048576)return(b/1048576).toFixed(1)+' MB'; return(b/1024).toFixed(0)+' KB'; }
+function fmtMs(ms) { if(ms==null)return'-'; if(Math.abs(ms)>=60000)return(ms/60000).toFixed(1)+' min'; if(Math.abs(ms)>=1000)return(ms/1000).toFixed(1)+' s'; return ms+' ms'; }
+
+async function loadHistory(page) {
+    if (page < 0) return;
+    const fp = document.getElementById('filter-fingerprint').value;
+    const exp = document.getElementById('filter-experiment').value;
+    const variant = document.getElementById('filter-variant').value;
+
+    const params = new URLSearchParams();
+    if (fp) params.set('fingerprint', fp);
+    if (exp) params.set('experiment_id', exp);
+    if (variant) params.set('variant', variant);
+    params.set('limit', '200');
+
+    document.getElementById('history-loading').style.display = 'block';
+    document.getElementById('list-section').style.display = 'none';
+    document.getElementById('history-empty').style.display = 'none';
+    document.getElementById('history-error').style.display = 'none';
+
+    try {
+        const resp = await fetch('/api/v1/history?' + params.toString());
+        const data = await resp.json();
+        document.getElementById('history-loading').style.display = 'none';
+
+        if (data.error) {
+            document.getElementById('history-error').textContent = data.error;
+            document.getElementById('history-error').style.display = 'block';
+            return;
+        }
+
+        if (data.length === 0) {
+            document.getElementById('history-empty').style.display = 'block';
+            return;
+        }
+
+        allData = data;
+        currentPage = Math.min(page, Math.floor((data.length - 1) / PAGE_SIZE));
+        renderPage();
+    } catch (e) {
+        document.getElementById('history-loading').style.display = 'none';
+        document.getElementById('history-error').textContent = 'Failed to load: ' + e.message;
+        document.getElementById('history-error').style.display = 'block';
+    }
+}
+
+function renderPage() {
+    const start = currentPage * PAGE_SIZE;
+    const end = Math.min(start + PAGE_SIZE, allData.length);
+    const pageData = allData.slice(start, end);
+    const totalPages = Math.ceil(allData.length / PAGE_SIZE);
+
+    const tbody = document.getElementById('history-body');
+    tbody.innerHTML = '';
+    pageData.forEach(row => {
+        const tr = document.createElement('tr');
+        tr.style.borderBottom = '1px solid hsl(var(--border))';
+        tr.innerHTML = `
+            <td style="padding:0.4rem; text-align:center;"><input type="checkbox" class="row-check" data-id="${row.analysis_id}" onchange="updateDeleteCount()"></td>
+            <td style="padding:0.4rem;">${fmtGMT(row.analyzed_at)}</td>
+            <td style="padding:0.4rem; font-family:'JetBrains Mono',monospace; font-size:0.65rem;">${esc(row.query_id) ? esc(row.query_id).substring(0,16)+'...' : '-'}</td>
+            <td style="padding:0.4rem; font-family:'JetBrains Mono',monospace; font-size:0.65rem;">${esc(row.query_fingerprint) ? esc(row.query_fingerprint).substring(0,12) : '-'}</td>
+            <td style="padding:0.4rem; cursor:pointer;" class="editable-cell" onclick="editCell(this,'experiment_id','${row.analysis_id}','sql')" title="{{ _('Click to edit') }}">${esc(row.experiment_id) || '-'}</td>
+            <td style="padding:0.4rem; cursor:pointer;" class="editable-cell" onclick="editCell(this,'variant','${row.analysis_id}','sql')" title="{{ _('Click to edit') }}">${esc(row.variant) || '-'}</td>
+            <td style="padding:0.4rem; text-align:right;">${fmtMs(row.total_time_ms)}</td>
+            <td style="padding:0.4rem; text-align:right; font-size:0.75rem;">${row.estimated_cost_usd != null ? '$' + Number(row.estimated_cost_usd).toFixed(3) : '-'}</td>
+            <td style="padding:0.4rem;">${esc(row.warehouse_name)||''} ${esc(row.warehouse_size)||''}</td>
+            <td style="padding:0.4rem; text-align:center;">${row.critical_alert_count>0?'<span style="color:hsl(var(--destructive));font-weight:600;">'+row.critical_alert_count+'</span>':'-'}</td>
+            <td style="padding:0.4rem; text-align:center;">${row.lang ? '<span style="font-size:0.65rem; padding:0.1rem 0.35rem; border-radius:3px; background:hsl(var(--primary)/0.1); color:hsl(var(--primary)); font-weight:600;">' + esc(row.lang).toUpperCase() + '</span>' : '-'}</td>
+            <td style="padding:0.4rem; text-align:center;" title="${row.has_explain === true ? '{{ _('EXPLAIN attached') }}' : row.has_explain === false ? '{{ _('No EXPLAIN attached') }}' : '{{ _('Unknown (legacy analysis)') }}'}">${row.has_explain === true ? '<span style="color:hsl(var(--success, 142 76% 36%)); font-weight:600;">✓</span>' : row.has_explain === false ? '<span style="color:hsl(var(--muted-foreground));">✗</span>' : '<span style="color:hsl(var(--muted-foreground));">-</span>'}</td>
+            <td style="padding:0.4rem; text-align:center; white-space:nowrap;"><a href="/shared/${row.analysis_id}" style="color:hsl(var(--primary)); text-decoration:none;" title="{{ _('View Report') }}"><i class="bi bi-file-text"></i></a> <a href="/api/v1/history/${row.analysis_id}/download" style="color:hsl(var(--primary)); text-decoration:none; margin-left:0.3rem;" title="{{ _('Download Markdown') }}"><i class="bi bi-download"></i></a></td>
+        `;
+        tbody.appendChild(tr);
+    });
+
+    document.getElementById('list-section').style.display = 'block';
+    document.getElementById('delete-bar').style.display = 'flex';
+    document.getElementById('page-info').textContent = `Page ${currentPage+1} of ${totalPages} (${allData.length} results)`;
+    document.getElementById('btn-prev').disabled = currentPage === 0;
+    document.getElementById('btn-next').disabled = currentPage >= totalPages - 1;
+    updateDeleteCount();
+}
+
+function updateDeleteCount() {
+    const checked = document.querySelectorAll('.row-check:checked');
+    document.getElementById('delete-count').textContent = checked.length;
+    document.getElementById('delete-btn').disabled = checked.length === 0;
+}
+
+function toggleSelectAll() {
+    const allChecked = document.getElementById('select-all-header').checked;
+    document.querySelectorAll('.row-check').forEach(cb => cb.checked = allChecked);
+    if (document.getElementById('select-all')) document.getElementById('select-all').checked = allChecked;
+    updateDeleteCount();
+}
+
+async function deleteSelected() {
+    const checked = document.querySelectorAll('.row-check:checked');
+    const ids = Array.from(checked).map(cb => cb.dataset.id);
+    if (ids.length === 0) return;
+    if (!confirm(`Delete ${ids.length} analysis record(s)? This cannot be undone.`)) return;
+
+    const status = document.getElementById('delete-status');
+    status.style.display = 'inline';
+    status.textContent = 'Deleting...';
+    status.style.color = 'hsl(var(--muted-foreground))';
+    document.getElementById('delete-btn').disabled = true;
+    sessionStorage.setItem('sqlHistDeleting', JSON.stringify({count: ids.length, ts: Date.now()}));
+
+    try {
+        const resp = await fetch('/api/v1/history/delete', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ analysis_ids: ids }),
+        });
+        const data = await resp.json();
+        sessionStorage.removeItem('sqlHistDeleting');
+        if (data.error) {
+            status.textContent = 'Error: ' + data.error;
+            status.style.color = 'hsl(var(--destructive))';
+        } else {
+            status.textContent = `Deleted ${data.deleted}/${data.requested}`;
+            status.style.color = 'hsl(var(--success))';
+            loadHistory(currentPage);
+        }
+    } catch (e) {
+        sessionStorage.removeItem('sqlHistDeleting');
+        status.textContent = 'Failed: ' + e.message;
+        status.style.color = 'hsl(var(--destructive))';
+    }
+    setTimeout(() => { status.style.display = 'none'; }, 5000);
+}
+
+// Tab switching
+function switchHistTab(tab) {
+    document.getElementById('sqlHistSection').style.display = tab === 'sql' ? '' : 'none';
+    document.getElementById('sparkHistSection').style.display = tab === 'spark' ? '' : 'none';
+    const sqlBtn = document.getElementById('tabSqlHist');
+    const sparkBtn = document.getElementById('tabSparkHist');
+    if (tab === 'sql') {
+        sqlBtn.style.background = 'hsl(var(--primary))'; sqlBtn.style.color = 'hsl(var(--primary-foreground))'; sqlBtn.style.border = 'none';
+        sparkBtn.style.background = 'hsl(var(--secondary))'; sparkBtn.style.color = 'hsl(var(--secondary-foreground))'; sparkBtn.style.border = '1px solid hsl(var(--border))';
+    } else {
+        sparkBtn.style.background = 'hsl(var(--primary))'; sparkBtn.style.color = 'hsl(var(--primary-foreground))'; sparkBtn.style.border = 'none';
+        sqlBtn.style.background = 'hsl(var(--secondary))'; sqlBtn.style.color = 'hsl(var(--secondary-foreground))'; sqlBtn.style.border = '1px solid hsl(var(--border))';
+        if (!sparkHistLoaded) loadSparkHistory();
+    }
+}
+
+let sparkHistLoaded = false;
+
+let sparkHistData = [];
+
+function renderSparkHist() {
+    const tbody = document.getElementById('spark-hist-body');
+    tbody.innerHTML = '';
+    sparkHistData.forEach(row => {
+        const dur = row.duration_min != null ? row.duration_min.toFixed(1) + ' min' : '-';
+        const analyzed = row.analyzed_at || '-';
+        const lang = row.output_lang || '-';
+        tbody.innerHTML += `<tr style="border-bottom:1px solid hsl(var(--border));">
+            <td style="padding:0.4rem; text-align:center;"><input type="checkbox" class="spark-row-check" data-id="${row.app_id}" onchange="updateSparkDeleteCount()"></td>
+            <td style="padding:0.4rem; font-size:0.75rem;">${fmtGMT(analyzed)}</td>
+            <td style="padding:0.4rem; font-family:'JetBrains Mono',monospace; font-size:0.7rem;">${esc(row.app_id)}</td>
+            <td style="padding:0.4rem; text-align:right;">${row.total_jobs || 0}</td>
+            <td style="padding:0.4rem; cursor:pointer;" class="editable-cell" onclick="editCell(this,'experiment_id','${row.app_id}','spark')" title="{{ _('Click to edit') }}">${esc(row.experiment_id) || '-'}</td>
+            <td style="padding:0.4rem; cursor:pointer;" class="editable-cell" onclick="editCell(this,'variant','${row.app_id}','spark')" title="{{ _('Click to edit') }}">${esc(row.variant) || '-'}</td>
+            <td style="padding:0.4rem; text-align:right;">${dur}</td>
+            <td style="padding:0.4rem; text-align:right; font-size:0.75rem;">${row.estimated_cost_usd != null ? '$' + Number(row.estimated_cost_usd).toFixed(3) : '-'}</td>
+            <td style="padding:0.4rem; font-family:'JetBrains Mono',monospace; font-size:0.7rem;">${esc(row.cluster_id) || '-'}</td>
+            <td style="padding:0.4rem; text-align:center;">${row.bottleneck_count > 0 ? '<span style="color:hsl(var(--destructive));font-weight:600;">' + row.bottleneck_count + '</span>' : '-'}</td>
+            <td style="padding:0.4rem; text-align:center;">${lang !== '-' ? '<span style="display:inline-block; padding:0.1rem 0.4rem; border-radius:0.25rem; font-size:0.65rem; font-weight:600; background:hsl(var(--primary)/0.1); color:hsl(var(--primary));">' + esc(lang).toUpperCase() + '</span>' : '-'}</td>
+            <td style="padding:0.4rem; text-align:center; white-space:nowrap;"><a href="/spark-perf/report/${encodeURIComponent(row.app_id)}" style="color:hsl(var(--primary)); text-decoration:none;" title="{{ _('View Report') }}"><i class="bi bi-file-text"></i></a> <a href="/api/v1/spark-perf/narrative/${encodeURIComponent(row.app_id)}/download" style="color:hsl(var(--primary)); text-decoration:none; margin-left:0.3rem;" title="{{ _('Download Markdown') }}"><i class="bi bi-download"></i></a></td>
+        </tr>`;
+    });
+    updateSparkDeleteCount();
+}
+
+async function loadSparkHistory() {
+    const clusterId = document.getElementById('spark-hist-cluster').value.trim();
+    const experimentId = document.getElementById('spark-hist-experiment').value.trim();
+    const variant = document.getElementById('spark-hist-variant').value.trim();
+    const params = new URLSearchParams();
+    if (clusterId) params.set('cluster_id', clusterId);
+    if (experimentId) params.set('experiment_id', experimentId);
+    if (variant) params.set('variant', variant);
+
+    document.getElementById('spark-hist-loading').style.display = 'block';
+    document.getElementById('spark-hist-section').style.display = 'none';
+    document.getElementById('spark-hist-empty').style.display = 'none';
+    document.getElementById('spark-hist-error').style.display = 'none';
+
+    try {
+        const r = await fetch('/api/v1/spark-perf/compare-list?' + params.toString());
+        const data = await r.json();
+        document.getElementById('spark-hist-loading').style.display = 'none';
+
+        const items = data.items || data;
+        if (!items || items.length === 0) {
+            document.getElementById('spark-hist-empty').style.display = 'block';
+            return;
+        }
+
+        sparkHistData = items;
+        renderSparkHist();
+
+        document.getElementById('spark-hist-section').style.display = 'block';
+        document.getElementById('spark-delete-bar').style.display = 'flex';
+        document.getElementById('spark-hist-info').textContent = items.length + ' analysis(es) found';
+        sparkHistLoaded = true;
+    } catch(e) {
+        document.getElementById('spark-hist-loading').style.display = 'none';
+        document.getElementById('spark-hist-error').textContent = 'Failed: ' + e.message;
+        document.getElementById('spark-hist-error').style.display = 'block';
+    }
+}
+
+// Spark delete functions
+function updateSparkDeleteCount() {
+    const checked = document.querySelectorAll('.spark-row-check:checked');
+    document.getElementById('spark-delete-count').textContent = checked.length;
+    document.getElementById('spark-delete-btn').disabled = checked.length === 0;
+}
+
+function toggleSparkSelectAll() {
+    const allChecked = document.getElementById('spark-select-all-header').checked;
+    document.querySelectorAll('.spark-row-check').forEach(cb => cb.checked = allChecked);
+    if (document.getElementById('spark-select-all')) document.getElementById('spark-select-all').checked = allChecked;
+    updateSparkDeleteCount();
+}
+
+async function deleteSparkSelected() {
+    const checked = document.querySelectorAll('.spark-row-check:checked');
+    const appIds = Array.from(checked).map(cb => cb.dataset.id);
+    if (appIds.length === 0) return;
+    if (!confirm(`Delete ${appIds.length} Spark analysis record(s)? This removes the narrative from gold_narrative_summary.`)) return;
+
+    const status = document.getElementById('spark-delete-status');
+    status.style.display = 'inline';
+    status.textContent = 'Deleting...';
+    status.style.color = 'hsl(var(--muted-foreground))';
+    document.getElementById('spark-delete-btn').disabled = true;
+    sessionStorage.setItem('sparkHistDeleting', JSON.stringify({count: appIds.length, ts: Date.now()}));
+
+    try {
+        const resp = await fetch('/api/v1/spark-perf/narratives/delete', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ app_ids: appIds }),
+        });
+        const data = await resp.json();
+        sessionStorage.removeItem('sparkHistDeleting');
+        if (data.error) {
+            status.textContent = 'Error: ' + data.error;
+            status.style.color = 'hsl(var(--destructive))';
+        } else {
+            status.textContent = `Deleted ${data.deleted}/${data.requested}`;
+            status.style.color = 'hsl(var(--success))';
+            sparkHistLoaded = false;
+            loadSparkHistory();
+        }
+    } catch (e) {
+        sessionStorage.removeItem('sparkHistDeleting');
+        status.textContent = 'Failed: ' + e.message;
+        status.style.color = 'hsl(var(--destructive))';
+    }
+    setTimeout(() => { status.style.display = 'none'; }, 5000);
+}
+
+function sortSqlHist(key) { sortTableData('sql-hist-table', key, allData, () => renderPage()); }
+function sortSparkHist(key) { sortTableData('spark-hist-table', key, sparkHistData, () => renderSparkHist()); }
+
+// Inline edit for experiment/variant
+function editCell(td, field, id, type) {
+    if (td.querySelector('input')) return; // already editing
+    const current = td.textContent.trim();
+    const val = current === '-' ? '' : current;
+    const input = document.createElement('input');
+    input.type = 'text';
+    input.value = val;
+    input.style.cssText = 'width:100%; font-size:0.8rem; padding:0.2rem; border:1px solid hsl(var(--primary)); border-radius:3px; background:hsl(var(--background)); color:hsl(var(--foreground));';
+    input.onkeydown = async (e) => {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            await saveCell(td, field, id, type, input.value.trim());
+        } else if (e.key === 'Escape') {
+            td.textContent = current;
+        }
+    };
+    input.onblur = async () => {
+        if (input.value.trim() !== val) {
+            await saveCell(td, field, id, type, input.value.trim());
+        } else {
+            td.textContent = current;
+        }
+    };
+    td.textContent = '';
+    td.appendChild(input);
+    input.focus();
+    input.select();
+}
+
+async function saveCell(td, field, id, type, newVal) {
+    const url = type === 'sql' ? '/api/v1/history/update' : '/api/v1/spark-perf/narratives/update';
+    const idField = type === 'sql' ? 'analysis_id' : 'app_id';
+    try {
+        const r = await fetch(url, {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({ [idField]: id, [field]: newVal }),
+        });
+        const data = await r.json();
+        if (data.ok) {
+            td.textContent = newVal || '-';
+            td.style.background = 'hsl(var(--success)/0.1)';
+            setTimeout(() => { td.style.background = ''; }, 1500);
+            // Update local data
+            const arr = type === 'sql' ? allData : sparkHistData;
+            const item = arr.find(x => (type === 'sql' ? x.analysis_id : x.app_id) === id);
+            if (item) item[field] = newVal || null;
+        } else {
+            td.textContent = newVal || '-';
+            td.style.background = 'hsl(var(--destructive)/0.1)';
+            setTimeout(() => { td.style.background = ''; }, 2000);
+        }
+    } catch(e) {
+        td.textContent = newVal || '-';
+        td.style.background = 'hsl(var(--destructive)/0.1)';
+        setTimeout(() => { td.style.background = ''; }, 2000);
+    }
+}
+
+// Restore delete-in-progress state
+function _restoreDeleteState(storageKey, statusId, btnId, reloadFn) {
+    try {
+        const del = JSON.parse(sessionStorage.getItem(storageKey));
+        if (del && del.ts && (Date.now() - del.ts < 10 * 60 * 1000)) {
+            const status = document.getElementById(statusId);
+            status.style.display = 'inline';
+            status.textContent = `Deleting ${del.count} record(s)...`;
+            document.getElementById(btnId).disabled = true;
+            (async function poll() {
+                await new Promise(r => setTimeout(r, 3000));
+                if (!sessionStorage.getItem(storageKey)) {
+                    status.textContent = 'Deleted';
+                    status.style.color = 'hsl(var(--success))';
+                    document.getElementById(btnId).disabled = false;
+                    reloadFn();
+                    setTimeout(() => { status.style.display = 'none'; }, 3000);
+                    return;
+                }
+                if (Date.now() - del.ts < 10 * 60 * 1000) poll();
+                else { sessionStorage.removeItem(storageKey); status.style.display = 'none'; document.getElementById(btnId).disabled = false; }
+            })();
+        }
+    } catch(e) {}
+}
+_restoreDeleteState('sqlHistDeleting', 'delete-status', 'delete-btn', () => loadHistory(currentPage));
+_restoreDeleteState('sparkHistDeleting', 'spark-delete-status', 'spark-delete-btn', () => { sparkHistLoaded = false; loadSparkHistory(); });
+
+// Auto-load
+loadHistory(0);
+</script>
+{% endblock %}

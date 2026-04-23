@@ -1,0 +1,17 @@
+resources:
+  apps:
+    profiler_app:
+      name: ${var.app_name}
+      description: "DBSQL Query Profile Analyzer - Web UI for query performance analysis"
+      source_code_path: ../app
+      user_api_scopes:
+        - sql
+        - apps
+      resources:
+        - name: sql-warehouse
+          sql_warehouse:
+            id: ${var.warehouse_id}
+            permission: CAN_USE
+      permissions:
+        - group_name: users
+          level: CAN_USE

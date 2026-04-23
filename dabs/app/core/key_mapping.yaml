@@ -1,0 +1,658 @@
+# Key Mapping for Databricks SQL Query Profile JSON
+# This file documents all JSON paths found in profile data and their usage status.
+#
+# Usage status:
+#   - true: Actively used in extractors.py
+#   - partial: Parent/sibling keys used, but this specific path not directly referenced
+#   - false: Not currently used
+#
+# Generated from json/ samples (14 files, 443 unique paths)
+
+version: 1
+
+sources:
+  dbsql_profile:
+    description: "Databricks SQL query profile JSON"
+    roots:
+      - query
+      - graphs
+      - metrics
+      - insights
+
+# =============================================================================
+# MAPPINGS
+# =============================================================================
+
+mappings:
+
+  # ---------------------------------------------------------------------------
+  # Query - Basic Information (used)
+  # ---------------------------------------------------------------------------
+  query_basic:
+    - path: query.id
+      type: string
+      usage: true
+      target: QueryMetrics.query_id
+      description: "Unique query identifier"
+
+    - path: query.status
+      type: string
+      usage: true
+      target: QueryMetrics.status
+      description: "Query execution status (FINISHED, FAILED, etc.)"
+
+    - path: query.queryText
+      type: string
+      usage: true
+      target: QueryMetrics.query_text
+      description: "Original SQL text"
+
+  # ---------------------------------------------------------------------------
+  # Query - Metrics (used)
+  # ---------------------------------------------------------------------------
+  query_metrics:
+    - path: query.metrics.totalTimeMs
+      type: int
+      usage: true
+      target: QueryMetrics.total_time_ms
+      description: "Total query time in milliseconds"
+
+    - path: query.metrics.compilationTimeMs
+      type: int
+      usage: true
+      target: QueryMetrics.compilation_time_ms
+      description: "Query compilation time"
+
+    - path: query.metrics.executionTimeMs
+      type: int
+      usage: true
+      target: QueryMetrics.execution_time_ms
+      description: "Query execution time"
+
+    - path: query.metrics.readBytes
+      type: int
+      usage: true
+      target: QueryMetrics.read_bytes
+      description: "Total bytes read"
+
+    - path: query.metrics.readRemoteBytes
+      type: int
+      usage: true
+      target: QueryMetrics.read_remote_bytes
+      description: "Bytes read from remote storage"
+
+    - path: query.metrics.readCacheBytes
+      type: int
+      usage: true
+      target: QueryMetrics.read_cache_bytes
+      description: "Bytes read from cache"
+
+    - path: query.metrics.spillToDiskBytes
+      type: int
+      usage: true
+      target: QueryMetrics.spill_to_disk_bytes
+      description: "Bytes spilled to disk"
+
+    - path: query.metrics.photonTotalTimeMs
+      type: int
+      usage: true
+      target: QueryMetrics.photon_total_time_ms
+      description: "Total Photon execution time"
+
+    - path: query.metrics.taskTotalTimeMs
+      type: int
+      usage: true
+      target: QueryMetrics.task_total_time_ms
+      description: "Cumulative task time"
+
+    - path: query.metrics.readFilesCount
+      type: int
+      usage: true
+      target: QueryMetrics.read_files_count
+      description: "Number of files read"
+
+    - path: query.metrics.prunedFilesCount
+      type: int
+      usage: true
+      target: QueryMetrics.pruned_files_count
+      description: "Number of files pruned"
+
+    - path: query.metrics.prunedBytes
+      type: int
+      usage: true
+      target: QueryMetrics.pruned_bytes
+      description: "Bytes pruned"
+
+    - path: query.metrics.rowsReadCount
+      type: int
+      usage: true
+      target: QueryMetrics.rows_read_count
+      description: "Number of rows read"
+
+    - path: query.metrics.rowsProducedCount
+      type: int
+      usage: true
+      target: QueryMetrics.rows_produced_count
+      description: "Number of rows produced"
+
+    - path: query.metrics.bytesReadFromCachePercentage
+      type: int
+      usage: true
+      target: QueryMetrics.bytes_read_from_cache_percentage
+      description: "Cache hit percentage"
+
+    - path: query.metrics.writeRemoteBytes
+      type: int
+      usage: true
+      target: QueryMetrics.write_remote_bytes
+      description: "Bytes written to remote storage"
+
+    - path: query.metrics.writeRemoteFiles
+      type: int
+      usage: true
+      target: QueryMetrics.write_remote_files
+      description: "Number of files written"
+
+    - path: query.metrics.networkSentBytes
+      type: int
+      usage: true
+      target: QueryMetrics.network_sent_bytes
+      description: "Bytes sent over network"
+
+    - path: query.metrics.readPartitionsCount
+      type: int
+      usage: true
+      target: QueryMetrics.read_partitions_count
+      description: "Number of partitions read"
+
+  # ---------------------------------------------------------------------------
+  # Query - Metrics (partial - stored in extra_metrics)
+  # ---------------------------------------------------------------------------
+  query_metrics_extra:
+    - path: query.metrics.planningTimeMs
+      type: int
+      usage: partial
+      target: QueryMetrics.extra_metrics
+      description: "Query planning time"
+
+    - path: query.metrics.queuedProvisioningTimeMs
+      type: int
+      usage: partial
+      target: QueryMetrics.extra_metrics
+      description: "Time queued for provisioning"
+
+    - path: query.metrics.queuedOverloadTimeMs
+      type: int
+      usage: partial
+      target: QueryMetrics.extra_metrics
+      description: "Time queued due to overload"
+
+    - path: query.metrics.resultFetchTimeMs
+      type: int
+      usage: partial
+      target: QueryMetrics.extra_metrics
+      description: "Time to fetch results"
+
+    - path: query.metrics.metadataTimeMs
+      type: int
+      usage: partial
+      target: QueryMetrics.extra_metrics
+      description: "Metadata operation time"
+
+    - path: query.metrics.queryExecutionTimeMs
+      type: int
+      usage: partial
+      target: QueryMetrics.extra_metrics
+      description: "Query execution time (alternative)"
+
+    - path: query.metrics.totalFilesCount
+      type: int
+      usage: partial
+      target: QueryMetrics.extra_metrics
+      description: "Total number of files"
+
+    - path: query.metrics.totalPartitionsCount
+      type: int
+      usage: partial
+      target: QueryMetrics.extra_metrics
+      description: "Total number of partitions"
+
+    - path: query.metrics.resultFromCache
+      type: bool
+      usage: partial
+      target: QueryMetrics.extra_metrics
+      description: "Whether result was from cache"
+
+    - path: query.metrics.writeRemoteRows
+      type: int
+      usage: partial
+      target: QueryMetrics.extra_metrics
+      description: "Number of rows written"
+
+    - path: query.metrics.planningPhases[]
+      type: array
+      usage: partial
+      target: QueryMetrics.extra_metrics
+      description: "Detailed planning phase breakdown"
+
+  # ---------------------------------------------------------------------------
+  # Query - Internal Source (used for format detection)
+  # ---------------------------------------------------------------------------
+  query_internal:
+    - path: query.internalQuerySource.entryPoint
+      type: string
+      usage: true
+      target: is_spark_connect_profile()
+      description: "Entry point (SPARK_CONNECT detection)"
+
+  # ---------------------------------------------------------------------------
+  # Graphs - Nodes (used)
+  # ---------------------------------------------------------------------------
+  graph_nodes:
+    - path: graphs[].nodes[].id
+      type: string
+      usage: true
+      target: NodeMetrics.node_id
+      description: "Node identifier"
+
+    - path: graphs[].nodes[].name
+      type: string
+      usage: true
+      target: NodeMetrics.name
+      description: "Node name (e.g., 'Scan catalog.schema.table')"
+
+    - path: graphs[].nodes[].tag
+      type: string
+      usage: true
+      target: NodeMetrics.tag
+      description: "Node tag/type"
+
+    - path: graphs[].nodes[].hidden
+      type: bool
+      usage: true
+      target: filtering
+      description: "Whether node is hidden (skipped if true)"
+
+    - path: graphs[].nodes[].keyMetrics.durationMs
+      type: int
+      usage: true
+      target: NodeMetrics.duration_ms
+      description: "Node execution duration"
+
+    - path: graphs[].nodes[].keyMetrics.peakMemoryBytes
+      type: int
+      usage: true
+      target: NodeMetrics.peak_memory_bytes
+      description: "Peak memory usage"
+
+    - path: graphs[].nodes[].keyMetrics.rowsNum
+      type: int
+      usage: true
+      target: NodeMetrics.rows
+      description: "Number of rows processed"
+
+  # ---------------------------------------------------------------------------
+  # Graphs - Node Metadata (used via key matching)
+  # ---------------------------------------------------------------------------
+  graph_node_metadata:
+    - path: graphs[].nodes[].metadata[].key
+      type: string
+      usage: true
+      description: "Metadata key name"
+      selector_values:
+        - IS_PHOTON
+        - SCAN_CLUSTERS
+        - JOIN_ALGORITHM
+        - JOIN_TYPE
+        - JOIN_BUILD_SIDE
+        - LEFT_KEYS
+        - RIGHT_KEYS
+        - CONDITION
+        - SHUFFLE_ATTRIBUTES
+
+    - path: graphs[].nodes[].metadata[].value
+      type: string
+      usage: true
+      description: "Metadata value (single)"
+
+    - path: graphs[].nodes[].metadata[].values[]
+      type: array
+      usage: true
+      description: "Metadata values (multiple)"
+
+  # ---------------------------------------------------------------------------
+  # Graphs - Node Metrics (used via label matching)
+  # ---------------------------------------------------------------------------
+  graph_node_metrics:
+    - path: graphs[].nodes[].metrics[].label
+      type: string
+      usage: true
+      description: "Metric label"
+      selector_values:
+        - "Files read"
+        - "Files pruned"
+        - "Size of files read"
+        - "Size of files pruned"
+        - "Rows scanned"
+        - "Number of output rows"
+        - "Cache hits size"
+        - "Cache misses size"
+        - "Number of partitions"
+        - "AQEShuffleRead - Number of partitions"
+        - "AQEShuffleRead - Partition data size"
+        - "Sink - Number of partitions"
+        - "Sink - Tasks total"
+        - "Source - Tasks total"
+
+    - path: graphs[].nodes[].metrics[].value
+      type: string
+      usage: true
+      description: "Metric value"
+
+  # ---------------------------------------------------------------------------
+  # Graphs - Stage Data (true - structure exists)
+  # ---------------------------------------------------------------------------
+  graph_stage_data:
+    - path: graphs[].stageData[].stageId
+      type: int
+      usage: true
+      description: "Stage identifier"
+
+    - path: graphs[].stageData[].status
+      type: string
+      usage: true
+      description: "Stage status"
+
+    - path: graphs[].stageData[].numTasks
+      type: int
+      usage: true
+      description: "Number of tasks in stage"
+
+    - path: graphs[].stageData[].numCompleteTasks
+      type: int
+      usage: true
+      description: "Number of completed tasks"
+
+    - path: graphs[].stageData[].numFailedTasks
+      type: int
+      usage: true
+      description: "Number of failed tasks"
+
+    - path: graphs[].stageData[].keyMetrics.durationMs
+      type: int
+      usage: true
+      description: "Stage duration"
+
+    - path: graphs[].stageData[].keyMetrics.peakMemoryBytes
+      type: int
+      usage: true
+      description: "Stage peak memory"
+
+  # ---------------------------------------------------------------------------
+  # Graphs - Photon Explain (true - structure exists)
+  # ---------------------------------------------------------------------------
+  graph_photon_explain:
+    - path: graphs[].photonExplain[].reason
+      type: string
+      usage: true
+      description: "Photon fallback reason"
+
+    - path: graphs[].photonExplain[].sparkPlanId
+      type: string
+      usage: true
+      description: "Related Spark plan ID"
+
+    - path: graphs[].photonExplain[].params[].paramName
+      type: string
+      usage: true
+      description: "Photon parameter name"
+
+    - path: graphs[].photonExplain[].params[].paramValue
+      type: string
+      usage: true
+      description: "Photon parameter value"
+
+  # ---------------------------------------------------------------------------
+  # UNUSED BUT VALUABLE - Insights
+  # ---------------------------------------------------------------------------
+  insights_unused:
+    - path: insights[].recommendation
+      type: string
+      usage: false
+      priority: high
+      description: "System-generated tuning recommendation text"
+
+    - path: insights[].docUrl
+      type: string
+      usage: false
+      priority: high
+      description: "Documentation URL for the recommendation"
+
+    - path: insights[].body
+      type: string
+      usage: false
+      priority: high
+      description: "Detailed insight body text"
+
+    - path: insights[].insight.type.insightEnum
+      type: string
+      usage: false
+      priority: high
+      description: "Insight category enum (for grouping/filtering)"
+
+    - path: insights[].insight.context.tableStatsContext.tableName
+      type: string
+      usage: false
+      priority: medium
+      description: "Table name related to insight"
+
+    - path: insights[].insight.context.tableStatsContext.statsStatus
+      type: string
+      usage: false
+      priority: medium
+      description: "Table statistics status"
+
+    - path: insights[].insight.mutable.taskDurationMs
+      type: int
+      usage: false
+      priority: medium
+      description: "Task duration related to insight"
+
+    - path: insights[].typeName
+      type: string
+      usage: false
+      priority: medium
+      description: "Insight type name"
+
+  # ---------------------------------------------------------------------------
+  # UNUSED BUT VALUABLE - Query Context
+  # ---------------------------------------------------------------------------
+  query_context_unused:
+    - path: query.executedAsUser.displayName
+      type: string
+      usage: false
+      priority: low
+      description: "User display name who executed query"
+
+    - path: query.executedAsUser.name
+      type: string
+      usage: false
+      priority: low
+      description: "User name who executed query"
+
+    - path: query.channelUsed.name
+      type: string
+      usage: false
+      priority: low
+      description: "Channel/endpoint name"
+
+    - path: query.channelUsed.dbsqlVersion
+      type: string
+      usage: false
+      priority: low
+      description: "DBSQL version"
+
+    - path: query.queryStartTimeMs
+      type: int
+      usage: false
+      priority: medium
+      description: "Query start timestamp"
+
+    - path: query.queryEndTimeMs
+      type: int
+      usage: false
+      priority: medium
+      description: "Query end timestamp"
+
+    - path: query.statementType
+      type: string
+      usage: false
+      priority: medium
+      description: "SQL statement type (SELECT, INSERT, etc.)"
+
+    - path: query.sparkUiUrl
+      type: string
+      usage: false
+      priority: low
+      description: "Spark UI URL for debugging"
+
+    - path: query.errorMessage
+      type: string
+      usage: false
+      priority: high
+      description: "Error message if query failed"
+
+  # ---------------------------------------------------------------------------
+  # UNUSED BUT VALUABLE - Query Source/Origin
+  # ---------------------------------------------------------------------------
+  query_source_unused:
+    - path: query.internalQuerySource.jobId
+      type: string
+      usage: false
+      priority: medium
+      description: "Job ID that triggered the query"
+
+    - path: query.internalQuerySource.notebookId
+      type: string
+      usage: false
+      priority: medium
+      description: "Notebook ID that triggered the query"
+
+    - path: query.internalQuerySource.dashboardId
+      type: string
+      usage: false
+      priority: medium
+      description: "Dashboard ID that triggered the query"
+
+    - path: query.internalQuerySource.pipelineId
+      type: string
+      usage: false
+      priority: medium
+      description: "Pipeline ID that triggered the query"
+
+    - path: query.internalQuerySource.driverInfo.driverName
+      type: string
+      usage: false
+      priority: low
+      description: "Driver/connector name"
+
+    - path: query.internalQuerySource.driverInfo.versionNumber
+      type: string
+      usage: false
+      priority: low
+      description: "Driver version"
+
+  # ---------------------------------------------------------------------------
+  # UNUSED - Query Parameters (for parameterized queries)
+  # ---------------------------------------------------------------------------
+  query_parameters_unused:
+    - path: query.queryMetadata.queryParameters.namedParameters.namedQueryParametersEntries[].name
+      type: string
+      usage: false
+      priority: low
+      description: "Named parameter name"
+
+    - path: query.queryMetadata.queryParameters.namedParameters.namedQueryParametersEntries[].value
+      type: object
+      usage: false
+      priority: low
+      description: "Named parameter value"
+
+  # ---------------------------------------------------------------------------
+  # UNUSED - Plan Metadata
+  # ---------------------------------------------------------------------------
+  plan_metadata_unused:
+    - path: planMetadata[].durationMs
+      type: int
+      usage: false
+      priority: low
+      description: "Plan duration"
+
+    - path: planMetadata[].metrics.readBytes
+      type: int
+      usage: false
+      priority: low
+      description: "Plan-level bytes read"
+
+    - path: planMetadatas[].callStack.callStackEntries[]
+      type: array
+      usage: false
+      priority: low
+      description: "Call stack for debugging"
+
+  # ---------------------------------------------------------------------------
+  # UNUSED - Top-level (flat format alternatives)
+  # ---------------------------------------------------------------------------
+  top_level_unused:
+    - path: id
+      type: string
+      usage: false
+      notes: "Flat format alternative to query.id"
+
+    - path: status
+      type: string
+      usage: false
+      notes: "Flat format alternative to query.status"
+
+    - path: queryText
+      type: string
+      usage: false
+      notes: "Flat format alternative to query.queryText"
+
+    - path: metrics.*
+      type: object
+      usage: false
+      notes: "Flat format alternative to query.metrics.*"
+
+    - path: sparkUiUrl
+      type: string
+      usage: false
+
+    - path: version
+      type: string
+      usage: false
+      description: "Profile format version"
+
+    - path: activePlanId
+      type: string
+      usage: false
+
+    - path: plansState
+      type: string
+      usage: false
+
+    - path: isFinal
+      type: bool
+      usage: false
+
+    - path: lookupKey
+      type: string
+      usage: false
+
+    - path: endpointId
+      type: string
+      usage: false
+
+    - path: canSubscribeToLiveQuery
+      type: bool
+      usage: false

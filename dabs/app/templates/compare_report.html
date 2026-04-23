@@ -1,0 +1,241 @@
+{% extends "base.html" %}
+{% block title %}{{ _('Comparison Report') }} - Performance Toolkit{% endblock %}
+
+{% block content %}
+<div style="max-width: 1400px; margin: 0 auto; padding: 2rem;">
+    <!-- Header banner -->
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; padding: 0.75rem 1rem; border-radius: var(--radius);
+        {% if comparison.regression_detected %}background: hsl(var(--destructive) / 0.1); border: 1px solid hsl(var(--destructive) / 0.3);
+        {% else %}background: hsl(var(--success) / 0.1); border: 1px solid hsl(var(--success) / 0.3);{% endif %}">
+        <div>
+            <i class="bi bi-arrow-left-right"
+               style="{% if comparison.regression_detected %}color: hsl(var(--destructive));{% else %}color: hsl(var(--success));{% endif %}"></i>
+            <strong>{{ _('Comparison Report') }}</strong>
+            <span style="color: hsl(var(--muted-foreground)); font-size: 0.8rem; margin-left: 0.5rem;">
+                {% if comparison.regression_detected %}
+                    <span style="color: hsl(var(--destructive)); font-weight: 600;">
+                        {{ _('Regression') }}: {{ comparison.regression_severity }}
+                    </span>
+                {% else %}
+                    <span style="color: hsl(var(--success)); font-weight: 600;">{{ _('No Regression') }}</span>
+                {% endif %}
+            </span>
+        </div>
+        <div class="no-print" style="display: flex; gap: 0.5rem;">
+            <a href="/compare" style="padding: 0.4rem 0.75rem; border-radius: var(--radius); background: hsl(var(--secondary)); color: hsl(var(--secondary-foreground)); border: none; cursor: pointer; font-size: 0.8rem; text-decoration: none;">
+                <i class="bi bi-arrow-left"></i> {{ _('Back to Compare') }}
+            </a>
+            <button onclick="window.print()" style="padding: 0.4rem 0.75rem; border-radius: var(--radius); background: hsl(var(--secondary)); color: hsl(var(--secondary-foreground)); border: none; cursor: pointer; font-size: 0.8rem;" title="Print / Save as PDF">
+                <i class="bi bi-printer"></i> {{ _('Print') }}
+            </button>
+        </div>
+    </div>
+
+    <!-- Comparison metadata -->
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.5rem; font-size: 0.8rem;">
+        <div style="padding: 0.75rem; border-radius: var(--radius); background: hsl(var(--card)); border: 1px solid hsl(var(--border));">
+            <div style="font-size: 0.7rem; color: hsl(var(--muted-foreground)); text-transform: uppercase; margin-bottom: 0.5rem;">{{ _('Baseline') }}</div>
+            <div><strong>ID:</strong> {{ comparison.get('baseline_query_id', comparison.get('baseline_app_id', '-')) }}</div>
+            <div><strong>{{ _('Experiment') }}:</strong> {{ comparison.baseline_experiment or '-' }}</div>
+            <div><strong>{{ _('Variant') }}:</strong> {{ comparison.baseline_variant or '-' }}</div>
+        </div>
+        <div style="padding: 0.75rem; border-radius: var(--radius); background: hsl(var(--card)); border: 1px solid hsl(var(--border));">
+            <div style="font-size: 0.7rem; color: hsl(var(--muted-foreground)); text-transform: uppercase; margin-bottom: 0.5rem;">{{ _('Candidate') }}</div>
+            <div><strong>ID:</strong> {{ comparison.get('candidate_query_id', comparison.get('candidate_app_id', '-')) }}</div>
+            <div><strong>{{ _('Experiment') }}:</strong> {{ comparison.candidate_experiment or '-' }}</div>
+            <div><strong>{{ _('Variant') }}:</strong> {{ comparison.candidate_variant or '-' }}</div>
+        </div>
+    </div>
+
+    <!-- Report content -->
+    {% if comparison.report_markdown %}
+    <div class="card" style="padding: 1.5rem;">
+        <div id="report-content" class="markdown-content"></div>
+    </div>
+    {% else %}
+    <div style="text-align: center; padding: 2rem; color: hsl(var(--muted-foreground));">
+        {{ _('No report available for this comparison.') }}
+    </div>
+    {% endif %}
+</div>
+
+<!-- Genie Chat Toggle -->
+<button id="chatToggle" onclick="toggleChat()" style="position:fixed; bottom:1.5rem; right:1.5rem; z-index:999; background:hsl(var(--primary)); color:hsl(var(--primary-foreground)); border:none; border-radius:50%; width:3rem; height:3rem; font-size:1.2rem; cursor:pointer; box-shadow:0 2px 8px rgba(0,0,0,0.2);" title="Ask Genie">
+    <i class="bi bi-chat-dots"></i>
+</button>
+
+<!-- Genie Chat Panel -->
+<div id="chatPanel" style="display:none; position:fixed; right:0; top:0; bottom:0; width:560px; background:hsl(var(--background)); border-left:2px solid hsl(var(--border)); z-index:1001; flex-direction:column; box-shadow:-4px 0 16px rgba(0,0,0,0.1);">
+    <div style="padding:0.75rem 1rem; border-bottom:1px solid hsl(var(--border)); display:flex; justify-content:space-between; align-items:center; background:hsl(var(--muted)/0.3);">
+        <span style="font-weight:600; font-size:0.9rem;"><i class="bi bi-stars"></i> {{ _('Genie — Comparison Analysis') }}</span>
+        <div style="display:flex; gap:0.5rem; align-items:center;">
+            <button onclick="clearChat()" style="background:none; border:none; cursor:pointer; color:hsl(var(--muted-foreground)); font-size:0.8rem;" title="{{ _('New Conversation') }}"><i class="bi bi-arrow-counterclockwise"></i></button>
+            <button onclick="toggleChat()" style="background:none; border:none; cursor:pointer; color:hsl(var(--muted-foreground)); font-size:1rem;"><i class="bi bi-x-lg"></i></button>
+        </div>
+    </div>
+    <div id="chatMessages" style="flex:1; overflow-y:auto; padding:0.75rem;">
+        <div style="text-align:center; color:hsl(var(--muted-foreground)); font-size:0.8rem; padding:2rem 1rem;">
+            <i class="bi bi-stars" style="font-size:2rem; display:block; margin-bottom:0.5rem;"></i>
+            {{ _('Ask questions about this comparison.') }}
+        </div>
+    </div>
+    <div style="padding:0.75rem; border-top:1px solid hsl(var(--border));">
+        <div style="display:flex; gap:0.5rem;">
+            <input type="text" id="chatInput" class="form-control" placeholder="{{ _('Ask about this comparison...') }}" style="font-size:0.85rem;"
+                onkeydown="if(event.key==='Enter'&&!event.shiftKey&&!event.isComposing){event.preventDefault();sendChat();}">
+            <button id="chatSendBtn" onclick="sendChat()" class="btn btn-sm" style="background:hsl(var(--primary)); color:hsl(var(--primary-foreground)); border:none; padding:0.4rem 0.75rem;"><i class="bi bi-send"></i></button>
+        </div>
+    </div>
+</div>
+
+<script>
+const reportMarkdown = {{ comparison.report_markdown|default('')|tojson }};
+const compareType = {{ compare_type|default('sql')|tojson }};
+const comparisonId = {{ comparison.comparison_id|tojson }};
+const baselineId = {{ comparison.get('baseline_query_id', comparison.get('baseline_app_id', ''))|tojson }};
+const candidateId = {{ comparison.get('candidate_query_id', comparison.get('candidate_app_id', ''))|tojson }};
+
+function esc(s) { if (!s) return ''; const d = document.createElement('div'); d.textContent = String(s); return d.innerHTML; }
+
+document.addEventListener('DOMContentLoaded', function() {
+    if (reportMarkdown && typeof marked !== 'undefined') {
+        const content = document.getElementById('report-content');
+        if (content) {
+            marked.setOptions({ breaks: true, gfm: true });
+            const html = marked.parse(reportMarkdown);
+            content.innerHTML = typeof DOMPurify !== 'undefined' ? DOMPurify.sanitize(html) : html;
+            renderMermaidBlocks(content, 'mermaid-cmprpt');
+            if (typeof hljs !== 'undefined') {
+                content.querySelectorAll('pre code').forEach(block => hljs.highlightElement(block));
+            }
+        }
+    }
+});
+
+// --- Genie Chat ---
+let _chatOpen = false, _chatConversationId = null, _chatSpaceReady = false;
+
+function toggleChat() {
+    _chatOpen = !_chatOpen;
+    document.getElementById('chatPanel').style.display = _chatOpen ? 'flex' : 'none';
+    if (_chatOpen && !_chatSpaceReady) _ensureGenieSpace();
+}
+
+function clearChat() {
+    _chatConversationId = null;
+    document.getElementById('chatMessages').innerHTML = '<div style="text-align:center; color:hsl(var(--muted-foreground)); font-size:0.8rem; padding:2rem 1rem;"><i class="bi bi-stars" style="font-size:2rem; display:block; margin-bottom:0.5rem;"></i>{{ _("Ask questions about this comparison.") }}</div>';
+}
+
+async function _ensureGenieSpace() {
+    const url = compareType === 'spark' ? '/api/v1/genie/ensure-space' : '/api/v1/genie/dbsql/ensure-space';
+    const msgs = document.getElementById('chatMessages');
+    msgs.innerHTML = '<div style="text-align:center; padding:2rem 1rem;"><div class="spinner" style="width:1.5rem; height:1.5rem; border-width:2px; margin:0 auto 0.5rem;"></div><p style="color:hsl(var(--muted-foreground)); font-size:0.8rem; margin:0;">{{ _("Initializing Genie Space...") }}</p></div>';
+    document.getElementById('chatInput').disabled = true;
+    document.getElementById('chatSendBtn').disabled = true;
+    try {
+        const r = await fetch(url, {method: 'POST', headers: {'Content-Type': 'application/json'}});
+        const data = await r.json();
+        if (data.error) { msgs.innerHTML = ''; _appendChatMsg('system', 'Failed to initialize Genie: ' + data.error); return; }
+        _chatSpaceReady = true;
+        msgs.innerHTML = '<div style="text-align:center; color:hsl(var(--muted-foreground)); font-size:0.8rem; padding:2rem 1rem;"><i class="bi bi-stars" style="font-size:2rem; display:block; margin-bottom:0.5rem;"></i>{{ _("Ask questions about this comparison.") }}</div>';
+    } catch(e) { msgs.innerHTML = ''; _appendChatMsg('system', 'Genie connection failed: ' + e.message); }
+    finally { document.getElementById('chatInput').disabled = false; document.getElementById('chatSendBtn').disabled = false; }
+}
+
+async function sendChat() {
+    const input = document.getElementById('chatInput');
+    const msg = input.value.trim();
+    if (!msg) return;
+    input.value = '';
+    document.getElementById('chatSendBtn').disabled = true;
+    const msgs = document.getElementById('chatMessages');
+    if (!_chatConversationId && msgs.querySelector('[style*="text-align:center"]')) msgs.innerHTML = '';
+    _appendChatMsg('user', msg);
+    const thinkingId = _appendChatMsg('assistant', '<i class="bi bi-hourglass-split"></i> Thinking...');
+
+    const isSpark = compareType === 'spark';
+    const baseUrl = isSpark ? '/api/v1/genie' : '/api/v1/genie/dbsql';
+    const bodyExtra = isSpark
+        ? { comparison_id: comparisonId, baseline_app_id: baselineId, candidate_app_id: candidateId }
+        : { comparison_id: comparisonId, baseline_id: baselineId, candidate_id: candidateId };
+
+    try {
+        let convId = _chatConversationId, msgId;
+        if (!convId) {
+            const r = await fetch(baseUrl + '/conversations', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({message: msg, ...bodyExtra}) });
+            const data = await r.json();
+            if (data.error) { _replaceChatMsg(thinkingId, 'Error: ' + data.error); return; }
+            convId = data.conversation_id; msgId = data.message_id; _chatConversationId = convId;
+        } else {
+            const r = await fetch(baseUrl + '/conversations/' + convId + '/messages', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({message: msg, ...bodyExtra}) });
+            const data = await r.json();
+            if (data.error) { _replaceChatMsg(thinkingId, 'Error: ' + data.error); return; }
+            msgId = data.message_id;
+        }
+        await _pollGenieMessage(baseUrl, convId, msgId, thinkingId);
+    } catch(e) { _replaceChatMsg(thinkingId, 'Error: ' + e.message); }
+    finally { document.getElementById('chatSendBtn').disabled = false; }
+}
+
+async function _pollGenieMessage(baseUrl, convId, msgId, thinkingId) {
+    for (let i = 0; i < 60; i++) {
+        await new Promise(r => setTimeout(r, 2000));
+        try {
+            const r = await fetch(baseUrl + '/conversations/' + convId + '/messages/' + msgId + '/status');
+            const data = await r.json();
+            if (data.status === 'COMPLETED') {
+                let text = (data.text || '').replace(/\[Context:.*?\]\s*/gs, '').replace(/\[comparison_id=.*?\]\s*/gs, '').trim();
+                let html = text ? DOMPurify.sanitize(marked.parse(text)) : '';
+                for (const att of (data.attachments || [])) {
+                    if (att.type === 'QUERY' && att.id) {
+                        if (data.sql) html += '<details style="margin-top:0.5rem;"><summary style="font-size:0.75rem; cursor:pointer; color:hsl(var(--muted-foreground));">SQL</summary><pre style="font-size:0.7rem; padding:0.5rem; background:hsl(240 10% 8%); color:hsl(0 0% 90%); border-radius:4px; overflow-x:auto;">' + esc(data.sql) + '</pre></details>';
+                        try {
+                            const rr = await fetch(baseUrl + '/conversations/' + convId + '/messages/' + msgId + '/results/' + att.id);
+                            const qr = await rr.json();
+                            if (qr.columns && qr.rows) {
+                                let h = '<div style="overflow-x:auto; margin-top:0.5rem; border:1px solid hsl(var(--border)); border-radius:4px; max-height:300px; overflow-y:auto;"><table style="width:100%; border-collapse:collapse; font-size:0.75rem;"><thead><tr>';
+                                qr.columns.forEach(c => { h += '<th style="padding:0.3rem 0.5rem; text-align:left; border-bottom:1px solid hsl(var(--border)); background:hsl(var(--muted)/0.5); font-size:0.7rem;">' + esc(c) + '</th>'; });
+                                h += '</tr></thead><tbody>';
+                                qr.rows.slice(0, 50).forEach(row => { h += '<tr>'; row.forEach(cell => { h += '<td style="padding:0.25rem 0.5rem; border-bottom:1px solid hsl(var(--border)/0.5);">' + esc(cell != null ? String(cell) : '') + '</td>'; }); h += '</tr>'; });
+                                h += '</tbody></table></div>';
+                                html += h;
+                            }
+                        } catch(e) {}
+                    }
+                }
+                _replaceChatMsg(thinkingId, html || '(No response)'); return;
+            } else if (data.status === 'FAILED' || data.status === 'CANCELLED') {
+                const errText = (data.text || data.status || '').replace(/\[Context:.*?\]\s*/gs, '').replace(/\[comparison_id=.*?\]\s*/gs, '').trim();
+                _replaceChatMsg(thinkingId, 'Query failed: ' + errText); return;
+            }
+        } catch(e) {}
+    }
+    _replaceChatMsg(thinkingId, 'Timed out waiting for response.');
+}
+
+let _chatMsgCounter = 0;
+function _appendChatMsg(role, content) {
+    const id = 'chat-msg-' + (++_chatMsgCounter);
+    const msgs = document.getElementById('chatMessages');
+    const div = document.createElement('div');
+    div.id = id;
+    div.style.cssText = role === 'user' ? 'margin-bottom:0.75rem; text-align:right;' : role === 'system' ? 'margin-bottom:0.75rem; text-align:center;' : 'margin-bottom:0.75rem;';
+    const bubble = document.createElement('div');
+    bubble.style.cssText = role === 'user'
+        ? 'display:inline-block; max-width:85%; padding:0.5rem 0.75rem; border-radius:0.75rem 0.75rem 0 0.75rem; background:hsl(var(--primary)); color:hsl(var(--primary-foreground)); font-size:0.85rem; text-align:left;'
+        : role === 'system'
+        ? 'display:inline-block; padding:0.3rem 0.5rem; font-size:0.75rem; color:hsl(var(--destructive));'
+        : 'display:inline-block; max-width:95%; padding:0.5rem 0.75rem; border-radius:0.75rem 0.75rem 0.75rem 0; background:hsl(var(--muted)/0.5); font-size:0.85rem;';
+    bubble.innerHTML = content;
+    div.appendChild(bubble);
+    msgs.appendChild(div);
+    msgs.scrollTop = msgs.scrollHeight;
+    return id;
+}
+
+function _replaceChatMsg(id, content) {
+    const el = document.getElementById(id);
+    if (el) { const b = el.querySelector('div'); if (b) b.innerHTML = content; document.getElementById('chatMessages').scrollTop = document.getElementById('chatMessages').scrollHeight; }
+}
+</script>
+{% endblock %}

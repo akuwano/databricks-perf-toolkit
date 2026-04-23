@@ -1,0 +1,91 @@
+/* ===== Print Styles ===== */
+@media print {
+    body {
+        background: white !important;
+        color: black !important;
+        font-size: 10pt;
+    }
+
+    /* Hide non-printable elements */
+    .navbar, footer, .theme-toggle, .no-print,
+    .btn:not(.no-hide-print) {
+        display: none !important;
+    }
+
+    /* Single column layout */
+    .row { display: block !important; }
+    .col-lg-4, .col-lg-8, .col-md-4, .col-md-8 {
+        width: 100% !important;
+        max-width: 100% !important;
+        flex: none !important;
+    }
+
+    /* Cards */
+    .card {
+        border: 1px solid #ddd !important;
+        box-shadow: none !important;
+        break-inside: avoid;
+        margin-bottom: 0.5rem !important;
+    }
+    .card-header {
+        background: #f8f8f8 !important;
+        color: black !important;
+        border-bottom: 1px solid #ddd !important;
+    }
+    .card-body { padding: 0.5rem !important; }
+
+    /* Metric cards (shared_result grid) */
+    [style*="grid-template-columns"] {
+        grid-template-columns: repeat(5, 1fr) !important;
+    }
+
+    /* Markdown report */
+    .markdown-content {
+        font-size: 10pt;
+        color: black !important;
+    }
+    .markdown-content h1 { font-size: 16pt; }
+    .markdown-content h2 {
+        font-size: 13pt;
+        page-break-after: avoid;
+    }
+    .markdown-content h3 {
+        font-size: 11pt;
+        page-break-after: avoid;
+    }
+    .markdown-content table {
+        page-break-inside: avoid;
+        border-collapse: collapse;
+        width: 100%;
+        font-size: 9pt;
+    }
+    .markdown-content table th,
+    .markdown-content table td {
+        border: 1px solid #ccc !important;
+        padding: 3px 6px !important;
+        color: black !important;
+    }
+    .markdown-content pre {
+        white-space: pre-wrap;
+        word-wrap: break-word;
+        background: #f5f5f5 !important;
+        color: black !important;
+        border: 1px solid #ddd;
+        font-size: 8pt;
+        page-break-inside: avoid;
+    }
+    .markdown-content code {
+        color: black !important;
+        background: #f0f0f0 !important;
+    }
+
+    /* Mermaid diagrams */
+    .mermaid svg { max-width: 100% !important; }
+
+    /* Links show URL */
+    .markdown-content a[href]::after {
+        content: " (" attr(href) ")";
+        font-size: 8pt;
+        color: #666;
+    }
+}

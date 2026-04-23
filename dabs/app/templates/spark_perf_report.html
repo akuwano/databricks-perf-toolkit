@@ -1,0 +1,435 @@
+{% extends "base.html" %}
+{% block title %}Spark Analysis Report - Performance Toolkit{% endblock %}
+
+{% block content %}
+<div style="max-width: 1400px; margin: 0 auto; padding: 2rem;">
+    <!-- Header banner -->
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; padding: 0.75rem 1rem; border-radius: var(--radius); background: hsl(var(--info) / 0.1); border: 1px solid hsl(var(--info) / 0.3);">
+        <div>
+            <i class="bi bi-bar-chart" style="color: hsl(var(--info));"></i>
+            <strong>{{ _('Spark Analysis') }}</strong>
+            <span style="color: hsl(var(--muted-foreground)); font-size: 0.8rem; margin-left: 0.5rem;" title="{{ app_id }}">
+                App ID: {{ app_id[:16] }}...
+                {% if summary and summary.cluster_id %}
+                <span style="font-family:'JetBrains Mono',monospace; font-size: 0.7rem; margin-left: 0.25rem;">[{{ summary.cluster_id }}]</span>
+                {% endif %}
+            </span>
+        </div>
+        <div class="no-print" style="display: flex; gap: 0.5rem;">
+            <button onclick="copyShareLink()" style="padding: 0.4rem 0.75rem; border-radius: var(--radius); background: hsl(var(--secondary)); color: hsl(var(--secondary-foreground)); border: none; cursor: pointer; font-size: 0.8rem;" title="{{ _('Copy share link') }}">
+                <i class="bi bi-link-45deg"></i> <span id="copy-link-text">{{ _('Copy Link') }}</span>
+            </button>
+            <button onclick="window.print()" style="padding: 0.4rem 0.75rem; border-radius: var(--radius); background: hsl(var(--secondary)); color: hsl(var(--secondary-foreground)); border: none; cursor: pointer; font-size: 0.8rem;" title="{{ _('Print / Save as PDF') }}">
+                <i class="bi bi-printer"></i> {{ _('Print') }}
+            </button>
+        </div>
+    </div>
+
+    <!-- KPI cards -->
+    {% if summary %}
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 0.75rem; margin-bottom: 1.5rem;">
+        <div style="padding: 0.75rem; border-radius: var(--radius); background: hsl(var(--card)); border: 1px solid hsl(var(--border));">
+            <div style="font-size: 0.7rem; color: hsl(var(--muted-foreground)); text-transform: uppercase;">{{ _('Duration') }}</div>
+            <div style="font-size: 1.2rem; font-weight: 600;">{{ "%.1f"|format(summary.duration_min|default(0)) }} min</div>
+        </div>
+        <div style="padding: 0.75rem; border-radius: var(--radius); background: hsl(var(--card)); border: 1px solid hsl(var(--border));">
+            <div style="font-size: 0.7rem; color: hsl(var(--muted-foreground)); text-transform: uppercase;">{{ _('Jobs') }}</div>
+            <div style="font-size: 1.2rem; font-weight: 600;">{{ summary.total_jobs|default(0) }}</div>
+        </div>
+        <div style="padding: 0.75rem; border-radius: var(--radius); background: hsl(var(--card)); border: 1px solid hsl(var(--border));">
+            <div style="font-size: 0.7rem; color: hsl(var(--muted-foreground)); text-transform: uppercase;">{{ _('Shuffle') }}</div>
+            <div style="font-size: 1.2rem; font-weight: 600;">{{ "%.2f"|format(summary.total_shuffle_gb|default(0)) }} GB</div>
+        </div>
+        <div style="padding: 0.75rem; border-radius: var(--radius); background: hsl(var(--card)); border: 1px solid hsl(var(--border));">
+            <div style="font-size: 0.7rem; color: hsl(var(--muted-foreground)); text-transform: uppercase;">{{ _('Spill') }}</div>
+            <div style="font-size: 1.2rem; font-weight: 600;">{{ "%.2f"|format(summary.total_spill_gb|default(0)) }} GB</div>
+        </div>
+        <div style="padding: 0.75rem; border-radius: var(--radius); background: hsl(var(--card)); border: 1px solid hsl(var(--border));">
+            <div style="font-size: 0.7rem; color: hsl(var(--muted-foreground)); text-transform: uppercase;">GC</div>
+            <div style="font-size: 1.2rem; font-weight: 600;">{{ "%.1f"|format(summary.gc_overhead_pct|default(0)) }}%</div>
+        </div>
+        {% if bottleneck_count > 0 %}
+        <div style="padding: 0.75rem; border-radius: var(--radius); background: hsl(var(--destructive) / 0.1); border: 1px solid hsl(var(--destructive) / 0.3);">
+            <div style="font-size: 0.7rem; color: hsl(var(--destructive)); text-transform: uppercase;">{{ _('Alerts') }}</div>
+            <div style="font-size: 1.2rem; font-weight: 600; color: hsl(var(--destructive));">{{ bottleneck_count }}</div>
+        </div>
+        {% else %}
+        <div style="padding: 0.75rem; border-radius: var(--radius); background: hsl(var(--card)); border: 1px solid hsl(var(--border));">
+            <div style="font-size: 0.7rem; color: hsl(var(--muted-foreground)); text-transform: uppercase;">{{ _('Alerts') }}</div>
+            <div style="font-size: 1.2rem; font-weight: 600;">0</div>
+        </div>
+        {% endif %}
+    </div>
+    {% endif %}
+
+    <!-- Report content (fetched async to avoid Edge inline script size limits) -->
+    <div id="report-loading" style="text-align: center; padding: 2rem; color: hsl(var(--muted-foreground));">
+        <i class="bi bi-hourglass-split"></i> {{ _('Loading...') }}
+    </div>
+    <div id="report-error" style="display:none; text-align: center; padding: 2rem; color: hsl(var(--muted-foreground));">
+        {{ _('No report available for this application.') }}
+    </div>
+    <div class="card" id="report-card" style="padding: 1.5rem; display:none; overflow-x: auto;">
+        <div id="report-content" class="markdown-content spark-perf-report" style="overflow-wrap: break-word; word-wrap: break-word;"></div>
+    </div>
+</div>
+
+<!-- Genie Chat Toggle -->
+<button id="chatToggle" onclick="toggleChat()" style="position:fixed; bottom:1.5rem; right:1.5rem; z-index:999; background:hsl(var(--primary)); color:hsl(var(--primary-foreground)); border:none; border-radius:50%; width:3rem; height:3rem; font-size:1.2rem; cursor:pointer; box-shadow:0 2px 8px rgba(0,0,0,0.2);" title="Ask Genie">
+    <i class="bi bi-chat-dots"></i>
+</button>
+
+<!-- Genie Chat Panel -->
+<div id="chatPanel" style="display:none; position:fixed; right:0; top:0; bottom:0; width:560px; background:hsl(var(--background)); border-left:2px solid hsl(var(--border)); z-index:1001; flex-direction:column; box-shadow:-4px 0 16px rgba(0,0,0,0.1);">
+    <!-- Header -->
+    <div style="padding:0.75rem 1rem; border-bottom:1px solid hsl(var(--border)); display:flex; justify-content:space-between; align-items:center; background:hsl(var(--muted)/0.3);">
+        <span style="font-weight:600; font-size:0.9rem;"><i class="bi bi-stars"></i> {{ _('Genie — Spark Analysis') }}</span>
+        <div style="display:flex; gap:0.5rem; align-items:center;">
+            <button onclick="clearChat()" style="background:none; border:none; cursor:pointer; color:hsl(var(--muted-foreground)); font-size:0.8rem;" title="{{ _('New Conversation') }}">
+                <i class="bi bi-arrow-counterclockwise"></i>
+            </button>
+            <button onclick="toggleChat()" style="background:none; border:none; cursor:pointer; color:hsl(var(--muted-foreground)); font-size:1rem;">
+                <i class="bi bi-x-lg"></i>
+            </button>
+        </div>
+    </div>
+
+    <!-- Messages -->
+    <div id="chatMessages" style="flex:1; overflow-y:auto; padding:0.75rem;">
+        <div style="text-align:center; color:hsl(var(--muted-foreground)); font-size:0.8rem; padding:2rem 1rem;">
+            <i class="bi bi-stars" style="font-size:2rem; display:block; margin-bottom:0.5rem;"></i>
+            {{ _("Ask questions about this Spark application's performance data.") }}
+            <br><br>
+            <span style="font-size:0.75rem;">{{ _('Examples:') }}<br>
+            "What are the top bottlenecks?"<br>
+            "Show stage execution times"<br>
+            "Which executors have high GC?"</span>
+        </div>
+    </div>
+
+    <!-- Input -->
+    <div style="padding:0.75rem; border-top:1px solid hsl(var(--border));">
+        <div style="display:flex; gap:0.5rem;">
+            <input type="text" id="chatInput" class="form-control" placeholder="{{ _('Ask about this application...') }}" style="font-size:0.85rem;"
+                onkeydown="if(event.key==='Enter'&&!event.shiftKey&&!event.isComposing){event.preventDefault();sendChat();}">
+            <button id="chatSendBtn" onclick="sendChat()" class="btn btn-sm" style="background:hsl(var(--primary)); color:hsl(var(--primary-foreground)); border:none; padding:0.4rem 0.75rem;">
+                <i class="bi bi-send"></i>
+            </button>
+        </div>
+    </div>
+</div>
+
+<script>
+const appId = {{ app_id|tojson }};
+
+function esc(s) { if (!s) return ''; const d = document.createElement('div'); d.textContent = String(s); return d.innerHTML; }
+
+document.addEventListener('DOMContentLoaded', async function() {
+    // Fetch report via API (avoids Edge inline script size limits with large narratives)
+    const loading = document.getElementById('report-loading');
+    const errorDiv = document.getElementById('report-error');
+    const card = document.getElementById('report-card');
+
+    try {
+        const r = await fetch('/api/v1/spark-perf/narrative/' + encodeURIComponent(appId));
+        const data = await r.json();
+        loading.style.display = 'none';
+
+        const reportMarkdown = data.report || '';
+        if (!reportMarkdown) {
+            errorDiv.style.display = 'block';
+            return;
+        }
+
+        const content = document.getElementById('report-content');
+        if (content && typeof marked !== 'undefined') {
+            const html = marked.parse(reportMarkdown);
+            content.innerHTML = typeof DOMPurify !== 'undefined' ? DOMPurify.sanitize(html) : html;
+            renderMermaidBlocks(content, 'mermaid-sprpt');
+            if (typeof hljs !== 'undefined') {
+                content.querySelectorAll('pre code').forEach(block => hljs.highlightElement(block));
+            }
+            _enhanceReport(content);
+            card.style.display = 'block';
+            // Wrap h2 sections in collapsible <details>
+            (function(container) {
+                if (!container) return;
+                const OPEN_KEYWORDS = [
+                    'Executive Summary', 'Overview',
+                    'Top Alerts', 'Top Bottleneck',
+                    'Action Plan',
+                    'Root Cause',
+                    'Recommendation',
+                    'Performance Metrics',
+                ];
+                const h2s = Array.from(container.querySelectorAll('h2'));
+                h2s.forEach(h2 => {
+                    const title = h2.textContent || '';
+                    const shouldOpen = true;  // All sections open by default
+                    const nodes = [];
+                    let next = h2.nextSibling;
+                    while (next && !(next.nodeType === 1 && (next.tagName === 'H2' || next.tagName === 'H1'))) {
+                        // Absorb <hr> within sections (LLM output may contain --- dividers)
+                        nodes.push(next);
+                        next = next.nextSibling;
+                    }
+                    const prevHr = h2.previousElementSibling;
+                    if (prevHr && prevHr.tagName === 'HR') prevHr.remove();
+                    const details = document.createElement('details');
+                    if (shouldOpen) details.setAttribute('open', '');
+                    const summary = document.createElement('summary');
+                    const label = document.createElement('span');
+                    label.className = 'section-title';
+                    label.textContent = h2.textContent;
+                    summary.appendChild(label);
+                    details.appendChild(summary);
+                    const body = document.createElement('div');
+                    body.className = 'details-body';
+                    nodes.forEach(n => body.appendChild(n));
+                    details.appendChild(body);
+                    h2.replaceWith(details);
+                });
+            })(content);
+        }
+    } catch(e) {
+        console.error('Report loading failed:', e);
+        loading.style.display = 'none';
+        errorDiv.style.display = 'block';
+    }
+});
+
+// --- Report Enhancement: convert bullet lists to tables + operator badges ---
+function _enhanceReport(root) {
+    root.querySelectorAll('ul').forEach(ul => {
+        const items = Array.from(ul.children).filter(c => c.tagName === 'LI');
+        if (items.length < 2) return;
+        const kvPattern = /^<strong>([^<]+)<\/strong>\s*[:]\s*/;
+        const parsed = items.map(li => {
+            const m = li.innerHTML.match(kvPattern);
+            if (!m) return null;
+            return { key: m[1], value: li.innerHTML.replace(kvPattern, '') };
+        });
+        if (parsed.some(p => p === null)) return;
+
+        const table = document.createElement('table');
+        parsed.forEach(p => {
+            const tr = document.createElement('tr');
+            const th = document.createElement('th');
+            th.innerHTML = p.key;
+            const td = document.createElement('td');
+            td.innerHTML = p.value;
+            tr.appendChild(th);
+            tr.appendChild(td);
+            table.appendChild(tr);
+        });
+        ul.replaceWith(table);
+    });
+
+    // Wrap comma-separated operator names in <code> badges
+    _badgeifyOperators(root);
+}
+
+/** Detect cells containing comma-separated PascalCase operator names and wrap each in <code>. */
+function _badgeifyOperators(root) {
+    const opPattern = /^[A-Z][a-zA-Z]+$/;
+    root.querySelectorAll('table td:last-child').forEach(td => {
+        // Skip if already contains <code> or other markup beyond plain text
+        if (td.querySelector('code, a, strong, em')) return;
+        const raw = td.textContent.trim();
+        if (!raw) return;
+        const parts = raw.split(/,\s*/);
+        // At least 2 comma-separated tokens, all matching PascalCase operator names
+        if (parts.length < 2 || !parts.every(p => opPattern.test(p.trim()))) return;
+        td.innerHTML = parts.map(p => '<code>' + esc(p.trim()) + '</code>').join(' ');
+    });
+}
+
+function copyShareLink() {
+    const url = window.location.href;
+    navigator.clipboard.writeText(url).then(() => {
+        const el = document.getElementById('copy-link-text');
+        el.textContent = 'Copied!';
+        setTimeout(() => { el.textContent = '{{ _("Copy Link") }}'; }, 2000);
+    });
+}
+
+// --- Genie Chat ---
+let _chatOpen = false;
+let _chatConversationId = null;
+let _chatSpaceReady = false;
+
+function toggleChat() {
+    _chatOpen = !_chatOpen;
+    const panel = document.getElementById('chatPanel');
+    panel.style.display = _chatOpen ? 'flex' : 'none';
+    if (_chatOpen && !_chatSpaceReady) {
+        _ensureGenieSpace();
+    }
+}
+
+function clearChat() {
+    _chatConversationId = null;
+    const msgs = document.getElementById('chatMessages');
+    msgs.innerHTML = '<div style="text-align:center; color:hsl(var(--muted-foreground)); font-size:0.8rem; padding:2rem 1rem;">' +
+        '<i class="bi bi-stars" style="font-size:2rem; display:block; margin-bottom:0.5rem;"></i>' +
+        '{{ _("Ask questions about this Spark application performance data.") }}</div>';
+}
+
+async function _ensureGenieSpace() {
+    try {
+        const r = await fetch('/api/v1/genie/ensure-space', {method: 'POST', headers: {'Content-Type': 'application/json'}});
+        const data = await r.json();
+        if (data.error) {
+            _appendChatMsg('system', 'Failed to initialize Genie: ' + data.error);
+            return;
+        }
+        _chatSpaceReady = true;
+    } catch(e) {
+        _appendChatMsg('system', 'Genie connection failed: ' + e.message);
+    }
+}
+
+async function sendChat() {
+    const input = document.getElementById('chatInput');
+    const msg = input.value.trim();
+    if (!msg) return;
+
+    input.value = '';
+    document.getElementById('chatSendBtn').disabled = true;
+
+    const msgs = document.getElementById('chatMessages');
+    if (!_chatConversationId && msgs.querySelector('[style*="text-align:center"]')) {
+        msgs.innerHTML = '';
+    }
+
+    _appendChatMsg('user', msg);
+    const thinkingId = _appendChatMsg('assistant', '<i class="bi bi-hourglass-split"></i> Thinking...');
+
+    try {
+        let convId = _chatConversationId;
+        let msgId;
+
+        if (!convId) {
+            const r = await fetch('/api/v1/genie/conversations', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({message: msg, app_id: appId || ''}),
+            });
+            const data = await r.json();
+            if (data.error) { _replaceChatMsg(thinkingId, 'Error: ' + data.error); return; }
+            convId = data.conversation_id;
+            msgId = data.message_id;
+            _chatConversationId = convId;
+        } else {
+            const r = await fetch('/api/v1/genie/conversations/' + convId + '/messages', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({message: msg, app_id: appId || ''}),
+            });
+            const data = await r.json();
+            if (data.error) { _replaceChatMsg(thinkingId, 'Error: ' + data.error); return; }
+            msgId = data.message_id;
+        }
+
+        await _pollGenieMessage(convId, msgId, thinkingId);
+    } catch(e) {
+        _replaceChatMsg(thinkingId, 'Error: ' + e.message);
+    } finally {
+        document.getElementById('chatSendBtn').disabled = false;
+    }
+}
+
+async function _pollGenieMessage(convId, msgId, thinkingId) {
+    for (let i = 0; i < 60; i++) {
+        await new Promise(r => setTimeout(r, 2000));
+        try {
+            const r = await fetch('/api/v1/genie/conversations/' + convId + '/messages/' + msgId + '/status');
+            const data = await r.json();
+
+            if (data.status === 'COMPLETED') {
+                let responseText = (data.text || '').replace(/^\[Context:.*?\]\s*/s, '').replace(/^\[app_id=.*?\]\s*/s, '').trim();
+                let html = responseText ? (typeof DOMPurify !== 'undefined' ? DOMPurify.sanitize(marked.parse(responseText)) : marked.parse(responseText)) : '';
+
+                for (const att of (data.attachments || [])) {
+                    if (att.type === 'QUERY' && att.id) {
+                        if (data.sql) {
+                            html += '<details style="margin-top:0.5rem;"><summary style="font-size:0.75rem; cursor:pointer; color:hsl(var(--muted-foreground));">SQL</summary><pre style="font-size:0.7rem; padding:0.5rem; background:hsl(240 10% 8%); color:hsl(0 0% 90%); border-radius:4px; overflow-x:auto;">' + esc(data.sql) + '</pre></details>';
+                        }
+                        try {
+                            const rr = await fetch('/api/v1/genie/conversations/' + convId + '/messages/' + msgId + '/results/' + att.id);
+                            const qr = await rr.json();
+                            if (qr.columns && qr.rows) {
+                                html += _renderQueryTable(qr.columns, qr.rows);
+                            }
+                        } catch(e) {}
+                    }
+                }
+
+                _replaceChatMsg(thinkingId, html || '(No response)');
+                return;
+            } else if (data.status === 'FAILED' || data.status === 'CANCELLED') {
+                _replaceChatMsg(thinkingId, 'Query failed: ' + (data.text || data.status));
+                return;
+            }
+        } catch(e) {}
+    }
+    _replaceChatMsg(thinkingId, 'Timed out waiting for response.');
+}
+
+function _renderQueryTable(columns, rows) {
+    if (!columns.length) return '';
+    const maxRows = 50;
+    let html = '<div style="overflow-x:auto; margin-top:0.5rem; border:1px solid hsl(var(--border)); border-radius:4px; max-height:300px; overflow-y:auto;">';
+    html += '<table style="width:100%; border-collapse:collapse; font-size:0.75rem;">';
+    html += '<thead><tr>';
+    columns.forEach(c => { html += '<th style="padding:0.3rem 0.5rem; text-align:left; border-bottom:1px solid hsl(var(--border)); background:hsl(var(--muted)/0.5); white-space:nowrap; font-size:0.7rem; text-transform:uppercase; letter-spacing:0.03em;">' + esc(c) + '</th>'; });
+    html += '</tr></thead><tbody>';
+    const displayRows = rows.slice(0, maxRows);
+    displayRows.forEach(row => {
+        html += '<tr>';
+        row.forEach(cell => { html += '<td style="padding:0.25rem 0.5rem; border-bottom:1px solid hsl(var(--border)/0.5); white-space:nowrap;">' + esc(cell != null ? String(cell) : '') + '</td>'; });
+        html += '</tr>';
+    });
+    html += '</tbody></table></div>';
+    if (rows.length > maxRows) {
+        html += '<div style="font-size:0.7rem; color:hsl(var(--muted-foreground)); padding:0.25rem;">Showing ' + maxRows + ' of ' + rows.length + ' rows</div>';
+    }
+    return html;
+}
+
+let _chatMsgCounter = 0;
+function _appendChatMsg(role, content) {
+    const id = 'chat-msg-' + (++_chatMsgCounter);
+    const msgs = document.getElementById('chatMessages');
+    const div = document.createElement('div');
+    div.id = id;
+    div.style.cssText = role === 'user'
+        ? 'margin-bottom:0.75rem; text-align:right;'
+        : role === 'system'
+        ? 'margin-bottom:0.75rem; text-align:center;'
+        : 'margin-bottom:0.75rem;';
+
+    const bubble = document.createElement('div');
+    bubble.style.cssText = role === 'user'
+        ? 'display:inline-block; max-width:85%; padding:0.5rem 0.75rem; border-radius:0.75rem 0.75rem 0 0.75rem; background:hsl(var(--primary)); color:hsl(var(--primary-foreground)); font-size:0.85rem; text-align:left;'
+        : role === 'system'
+        ? 'display:inline-block; padding:0.3rem 0.5rem; font-size:0.75rem; color:hsl(var(--destructive));'
+        : 'display:inline-block; max-width:95%; padding:0.5rem 0.75rem; border-radius:0.75rem 0.75rem 0.75rem 0; background:hsl(var(--muted)/0.5); font-size:0.85rem;';
+
+    bubble.innerHTML = content;
+    div.appendChild(bubble);
+    msgs.appendChild(div);
+    msgs.scrollTop = msgs.scrollHeight;
+    return id;
+}
+
+function _replaceChatMsg(id, content) {
+    const el = document.getElementById(id);
+    if (el) {
+        const bubble = el.querySelector('div');
+        if (bubble) bubble.innerHTML = content;
+        document.getElementById('chatMessages').scrollTop = document.getElementById('chatMessages').scrollHeight;
+    }
+}
+</script>
+{% endblock %}

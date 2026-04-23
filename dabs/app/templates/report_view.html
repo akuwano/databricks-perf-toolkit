@@ -1,0 +1,412 @@
+{% extends "base.html" %}
+
+{% block title %}{{ _('View Report') }} - Performance Toolkit{% endblock %}
+
+{% block content %}
+<style>.container { max-width: 1400px !important; }</style>
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h6>
+                    <i class="bi bi-file-text"></i>
+                    {{ filename }}
+                </h6>
+                <div class="d-flex gap-2">
+                    <a href="/api/v1/report/{{ report_id }}/download" class="btn btn-sm btn-outline">
+                        <i class="bi bi-download"></i>
+                        {{ _('Download') }}
+                    </a>
+                    <a href="/report" class="btn btn-sm btn-outline">
+                        <i class="bi bi-upload"></i>
+                        {{ _('Upload Another') }}
+                    </a>
+                </div>
+            </div>
+            <div class="card-body">
+                <div id="reportContent" class="markdown-content"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Genie Chat Toggle -->
+    <button id="chatToggle" onclick="toggleChat()" style="position:fixed; bottom:1.5rem; right:1.5rem; z-index:999; background:hsl(var(--primary)); color:hsl(var(--primary-foreground)); border:none; border-radius:50%; width:3rem; height:3rem; font-size:1.2rem; cursor:pointer; box-shadow:0 2px 8px rgba(0,0,0,0.2);" title="Ask Genie">
+        <i class="bi bi-chat-dots"></i>
+    </button>
+
+    <!-- Genie Chat Panel -->
+    <div id="chatPanel" style="display:none; position:fixed; right:0; top:0; bottom:0; width:560px; background:hsl(var(--background)); border-left:2px solid hsl(var(--border)); z-index:1001; flex-direction:column; box-shadow:-4px 0 16px rgba(0,0,0,0.1);">
+        <!-- Header -->
+        <div style="padding:0.75rem 1rem; border-bottom:1px solid hsl(var(--border)); display:flex; justify-content:space-between; align-items:center; background:hsl(var(--muted)/0.3);">
+            <span style="font-weight:600; font-size:0.9rem;"><i class="bi bi-stars"></i> Genie — DBSQL Analysis</span>
+            <div style="display:flex; gap:0.5rem; align-items:center;">
+                <button onclick="clearChat()" style="background:none; border:none; cursor:pointer; color:hsl(var(--muted-foreground)); font-size:0.8rem;" title="New Conversation">
+                    <i class="bi bi-arrow-counterclockwise"></i>
+                </button>
+                <button onclick="toggleChat()" style="background:none; border:none; cursor:pointer; color:hsl(var(--muted-foreground)); font-size:1rem;">
+                    <i class="bi bi-x-lg"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- Messages -->
+        <div id="chatMessages" style="flex:1; overflow-y:auto; padding:0.75rem;">
+            <div style="text-align:center; color:hsl(var(--muted-foreground)); font-size:0.8rem; padding:2rem 1rem;">
+                <i class="bi bi-stars" style="font-size:2rem; display:block; margin-bottom:0.5rem;"></i>
+                {{ _('Ask questions about this DBSQL query analysis data.') }}
+                <br><br>
+                <span style="font-size:0.75rem;">{{ _('Examples:') }}<br>
+                "{{ _('What are the recommended actions?') }}"<br>
+                "{{ _('Show table scan details') }}"<br>
+                "{{ _('Which operators are hot?') }}"</span>
+            </div>
+        </div>
+
+        <!-- Input -->
+        <div style="padding:0.75rem; border-top:1px solid hsl(var(--border));">
+            <div style="display:flex; gap:0.5rem;">
+                <input type="text" id="chatInput" class="form-control" placeholder="{{ _('Ask about this analysis...') }}" style="font-size:0.85rem;"
+                    onkeydown="if(event.key==='Enter'&&!event.shiftKey&&!event.isComposing){event.preventDefault();sendChat();}">
+                <button id="chatSendBtn" onclick="sendChat()" class="btn btn-sm" style="background:hsl(var(--primary)); color:hsl(var(--primary-foreground)); border:none; padding:0.4rem 0.75rem;">
+                    <i class="bi bi-send"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<style>
+/* Copy button styles */
+.sql-container {
+    position: relative;
+}
+.copy-btn {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    padding: 4px 8px;
+    font-size: 0.75rem;
+    background: hsl(var(--muted));
+    border: 1px solid hsl(var(--border));
+    border-radius: 4px;
+    cursor: pointer;
+    opacity: 0.7;
+    transition: opacity 0.2s;
+    z-index: 10;
+}
+.copy-btn:hover {
+    opacity: 1;
+    background: hsl(var(--accent));
+}
+.copy-btn.copied {
+    background: hsl(var(--success, 142 76% 36%));
+    color: white;
+}
+details summary {
+    cursor: pointer;
+    padding: 8px 0;
+}
+details pre {
+    position: relative;
+}
+.d-flex { display: flex; }
+.justify-content-between { justify-content: space-between; }
+.align-items-center { align-items: center; }
+.gap-2 { gap: 0.5rem; }
+.btn-sm {
+    padding: 0.25rem 0.5rem;
+    font-size: 0.875rem;
+}
+.btn-outline {
+    background: transparent;
+    border: 1px solid hsl(var(--border));
+    color: hsl(var(--foreground));
+    cursor: pointer;
+    border-radius: var(--radius);
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+}
+.btn-outline:hover {
+    background: hsl(var(--accent));
+}
+</style>
+<script>
+const analysisId = {{ report_id | tojson }};
+document.addEventListener('DOMContentLoaded', function() {
+    const reportContent = document.getElementById('reportContent');
+    const markdown = {{ report | tojson }};
+
+    // Configure marked
+    marked.setOptions({
+        breaks: true,
+        gfm: true
+    });
+
+    // Render markdown with XSS protection
+    reportContent.innerHTML = DOMPurify.sanitize(marked.parse(markdown));
+
+    // Render Mermaid diagrams with zoom/pan
+    renderMermaidBlocks(reportContent, 'mermaid-rv');
+
+    // Apply SQL syntax highlighting
+    if (window.hljs) {
+        document.querySelectorAll('#reportContent pre code').forEach((block) => {
+            const text = block.textContent || '';
+            const isSql = block.classList.contains('language-sql') ||
+                /\b(SELECT|INSERT|UPDATE|DELETE|CREATE|ALTER|DROP|FROM|WHERE|JOIN|GROUP BY|ORDER BY)\b/i.test(text);
+
+            if (isSql && !block.classList.contains('language-sql') && !block.classList.contains('lang-sql')) {
+                block.classList.add('language-sql');
+            }
+
+            if (block.classList.contains('language-sql') || block.classList.contains('lang-sql')) {
+                hljs.highlightElement(block);
+            }
+        });
+    }
+
+    // Add copy buttons to SQL code blocks
+    addCopyButtons();
+});
+
+function addCopyButtons() {
+    const codeBlocks = document.querySelectorAll('#reportContent pre');
+
+    codeBlocks.forEach((pre, index) => {
+        const code = pre.querySelector('code');
+        if (!code) return;
+
+        const isSql = code.classList.contains('language-sql') ||
+                      code.textContent.match(/\b(SELECT|FROM|WHERE|JOIN|WITH)\b/i);
+
+        if (!isSql) return;
+
+        const container = document.createElement('div');
+        container.className = 'sql-container';
+        pre.parentNode.insertBefore(container, pre);
+        container.appendChild(pre);
+
+        const copyBtn = document.createElement('button');
+        copyBtn.className = 'copy-btn';
+        copyBtn.innerHTML = '<i class="bi bi-clipboard"></i> {{ _("Copy") }}';
+        copyBtn.onclick = function() {
+            copyToClipboard(code.textContent, copyBtn);
+        };
+
+        container.appendChild(copyBtn);
+    });
+}
+
+function copyToClipboard(text, button) {
+    navigator.clipboard.writeText(text).then(() => {
+        button.classList.add('copied');
+        button.innerHTML = '<i class="bi bi-check"></i> {{ _("Copied!") }}';
+        setTimeout(() => {
+            button.classList.remove('copied');
+            button.innerHTML = '<i class="bi bi-clipboard"></i> {{ _("Copy") }}';
+        }, 2000);
+    }).catch(err => {
+        console.error('Failed to copy:', err);
+    });
+}
+
+// --- Genie Chat ---
+function esc(s) { if (!s) return ''; const d = document.createElement('div'); d.textContent = String(s); return d.innerHTML; }
+
+let _chatOpen = false;
+let _chatConversationId = null;
+let _chatSpaceReady = false;
+
+function toggleChat() {
+    _chatOpen = !_chatOpen;
+    const panel = document.getElementById('chatPanel');
+    panel.style.display = _chatOpen ? 'flex' : 'none';
+    if (_chatOpen && !_chatSpaceReady) {
+        _ensureGenieSpace();
+    }
+}
+
+function clearChat() {
+    _chatConversationId = null;
+    const msgs = document.getElementById('chatMessages');
+    msgs.innerHTML = '<div style="text-align:center; color:hsl(var(--muted-foreground)); font-size:0.8rem; padding:2rem 1rem;">' +
+        '<i class="bi bi-stars" style="font-size:2rem; display:block; margin-bottom:0.5rem;"></i>' +
+        '{{ _("Ask questions about this DBSQL query analysis data.") }}</div>';
+}
+
+async function _ensureGenieSpace() {
+    try {
+        const r = await fetch('/api/v1/genie/dbsql/ensure-space', {method: 'POST', headers: {'Content-Type': 'application/json'}});
+        const data = await r.json();
+        if (data.error) {
+            _appendChatMsg('system', 'Failed to initialize Genie: ' + data.error);
+            return;
+        }
+        _chatSpaceReady = true;
+    } catch(e) {
+        _appendChatMsg('system', 'Genie connection failed: ' + e.message);
+    }
+}
+
+async function sendChat() {
+    const input = document.getElementById('chatInput');
+    const msg = input.value.trim();
+    if (!msg) return;
+
+    input.value = '';
+    document.getElementById('chatSendBtn').disabled = true;
+
+    // Wait for Genie Space to be ready (first message may arrive before ensure-space completes)
+    if (!_chatSpaceReady) {
+        _appendChatMsg('system', '<i class="bi bi-hourglass-split"></i> Initializing Genie...');
+        await _ensureGenieSpace();
+        // Remove init message
+        const msgs2 = document.getElementById('chatMessages');
+        const lastSys = msgs2.querySelector('.chat-msg-system:last-child');
+        if (lastSys && lastSys.textContent.includes('Initializing')) lastSys.remove();
+        if (!_chatSpaceReady) {
+            document.getElementById('chatSendBtn').disabled = false;
+            return;
+        }
+    }
+
+    const msgs = document.getElementById('chatMessages');
+    if (!_chatConversationId && msgs.querySelector('[style*="text-align:center"]')) {
+        msgs.innerHTML = '';
+    }
+
+    _appendChatMsg('user', msg);
+    const thinkingId = _appendChatMsg('assistant', '<i class="bi bi-hourglass-split"></i> Thinking...');
+
+    try {
+        let convId = _chatConversationId;
+        let msgId;
+
+        if (!convId) {
+            const r = await fetch('/api/v1/genie/dbsql/conversations', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({message: msg, analysis_id: analysisId || '', report_summary: (typeof markdown !== 'undefined' ? markdown.substring(0, 500) : '')}),
+            });
+            const data = await r.json();
+            if (data.error) { _replaceChatMsg(thinkingId, 'Error: ' + data.error); return; }
+            convId = data.conversation_id;
+            msgId = data.message_id;
+            _chatConversationId = convId;
+        } else {
+            const r = await fetch('/api/v1/genie/dbsql/conversations/' + convId + '/messages', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({message: msg, analysis_id: analysisId || ''}),
+            });
+            const data = await r.json();
+            if (data.error) { _replaceChatMsg(thinkingId, 'Error: ' + data.error); return; }
+            msgId = data.message_id;
+        }
+
+        await _pollGenieMessage(convId, msgId, thinkingId);
+    } catch(e) {
+        _replaceChatMsg(thinkingId, 'Error: ' + e.message);
+    } finally {
+        document.getElementById('chatSendBtn').disabled = false;
+    }
+}
+
+async function _pollGenieMessage(convId, msgId, thinkingId) {
+    for (let i = 0; i < 60; i++) {
+        await new Promise(r => setTimeout(r, 2000));
+        try {
+            const r = await fetch('/api/v1/genie/dbsql/conversations/' + convId + '/messages/' + msgId + '/status');
+            const data = await r.json();
+
+            if (data.status === 'COMPLETED') {
+                let responseText = (data.text || '').replace(/^\[Context:.*?\]\s*/s, '').replace(/^\[analysis_id=.*?\]\s*/s, '').trim();
+                let html = responseText ? DOMPurify.sanitize(marked.parse(responseText)) : '';
+
+                for (const att of (data.attachments || [])) {
+                    if (att.type === 'QUERY' && att.id) {
+                        if (data.sql) {
+                            html += '<details style="margin-top:0.5rem;"><summary style="font-size:0.75rem; cursor:pointer; color:hsl(var(--muted-foreground));">SQL</summary><pre style="font-size:0.7rem; padding:0.5rem; background:hsl(240 10% 8%); color:hsl(0 0% 90%); border-radius:4px; overflow-x:auto;">' + esc(data.sql) + '</pre></details>';
+                        }
+                        try {
+                            const rr = await fetch('/api/v1/genie/dbsql/conversations/' + convId + '/messages/' + msgId + '/results/' + att.id);
+                            const qr = await rr.json();
+                            if (qr.columns && qr.rows) {
+                                html += _renderQueryTable(qr.columns, qr.rows);
+                            }
+                        } catch(e) {}
+                    }
+                }
+
+                _replaceChatMsg(thinkingId, html || '(No response)');
+                return;
+            } else if (data.status === 'FAILED' || data.status === 'CANCELLED') {
+                _replaceChatMsg(thinkingId, 'Query failed: ' + (data.text || data.status));
+                return;
+            }
+        } catch(e) {}
+    }
+    _replaceChatMsg(thinkingId, 'Timed out waiting for response.');
+}
+
+function _renderQueryTable(columns, rows) {
+    if (!columns.length) return '';
+    const maxRows = 50;
+    let html = '<div style="overflow-x:auto; margin-top:0.5rem; border:1px solid hsl(var(--border)); border-radius:4px; max-height:300px; overflow-y:auto;">';
+    html += '<table style="width:100%; border-collapse:collapse; font-size:0.75rem;">';
+    html += '<thead><tr>';
+    columns.forEach(c => { html += '<th style="padding:0.3rem 0.5rem; text-align:left; border-bottom:1px solid hsl(var(--border)); background:hsl(var(--muted)/0.5); white-space:nowrap; font-size:0.7rem; text-transform:uppercase; letter-spacing:0.03em;">' + esc(c) + '</th>'; });
+    html += '</tr></thead><tbody>';
+    const displayRows = rows.slice(0, maxRows);
+    displayRows.forEach(row => {
+        html += '<tr>';
+        row.forEach(cell => { html += '<td style="padding:0.25rem 0.5rem; border-bottom:1px solid hsl(var(--border)/0.5); white-space:nowrap;">' + esc(cell != null ? String(cell) : '') + '</td>'; });
+        html += '</tr>';
+    });
+    html += '</tbody></table></div>';
+    if (rows.length > maxRows) {
+        html += '<div style="font-size:0.7rem; color:hsl(var(--muted-foreground)); padding:0.25rem;">Showing ' + maxRows + ' of ' + rows.length + ' rows</div>';
+    }
+    return html;
+}
+
+let _chatMsgCounter = 0;
+function _appendChatMsg(role, content) {
+    const id = 'chat-msg-' + (++_chatMsgCounter);
+    const msgs = document.getElementById('chatMessages');
+    const div = document.createElement('div');
+    div.id = id;
+    div.style.cssText = role === 'user'
+        ? 'margin-bottom:0.75rem; text-align:right;'
+        : role === 'system'
+        ? 'margin-bottom:0.75rem; text-align:center;'
+        : 'margin-bottom:0.75rem;';
+
+    const bubble = document.createElement('div');
+    bubble.style.cssText = role === 'user'
+        ? 'display:inline-block; max-width:85%; padding:0.5rem 0.75rem; border-radius:0.75rem 0.75rem 0 0.75rem; background:hsl(var(--primary)); color:hsl(var(--primary-foreground)); font-size:0.85rem; text-align:left;'
+        : role === 'system'
+        ? 'display:inline-block; padding:0.3rem 0.5rem; font-size:0.75rem; color:hsl(var(--destructive));'
+        : 'display:inline-block; max-width:95%; padding:0.5rem 0.75rem; border-radius:0.75rem 0.75rem 0.75rem 0; background:hsl(var(--muted)/0.5); font-size:0.85rem;';
+
+    bubble.innerHTML = content;
+    div.appendChild(bubble);
+    msgs.appendChild(div);
+    msgs.scrollTop = msgs.scrollHeight;
+    return id;
+}
+
+function _replaceChatMsg(id, content) {
+    const el = document.getElementById(id);
+    if (el) {
+        const bubble = el.querySelector('div');
+        if (bubble) bubble.innerHTML = content;
+        document.getElementById('chatMessages').scrollTop = document.getElementById('chatMessages').scrollHeight;
+    }
+}
+</script>
+{% endblock %}

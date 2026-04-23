@@ -1,0 +1,373 @@
+{% extends "base.html" %}
+
+{% block title %}{{ _('Analysis Result') }} - Performance Toolkit{% endblock %}
+
+{% block content %}
+<div class="row">
+    <!-- Sidebar with metrics -->
+    <div class="col-lg-4 mb-4">
+        <!-- Query Info Card -->
+        <div class="card card-metrics mb-4">
+            <div class="card-header">
+                <h6>
+                    <i class="bi bi-info-circle"></i>
+                    {{ _('Query Information') }}
+                </h6>
+            </div>
+            <div class="card-body">
+                <dl class="row mb-0">
+                    <dt>{{ _('Query ID') }}</dt>
+                    <dd class="text-truncate" title="{{ analysis.query_metrics.query_id }}" style="font-family: 'JetBrains Mono', monospace; font-size: 0.75rem;">
+                        {{ analysis.query_metrics.query_id[:24] }}...
+                    </dd>
+
+                    <dt>{{ _('Status') }}</dt>
+                    <dd>
+                        <span class="badge {% if analysis.query_metrics.status == 'FINISHED' %}badge-success{% else %}badge-secondary{% endif %}">
+                            {{ analysis.query_metrics.status }}
+                        </span>
+                    </dd>
+
+                    <dt>{{ _('Execution Time') }}</dt>
+                    <dd>{{ "%.2f"|format(analysis.query_metrics.total_time_ms / 1000) }} {{ _('seconds') }}</dd>
+
+                    <dt>{{ _('File') }}</dt>
+                    <dd class="text-truncate" title="{{ filename }}">{{ filename }}</dd>
+                </dl>
+            </div>
+        </div>
+
+        <!-- Bottleneck Indicators Card -->
+        <div class="card card-metrics mb-4">
+            <div class="card-header">
+                <h6>
+                    <i class="bi bi-speedometer2"></i>
+                    {{ _('Bottleneck Indicators') }}
+                </h6>
+            </div>
+            <div class="card-body">
+                <!-- Cache Hit Ratio -->
+                <div class="mb-3">
+                    <div class="d-flex justify-content-between align-items-center mb-1">
+                        <small class="text-muted">{{ _('Cache Hit Ratio') }}</small>
+                        <span class="severity-{{ analysis.bottleneck_indicators.cache_severity.value }}" style="font-size: 0.875rem; font-family: 'JetBrains Mono', monospace;">
+                            {{ "%.1f"|format(analysis.bottleneck_indicators.cache_hit_ratio * 100) }}%
+                        </span>
+                    </div>
+                    <div class="progress">
+                        <div class="progress-bar {% if analysis.bottleneck_indicators.cache_hit_ratio >= 0.8 %}bg-success{% elif analysis.bottleneck_indicators.cache_hit_ratio >= 0.5 %}bg-warning{% else %}bg-danger{% endif %}"
+                             style="width: {{ analysis.bottleneck_indicators.cache_hit_ratio * 100 }}%"></div>
+                    </div>
+                </div>
+
+                <!-- Photon Ratio -->
+                <div class="mb-3">
+                    <div class="d-flex justify-content-between align-items-center mb-1">
+                        <small class="text-muted">{{ _('Photon Utilization') }}</small>
+                        <span class="severity-{{ analysis.bottleneck_indicators.photon_severity.value }}" style="font-size: 0.875rem; font-family: 'JetBrains Mono', monospace;">
+                            {{ "%.1f"|format(analysis.bottleneck_indicators.photon_ratio * 100) }}%
+                        </span>
+                    </div>
+                    <div class="progress">
+                        <div class="progress-bar {% if analysis.bottleneck_indicators.photon_ratio >= 0.8 %}bg-success{% elif analysis.bottleneck_indicators.photon_ratio >= 0.5 %}bg-warning{% else %}bg-danger{% endif %}"
+                             style="width: {{ analysis.bottleneck_indicators.photon_ratio * 100 }}%"></div>
+                    </div>
+                </div>
+
+                <!-- Shuffle Impact -->
+                <div class="mb-3">
+                    <div class="d-flex justify-content-between align-items-center mb-1">
+                        <small class="text-muted">{{ _('Shuffle Impact') }}</small>
+                        <span class="severity-{{ analysis.bottleneck_indicators.shuffle_severity.value }}" style="font-size: 0.875rem; font-family: 'JetBrains Mono', monospace;">
+                            {{ "%.1f"|format(analysis.bottleneck_indicators.shuffle_impact_ratio * 100) }}%
+                        </span>
+                    </div>
+                    <div class="progress">
+                        <div class="progress-bar {% if analysis.bottleneck_indicators.shuffle_impact_ratio < 0.2 %}bg-success{% elif analysis.bottleneck_indicators.shuffle_impact_ratio < 0.4 %}bg-warning{% else %}bg-danger{% endif %}"
+                             style="width: {{ analysis.bottleneck_indicators.shuffle_impact_ratio * 100 }}%"></div>
+                    </div>
+                </div>
+
+                <!-- Disk Spill -->
+                <div class="mb-0">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <small class="text-muted">{{ _('Disk Spill') }}</small>
+                        <span class="severity-{{ analysis.bottleneck_indicators.spill_severity.value }}" style="font-size: 0.875rem; font-family: 'JetBrains Mono', monospace;">
+                            {% set spill_gb = analysis.bottleneck_indicators.spill_bytes / (1024**3) %}
+                            {{ "%.2f"|format(spill_gb) }} GB
+                        </span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Issues Card -->
+        {% if analysis.bottleneck_indicators.critical_issues or analysis.bottleneck_indicators.warnings %}
+        <div class="card mb-4">
+            <div class="card-header">
+                <h6>
+                    <i class="bi bi-exclamation-triangle"></i>
+                    {{ _('Detected Issues') }}
+                </h6>
+            </div>
+            <div class="card-body p-0">
+                <ul class="list-group">
+                    {% for issue in analysis.bottleneck_indicators.critical_issues %}
+                    <li class="list-group-item">
+                        <i class="bi bi-x-circle-fill" style="color: hsl(var(--destructive));"></i>
+                        <small>{{ issue }}</small>
+                    </li>
+                    {% endfor %}
+                    {% for warning in analysis.bottleneck_indicators.warnings[:5] %}
+                    <li class="list-group-item">
+                        <i class="bi bi-exclamation-triangle-fill" style="color: hsl(var(--warning));"></i>
+                        <small>{{ warning }}</small>
+                    </li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Actions Card -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h6>
+                    <i class="bi bi-download"></i>
+                    {{ _('Export') }}
+                </h6>
+            </div>
+            <div class="card-body" style="display: flex; flex-direction: column; gap: 0.75rem;">
+                <button onclick="copyShareLink()" class="btn btn-outline">
+                    <i class="bi bi-link-45deg"></i>
+                    <span id="copy-link-text">{{ _('Copy Share Link') }}</span>
+                </button>
+                <button onclick="copySlackSummary()" class="btn btn-outline">
+                    <i class="bi bi-chat-square-text"></i>
+                    <span id="copy-summary-text">{{ _('Copy Slack Summary') }}</span>
+                </button>
+                {% if not persisted %}
+                <div style="padding:0.5rem; border-radius:var(--radius); background:#fff3e0; color:#e65100; font-size:0.75rem; line-height:1.4;">
+                    <i class="bi bi-exclamation-triangle"></i>
+                    {{ _('Not saved to Delta — shared links will become invalid after the session ends. To persist, enable "Save to Delta Table" during analysis.') }}
+                </div>
+                {% endif %}
+                <a href="/api/v1/analyze/{{ analysis_id }}/download?format=markdown" class="btn btn-outline">
+                    <i class="bi bi-markdown"></i>
+                    {{ _('Download as Markdown') }}
+                </a>
+                <button onclick="window.print()" class="btn btn-secondary">
+                    <i class="bi bi-printer"></i>
+                    {{ _('Print / Save as PDF') }}
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main content with report -->
+    <div class="col-lg-8" id="mainContent">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h6>
+                    <i class="bi bi-file-text"></i>
+                    {{ _('Analysis Report') }}
+                </h6>
+                {% if llm_result.llm_enabled %}
+                <span class="badge badge-success">
+                    <i class="bi bi-cpu"></i>
+                    {{ _('LLM Analyzed') }}
+                </span>
+                {% else %}
+                <span class="badge badge-secondary">
+                    <i class="bi bi-graph-up"></i>
+                    {{ _('Metrics Only') }}
+                </span>
+                {% endif %}
+            </div>
+            {% if baseline_comparison %}
+            <div style="padding: 1rem 1.5rem; border-bottom: 1px solid hsl(var(--border)); font-size: 0.85rem;">
+                <strong>{{ _('vs Baseline') }}:</strong>
+                {% if baseline_comparison.regression_detected %}
+                <span style="color: hsl(var(--destructive)); font-weight: 600;">
+                    {{ _('Regression detected') }} ({{ baseline_comparison.regression_severity }})
+                </span>
+                {% else %}
+                <span style="color: hsl(142 76% 36%); font-weight: 600;">
+                    {{ _('No regression') }}
+                </span>
+                {% endif %}
+                —
+                {% for md in baseline_comparison.metric_diffs %}
+                    {% if md.regression_flag %}
+                    <span style="color: hsl(var(--destructive));" title="{{ md.metric_name }}">{{ md.metric_name.replace('_',' ')|title }} {{ '{:+.1f}'.format(md.relative_diff_ratio * 100 if md.relative_diff_ratio else 0) }}%</span>
+                    {% elif md.improvement_flag %}
+                    <span style="color: hsl(142 76% 36%);" title="{{ md.metric_name }}">{{ md.metric_name.replace('_',' ')|title }} {{ '{:+.1f}'.format(md.relative_diff_ratio * 100 if md.relative_diff_ratio else 0) }}%</span>
+                    {% endif %}
+                {% endfor %}
+                <a href="/compare" style="margin-left: 0.5rem; font-size: 0.8rem;">{{ _('Details') }} →</a>
+            </div>
+            {% endif %}
+            <div class="card-body">
+                <div id="reportContent" class="markdown-content"></div>
+            </div>
+        </div>
+    </div>
+
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<style>
+/* Copy button styles */
+.sql-container {
+    position: relative;
+}
+.copy-btn {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    padding: 4px 8px;
+    font-size: 0.75rem;
+    background: hsl(var(--muted));
+    border: 1px solid hsl(var(--border));
+    border-radius: 4px;
+    cursor: pointer;
+    opacity: 0.7;
+    transition: opacity 0.2s;
+    z-index: 10;
+}
+.copy-btn:hover {
+    opacity: 1;
+    background: hsl(var(--accent));
+}
+.copy-btn.copied {
+    background: hsl(var(--success, 142 76% 36%));
+    color: white;
+}
+details summary {
+    cursor: pointer;
+    padding: 8px 0;
+}
+details pre {
+    position: relative;
+}
+</style>
+<script>
+const analysisId = {{ analysis_id | tojson }};
+document.addEventListener('DOMContentLoaded', function() {
+    const reportContent = document.getElementById('reportContent');
+    const markdown = {{ report | tojson }};
+
+    // Configure marked
+    marked.setOptions({
+        breaks: true,
+        gfm: true
+    });
+
+    // Render markdown with XSS protection
+    reportContent.innerHTML = DOMPurify.sanitize(marked.parse(markdown));
+
+    // Render Mermaid diagrams with zoom/pan
+    renderMermaidBlocks(reportContent, 'mermaid');
+
+    // Apply SQL syntax highlighting
+    // Note: highlight.js is loaded in `base.html`. This page renders Markdown
+    // dynamically, so we must highlight after `innerHTML = ...`.
+    if (window.hljs) {
+        document.querySelectorAll('#reportContent pre code').forEach((block) => {
+            const text = block.textContent || '';
+            const isSql = block.classList.contains('language-sql') ||
+                /\b(SELECT|INSERT|UPDATE|DELETE|CREATE|ALTER|DROP|FROM|WHERE|JOIN|GROUP BY|ORDER BY)\b/i.test(text);
+
+            // highlight.js expects `language-xxx` or `lang-xxx`
+            if (isSql && !block.classList.contains('language-sql') && !block.classList.contains('lang-sql')) {
+                block.classList.add('language-sql');
+            }
+
+            if (block.classList.contains('language-sql') || block.classList.contains('lang-sql')) {
+                hljs.highlightElement(block);
+            }
+        });
+    } else {
+        console.warn('highlight.js is not loaded; skipping syntax highlighting');
+    }
+
+    // Add copy buttons to SQL code blocks
+    addCopyButtons();
+});
+
+function addCopyButtons() {
+    // Find all <pre> elements containing SQL code
+    const codeBlocks = document.querySelectorAll('#reportContent pre');
+
+    codeBlocks.forEach((pre, index) => {
+        const code = pre.querySelector('code');
+        if (!code) return;
+
+        // Check if it's SQL (has sql class or contains SQL keywords)
+        const isSql = code.classList.contains('language-sql') ||
+                      code.textContent.match(/\b(SELECT|FROM|WHERE|JOIN|WITH)\b/i);
+
+        if (!isSql) return;
+
+        // Wrap in container for positioning
+        const container = document.createElement('div');
+        container.className = 'sql-container';
+        pre.parentNode.insertBefore(container, pre);
+        container.appendChild(pre);
+
+        // Create copy button
+        const copyBtn = document.createElement('button');
+        copyBtn.className = 'copy-btn';
+        copyBtn.innerHTML = '<i class="bi bi-clipboard"></i> {{ _("Copy") }}';
+        copyBtn.onclick = function() {
+            copyToClipboard(code.textContent, copyBtn);
+        };
+
+        container.appendChild(copyBtn);
+    });
+}
+
+function copyToClipboard(text, button) {
+    navigator.clipboard.writeText(text).then(function() {
+        // Show success state
+        const originalHTML = button.innerHTML;
+        button.innerHTML = '<i class="bi bi-check"></i> {{ _("Copied!") }}';
+        button.classList.add('copied');
+
+        // Reset after 2 seconds
+        setTimeout(function() {
+            button.innerHTML = originalHTML;
+            button.classList.remove('copied');
+        }, 2000);
+    }).catch(function(err) {
+        console.error('Failed to copy:', err);
+    });
+}
+
+// --- Share functions ---
+function copyShareLink() {
+    const url = window.location.origin + '/shared/' + analysisId;
+    navigator.clipboard.writeText(url).then(() => {
+        const el = document.getElementById('copy-link-text');
+        if (el) { el.textContent = 'Copied!'; setTimeout(() => { el.textContent = 'Copy Share Link'; }, 2000); }
+    });
+}
+
+async function copySlackSummary() {
+    try {
+        const resp = await fetch('/api/v1/shared/' + analysisId + '/summary?base_url=' + encodeURIComponent(window.location.origin));
+        if (!resp.ok) throw new Error('Failed');
+        const text = await resp.text();
+        await navigator.clipboard.writeText(text);
+        const el = document.getElementById('copy-summary-text');
+        if (el) { el.textContent = 'Copied!'; setTimeout(() => { el.textContent = 'Copy Slack Summary'; }, 2000); }
+    } catch (e) {
+        console.error('Copy failed:', e);
+    }
+}
+
+// Genie Chat removed from result.html — only available on pages with persisted Delta data
+// (shared_result.html, spark_perf.html, report_view.html)
+</script>
+{% endblock %}

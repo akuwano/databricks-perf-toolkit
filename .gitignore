@@ -1,0 +1,32 @@
+# Query profile JSON files
+query-profile_*.json
+json/
+
+# Report files
+report/
+report*.md
+!docs/report-rendering.md
+Tmp/
+
+# macOS
+.DS_Store
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+
+# Environment variables
+.env
+.env.local
+.env.*.local
+
+# IDE and editor artifacts
+.vscode/
+.idea/
+*.swp
+*.swo
+skills/
+eval_results*.json
+eval_stderr*.log
