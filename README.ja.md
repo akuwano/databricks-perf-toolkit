@@ -147,6 +147,18 @@ Web UI 追加: `flask`、`flask-babel`、`markdown`
 - [uv](https://docs.astral.sh/uv/) (このリポジトリで統一して使う依存管理ツール)
 - Databricks workspace (`DATABRICKS_HOST` / `DATABRICKS_TOKEN`)
 - `databricks` CLI と設定済みプロファイル (`databricks auth login --host <workspace-url>`)
+- **書き込み権限のある Unity Catalog カタログ** (次のセクション参照)
+
+### カタログの準備
+
+`deploy.sh` は `local-overrides.yml` で指定されたカタログに対して `CREATE CATALOG IF NOT EXISTS` を実行しますが、ワークスペースとユーザーが SQL 経由の純粋な `CREATE CATALOG` をサポートしている場合のみ成功します。**Default Storage が有効なワークスペース** (最近プロビジョニングされた多くのワークスペース) では `MANAGED LOCATION` の明示が必須で、deploy スクリプトからは作成できません。事前に Databricks UI からカタログを作成するのが推奨手順です。
+
+1. Databricks workspace で **Catalog Explorer** を開く
+2. **Create Catalog** で任意の名前 (例: `perf_toolkit`) で作成する。Default Storage ワークスペースでも UI wizard で問題なく作れます
+3. カタログ名をメモしておく。後の step 3 で `dabs/local-overrides.yml` の `dbsql_catalog` と `sparkperf_catalog` に指定します (同じカタログを両方に使っても OK)
+4. 使うスキーマが既にあるか、またはそのカタログで `CREATE SCHEMA` 権限があることを確認 — カタログさえあれば `deploy.sh` が `CREATE SCHEMA IF NOT EXISTS` を実行します
+
+既に書き込めるカタログがある場合は、UI 操作は不要でそのカタログ名を使うだけで OK。
 
 ### ゼロからのセットアップ
 
@@ -239,31 +251,9 @@ scripts/               # deploy、smoke test、view deploy、runtime config
 
 詳細は `docs/analysis-pipeline.md` と `docs/action-plan-generation.md` を参照。
 
-## Development
+## Contributing
 
-開発コマンドは `uv run` 経由で実行することで、正しい virtualenv と依存グループが自動で選択されます。
-
-```bash
-# 全ての dev グループをインストール (test + lint + ui-smoke + dev)
-uv sync --all-groups
-
-# テスト (pytest が conftest を見つけるため dabs/app から実行する)
-cd dabs/app && uv run pytest                     # アプリ側フル
-cd dabs/app && uv run pytest ../../eval/tests    # eval フレームワーク
-cd dabs/app && uv run pytest tests/test_usecases.py -v   # 単一ファイル
-
-# 型チェック
-cd dabs/app && uv run mypy .
-
-# lint / format
-uv run ruff check dabs/app/
-uv run ruff format --check dabs/app/
-
-# UI スモーク (アプリが起動している必要あり。詳細は scripts/ui_smoke_test.py --help)
-uv run python scripts/ui_smoke_test.py <app-url> --token <token>
-```
-
-ポストデプロイスモークテストは `./scripts/deploy.sh` 内で自動実行されます。フル分析フロー検証を含める場合は `--full-test` を追加。
+コードへの貢献 (テスト、lint、型チェック、リリース手順など) は [`CONTRIBUTING.md`](CONTRIBUTING.md) を参照。
 
 ## CLI
 

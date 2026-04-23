@@ -17,6 +17,12 @@
 #
 # Only the `dev` target is active by default. Uncomment `staging` / `prod` below
 # when you're ready to deploy to those environments.
+#
+# Important: the catalog names below (`sparkperf_catalog`, `dbsql_catalog`) must
+# already exist in your workspace, or the deploying user must have metastore
+# `CREATE CATALOG` privilege. On Default Storage workspaces `CREATE CATALOG`
+# via SQL is not supported — create the catalog via the Databricks Catalog
+# Explorer UI first, then set its name here. See README "Prepare catalogs".
 
 targets:
   dev:

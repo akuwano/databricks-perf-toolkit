@@ -156,6 +156,18 @@ This tool is deployed to Databricks Apps via the bundled `./scripts/deploy.sh` �
 - [uv](https://docs.astral.sh/uv/) (dependency manager used throughout this repo)
 - A Databricks workspace reachable by `DATABRICKS_HOST` / `DATABRICKS_TOKEN`
 - `databricks` CLI with a configured profile (`databricks auth login --host <workspace-url>`)
+- **Unity Catalog catalogs that you can write to** (see the next section)
+
+### Prepare catalogs
+
+`deploy.sh` tries `CREATE CATALOG IF NOT EXISTS` for the catalogs referenced in `local-overrides.yml`, but it can only do so if the workspace and the deploying user support bare `CREATE CATALOG` via SQL. On **workspaces with Default Storage enabled** (most newly provisioned workspaces) that statement requires an explicit `MANAGED LOCATION` and fails when invoked from the deploy script. The recommended path is to create the catalog ahead of time via the Databricks UI.
+
+1. Open **Catalog Explorer** in your Databricks workspace.
+2. **Create Catalog** — give it a name (e.g. `perf_toolkit`). On a Default Storage workspace this just works via the UI wizard.
+3. Note the catalog name. You'll reference it from `dabs/local-overrides.yml` in step 3 below (`dbsql_catalog` and `sparkperf_catalog`; they can be the same catalog).
+4. Confirm the schemas you plan to use either exist or that you have `CREATE SCHEMA` on the catalog — `deploy.sh` will handle `CREATE SCHEMA IF NOT EXISTS` once the catalog is in place.
+
+If you already have a catalog you can write to, skip the wizard and just use that name.
 
 ### From scratch
 
@@ -248,31 +260,9 @@ scripts/               # deploy, smoke test, view deployment, runtime config
 
 See `docs/analysis-pipeline.md` and `docs/action-plan-generation.md` for details.
 
-## Development
+## Contributing
 
-All dev commands use `uv run` so the correct virtualenv and dep groups are picked up automatically.
-
-```bash
-# Install all dev groups (test + lint + ui-smoke + dev)
-uv sync --all-groups
-
-# Run tests (from dabs/app so pytest picks up the right conftest)
-cd dabs/app && uv run pytest                     # full app suite
-cd dabs/app && uv run pytest ../../eval/tests    # eval framework
-cd dabs/app && uv run pytest tests/test_usecases.py -v   # a single file
-
-# Type-check
-cd dabs/app && uv run mypy .
-
-# Lint / format
-uv run ruff check dabs/app/
-uv run ruff format --check dabs/app/
-
-# UI smoke (requires running app, see scripts/ui_smoke_test.py --help)
-uv run python scripts/ui_smoke_test.py <app-url> --token <token>
-```
-
-Post-deploy smoke tests run automatically inside `./scripts/deploy.sh`. Override with `--full-test` to include a full analysis flow check.
+If you want to work on the codebase (tests, lint, type-check, release flow), see [`CONTRIBUTING.md`](CONTRIBUTING.md).
 
 ## CLI
 
