@@ -1,4 +1,4 @@
-# DBSQL Profiler Analysis Tool
+# Databricks Performance Toolkit
 
 Databricks SQL のクエリプロファイルと Spark ジョブ性能を分析し、改善アクションの提示・比較実験・Web UI を提供する実用ツールキットです。
 

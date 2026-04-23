@@ -1,4 +1,4 @@
-# DBSQL Profiler Analysis Tool
+# Databricks Performance Toolkit
 
 A practical toolkit for analyzing Databricks SQL query profiles and Spark job performance, generating actionable optimization guidance, and comparing tuning experiments through CLI and Web UI.
 
