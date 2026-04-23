@@ -161,14 +161,14 @@ uv sync
 # 3. 自分の環境設定ファイルを作る (編集するのはこのファイルだけ)
 cp dabs/local-overrides.yml.sample dabs/local-overrides.yml
 # dabs/local-overrides.yml を編集し、target ごとに以下を設定:
+#   - workspace.profile (~/.databrickscfg のプロファイル名。デフォルト DEFAULT)
 #   - catalog / schema (DBSQL profiler + Spark Perf 永続化用)
 #   - warehouse_id (SQL Warehouse ID)
 #   - log_root / cluster_id (Spark Perf ETL 入力)
 #   - app_name (Databricks App 名)
 
-# 4. Databricks CLI を一度認証
-databricks auth login --host https://<your-workspace>
-# プロファイル名はデフォルト DEFAULT。変える場合は local-overrides.yml も合わせる
+# 4. Databricks CLI を一度認証 (上の workspace.profile と揃える)
+databricks auth login --host https://<your-workspace> --profile DEFAULT
 
 # 5. デプロイ (runtime-config.json / app.yaml 生成 → bundle deploy →
 #    warehouse / job 権限付与 → スモークテスト までを一括実行)

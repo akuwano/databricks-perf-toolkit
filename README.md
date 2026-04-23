@@ -170,14 +170,14 @@ uv sync
 # 3. Configure your environment (this is the ONLY config file you edit)
 cp dabs/local-overrides.yml.sample dabs/local-overrides.yml
 # Edit dabs/local-overrides.yml and set per-target:
+#   - workspace.profile (Databricks CLI profile from ~/.databrickscfg; DEFAULT by default)
 #   - catalog / schema for DBSQL profiler + Spark Perf persistence
 #   - warehouse_id (SQL Warehouse ID)
 #   - log_root / cluster_id (for Spark Perf ETL input)
 #   - app_name (Databricks App name)
 
-# 4. Authenticate the Databricks CLI once
-databricks auth login --host https://<your-workspace>
-# Use profile name DEFAULT, or update local-overrides.yml to match
+# 4. Authenticate the Databricks CLI once (matches workspace.profile above)
+databricks auth login --host https://<your-workspace> --profile DEFAULT
 
 # 5. Deploy (generates runtime-config.json + app.yaml, deploys bundle,
 #    grants warehouse + job permissions, runs smoke tests)
