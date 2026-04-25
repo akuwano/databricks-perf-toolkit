@@ -32,7 +32,7 @@ logging.getLogger("werkzeug").setLevel(logging.WARNING)
 logging.getLogger("sqlglot").setLevel(logging.ERROR)
 
 # Overwritten by deploy.sh from pyproject.toml at deploy time
-APP_VERSION = "5.17.0"
+APP_VERSION = "5.19.4"
 
 app = Flask(__name__)
 app.config["MAX_CONTENT_LENGTH"] = 10 * 1024 * 1024  # 10MB limit

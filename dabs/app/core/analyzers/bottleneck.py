@@ -70,7 +70,9 @@ def _apply_sql_pattern_alerts(
             current_value=str(total_occ),
             threshold=_("≥2 references beyond WITH"),
             recommendation=_(
-                "Consider converting to a Temporary View (CREATE OR REPLACE TEMP VIEW) to ensure single materialization"
+                "Do NOT rely on CREATE TEMP VIEW — it is a catalog alias and does NOT guarantee "
+                "single materialization. Persist the shared result with CTAS / Delta, or rewrite "
+                "the query so the CTE body runs once. Confirm reuse via ReusedExchange in EXPLAIN."
             ),
         )
 

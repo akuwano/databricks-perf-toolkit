@@ -63,6 +63,8 @@ WHERE EXISTS (
 
 ### 3. Filter Early（早期フィルタリング）
 
+> **Note on TEMP VIEW usage in this section:** 以降で `CREATE OR REPLACE TEMP VIEW` を使った例が出てきますが、これは **可読性・段階的な SQL 整理のため**の表記です。CTE と同様に、TEMP VIEW は実体化や再計算回避を保証しません（カタログ上のエイリアス）。重複計算の解消が目的の場合は、`CTAS` / Delta テーブル化 もしくはクエリの書き換えで重複サブプランを 1 回にまとめ、`EXPLAIN` で `ReusedExchange` の有無を確認してください。
+
 JOINの**前に**フィルタを適用し、処理データ量を削減します。
 
 **ESチケット頻出パターン:** Filter Earlyは最も再現性の高い改善策。JOIN・MERGE・集約の前で選択性の高い条件を適用すると、後段のshuffle・spill・OOMを同時に抑制できる。

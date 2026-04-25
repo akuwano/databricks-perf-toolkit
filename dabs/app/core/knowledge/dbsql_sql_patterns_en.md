@@ -61,6 +61,8 @@ WHERE EXISTS (
 
 ### 3. Filter Early
 
+> **Note on TEMP VIEW usage in this section:** The examples below use `CREATE OR REPLACE TEMP VIEW` purely to structure SQL for readability and step-wise composition. Like CTEs, a TEMP VIEW does **not** guarantee materialization or eliminate re-computation — it is a catalog alias only. To remove duplicate work, persist the shared result with `CTAS` / a Delta table, or rewrite the query so the shared subplan runs once. Verify reuse via `ReusedExchange` in `EXPLAIN` under AQE.
+
 Apply filters **before** JOINs to reduce data volume.
 
 **ES Ticket Pattern:** Filter Early is the most reproducible win. Applying selective predicates before JOINs, MERGE, and aggregates cuts downstream shuffle, spill, and OOM risk together.

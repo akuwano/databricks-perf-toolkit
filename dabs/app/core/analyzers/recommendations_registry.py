@@ -1024,20 +1024,28 @@ def _build_cte_multi_ref(ctx: Context) -> list[ActionCard]:
             ).format(name=name, n=total_occ),
             evidence=[_("CTE identifier occurrences in SQL: {n}").format(n=total_occ)],
             likely_cause=_(
-                "Each extra reference can force repeated evaluation unless the optimizer caches inlines"
+                "Each extra reference can force repeated evaluation unless the optimizer caches "
+                "inlines or AQE inserts a ReusedExchange node"
             ),
             fix=_(
-                "Consider converting to a Temporary View (CREATE OR REPLACE TEMP VIEW) to ensure single materialization"
+                "Do NOT rely on CREATE TEMP VIEW for this — a TEMP VIEW is only a catalog alias "
+                "and does not guarantee materialization. Eliminate the duplicate work by either "
+                "(a) persisting the shared result with CTAS / Delta table, or (b) rewriting the "
+                "query so the CTE body runs once and is joined back (e.g. pre-aggregate, then "
+                "join). Confirm the optimizer reused it via a ReusedExchange node in EXPLAIN."
             ),
             expected_impact=(
                 "high" if refs >= 3 and ctx.query_metrics.read_bytes > 1_000_000_000 else "medium"
             ),
-            effort="low",
-            validation_metric="Single scan per CTE materialization",
+            effort="medium",
+            validation_metric="ReusedExchange present in EXPLAIN for this CTE; single scan",
             risk="low",
-            risk_reason=_("Temp view is session-scoped; revert by dropping the view"),
+            risk_reason=_(
+                "CTAS / Delta table needs cleanup; a query rewrite is reversible"
+            ),
             verification_steps=[
                 {"metric": "scan_count", "expected": _("Reduced re-scans")},
+                {"metric": "explain_reused_exchange", "expected": _("ReusedExchange present")},
             ],
             root_cause_group="sql_pattern",
             coverage_category="QUERY",
@@ -1967,9 +1975,10 @@ def _build_cluster_underutilization(ctx: Context) -> list[ActionCard]:
         )
         fix = _(
             "Simplify the plan: replace multi-step subqueries with JOINs, "
-            "materialize multi-referenced CTEs into a temp view, avoid "
-            "broadcasting large sides. For Pro/Classic warehouses consider "
-            "upgrading the driver node size."
+            "persist multi-referenced CTE results with CTAS / Delta or "
+            "rewrite to remove duplicate evaluation (a TEMP VIEW does NOT "
+            "materialize them), and avoid broadcasting large sides. For "
+            "Pro/Classic warehouses consider upgrading the driver node size."
         )
     else:  # serial_plan
         evidence.append(

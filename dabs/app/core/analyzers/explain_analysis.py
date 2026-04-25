@@ -693,9 +693,11 @@ def _apply_explain_v2_insights(
             current_value=str(len(multi_ref_ctes)),
             threshold="0",
             recommendation=_(
-                "Materialize the shared CTE into a temporary view / Delta "
+                "Do NOT use a TEMP VIEW to prevent CTE re-computation — it does "
+                "not materialize. Persist the shared result with CTAS / Delta "
                 "table, or rewrite the query so the CTE body runs once and is "
-                "joined back (often via a grouped aggregation)."
+                "joined back (often via a grouped aggregation). Confirm reuse "
+                "via ReusedExchange in EXPLAIN under AQE."
             ),
         )
 
