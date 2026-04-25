@@ -71,9 +71,9 @@ def analyze():
         raise UserInputError("; ".join(validation.errors))
 
     # Get LLM options from request
-    primary_model = request.form.get("primary_model", "databricks-claude-opus-4-6")
-    review_model = request.form.get("review_model", "databricks-claude-opus-4-6")
-    refine_model = request.form.get("refine_model", "databricks-gpt-5-4")
+    primary_model = request.form.get("primary_model", "databricks-claude-opus-4-7")
+    review_model = request.form.get("review_model", "databricks-claude-opus-4-7")
+    refine_model = request.form.get("refine_model", "databricks-gpt-5-5")
     skip_llm = request.form.get("skip_llm", "false").lower() == "true"
 
     # Get report review/refine options (default: off)

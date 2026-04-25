@@ -45,9 +45,9 @@ Upload a query profile JSON and start analysis.
 |-----------|------|----------|-------------|
 | `file` | file | Yes | Query profile JSON |
 | `skip_llm` | string | No | `"true"` to skip LLM analysis |
-| `primary_model` | string | No | Primary LLM model (default: `databricks-claude-opus-4-6`) |
+| `primary_model` | string | No | Primary LLM model (default: `databricks-claude-opus-4-7`) |
 | `review_model` | string | No | Review LLM model |
-| `refine_model` | string | No | Refine LLM model (default: `databricks-gpt-5-4`) |
+| `refine_model` | string | No | Refine LLM model (default: `databricks-gpt-5-5`) |
 | `enable_report_review` | string | No | `"on"` to enable report review step |
 | `enable_report_refine` | string | No | `"on"` to enable report refine step |
 | `enable_table_write` | string | No | `"on"` to persist results to Delta |
@@ -325,7 +325,7 @@ Fetch DBSQL report markdown. Requires `analysis_id` query parameter.
 
 LLM-powered cross-analysis of DBSQL and Spark reports. [Experimental]
 
-**Body**: `{"dbsql_report": "...", "spark_report": "...", "model": "databricks-claude-opus-4-6"}`
+**Body**: `{"dbsql_report": "...", "spark_report": "...", "model": "databricks-claude-opus-4-7"}`
 
 **Response**: `{"analysis": "## Cross Analysis\n..."}`
 
@@ -337,4 +337,4 @@ LLM-powered cross-analysis of DBSQL and Spark reports. [Experimental]
 
 List available LLM chat models from Databricks Serving Endpoints.
 
-**Response**: `[{"name": "databricks-claude-opus-4-6", "display_name": "Claude Opus 4.6"}, ...]`
+**Response**: `[{"name": "databricks-claude-opus-4-7", "display_name": "Claude Opus 4.7"}, ...]`

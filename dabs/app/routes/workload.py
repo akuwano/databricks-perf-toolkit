@@ -198,7 +198,7 @@ def cross_analyze():
         {"role": "user", "content": user_content},
     ]
 
-    model = (data.get("model") or "databricks-claude-opus-4-6").strip()
+    model = (data.get("model") or "databricks-claude-opus-4-7").strip()
 
     result = call_llm_with_retry(
         client=client,

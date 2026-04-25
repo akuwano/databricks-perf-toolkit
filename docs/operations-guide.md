@@ -185,7 +185,7 @@ Web UIからSpark PerfのETLパイプラインを起動できます。
 
 **チェックリスト**:
 1. Foundation Model Serving Endpoint が有効か確認
-2. `databricks-claude-opus-4-6` と `databricks-gpt-5-4` エンドポイントが存在するか
+2. `databricks-claude-opus-4-7` と `databricks-gpt-5-5` エンドポイントが存在するか
 3. SP に Serving Endpoint のアクセス権があるか
 4. `skip_llm=true` で分析が通るか（LLM以外の問題を切り分け）
 

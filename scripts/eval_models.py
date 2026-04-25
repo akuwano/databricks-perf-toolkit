@@ -28,14 +28,14 @@ from core.usecases import LLMConfig, PipelineOptions, run_analysis_pipeline
 # Default: full-Opus vs full-GPT (A vs B pattern)
 # Best config found: E (Opus+Opus+GPTrefine) - see docs/llm-model-evaluation-results.md
 CANDIDATE_CONFIGS = [
-    ("databricks-claude-opus-4-6", "databricks-claude-opus-4-6", "databricks-claude-opus-4-6", "Opus-full"),
-    ("databricks-gpt-5-4", "databricks-gpt-5-4", "databricks-gpt-5-4", "GPT-full"),
+    ("databricks-claude-opus-4-7", "databricks-claude-opus-4-7", "databricks-claude-opus-4-7", "Opus-full"),
+    ("databricks-gpt-5-5", "databricks-gpt-5-5", "databricks-gpt-5-5", "GPT-full"),
 ]
 
 # Models to evaluate (judges)
 JUDGE_MODELS = [
-    "databricks-claude-opus-4-6",
-    "databricks-gpt-5-4",
+    "databricks-claude-opus-4-7",
+    "databricks-gpt-5-5",
     "databricks-gemini-3-1-pro",
 ]
 

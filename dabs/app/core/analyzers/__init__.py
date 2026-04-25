@@ -68,7 +68,7 @@ def analyze_from_dict(
         data: Query profile data dictionary
         llm_clustering_config: Optional LLM configuration for clustering recommendation
             {
-                "model": str,  # e.g., "databricks-claude-opus-4-6"
+                "model": str,  # e.g., "databricks-claude-opus-4-7"
                 "databricks_host": str,
                 "databricks_token": str,
                 "lang": str  # "en" or "ja"

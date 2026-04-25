@@ -24,12 +24,12 @@ KNOWLEDGE_MAX_CHARS = 25_000  # max chars for knowledge content
 
 # Model-specific max output tokens (known Databricks Foundation Model APIs)
 _MODEL_MAX_OUTPUT_TOKENS: dict[str, int] = {
-    "databricks-claude-opus-4-6": 32768,
+    "databricks-claude-opus-4-7": 32768,
     "databricks-claude-sonnet-4-6": 64000,
     "databricks-claude-sonnet-4-5": 64000,
     "databricks-claude-sonnet-4": 64000,
     "databricks-claude-haiku-4-5": 8192,
-    "databricks-gpt-5-4": 16384,
+    "databricks-gpt-5-5": 16384,
     "databricks-meta-llama-3-3-70b-instruct": 8192,
     "databricks-meta-llama-4-maverick": 32768,
     "databricks-meta-llama-4-scout": 16384,

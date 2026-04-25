@@ -50,9 +50,9 @@ logger = logging.getLogger(__name__)
 class LLMConfig:
     """LLM-related configuration."""
 
-    primary_model: str = "databricks-claude-opus-4-6"
-    review_model: str = "databricks-claude-opus-4-6"
-    refine_model: str = "databricks-gpt-5-4"
+    primary_model: str = "databricks-claude-opus-4-7"
+    review_model: str = "databricks-claude-opus-4-7"
+    refine_model: str = "databricks-gpt-5-5"
     databricks_host: str = ""
     databricks_token: str = ""
     tuning_file: str | None = None

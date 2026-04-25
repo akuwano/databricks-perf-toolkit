@@ -203,7 +203,7 @@ def generate_action_cards(
         top_scanned_tables: Top scanned tables by bytes_read for LC recommendations
         llm_clustering_config: Optional LLM configuration for clustering recommendation
             {
-                "model": str,  # e.g., "databricks-claude-opus-4-6"
+                "model": str,  # e.g., "databricks-claude-opus-4-7"
                 "databricks_host": str,
                 "databricks_token": str,
                 "lang": str  # "en" or "ja"
@@ -387,7 +387,7 @@ def generate_action_cards(
             filter_rate=indicators.filter_rate,
             read_files_count=query_metrics.read_files_count,
             pruned_files_count=query_metrics.pruned_files_count,
-            model=llm_clustering_config.get("model", "databricks-claude-opus-4-6"),
+            model=llm_clustering_config.get("model", "databricks-claude-opus-4-7"),
             databricks_host=llm_clustering_config.get("databricks_host", ""),
             databricks_token=llm_clustering_config.get("databricks_token", ""),
             lang=llm_clustering_config.get("lang"),

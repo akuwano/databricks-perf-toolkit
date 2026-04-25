@@ -26,9 +26,9 @@ def sample_profile_data():
 class TestLLMConfig:
     def test_default_models(self):
         cfg = LLMConfig()
-        assert cfg.primary_model == "databricks-claude-opus-4-6"
-        assert cfg.review_model == "databricks-claude-opus-4-6"
-        assert cfg.refine_model == "databricks-gpt-5-4"
+        assert cfg.primary_model == "databricks-claude-opus-4-7"
+        assert cfg.review_model == "databricks-claude-opus-4-7"
+        assert cfg.refine_model == "databricks-gpt-5-5"
 
     def test_refine_model_explicit(self):
         cfg = LLMConfig(refine_model="model-b")

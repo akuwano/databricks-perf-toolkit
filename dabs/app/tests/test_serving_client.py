@@ -20,17 +20,17 @@ class TestDefaults:
     def test_default_model_names(self):
         result = _defaults()
         names = [m.name for m in result]
-        assert "databricks-claude-opus-4-6" in names
-        assert "databricks-gpt-5-4" in names
+        assert "databricks-claude-opus-4-7" in names
+        assert "databricks-gpt-5-5" in names
 
 
 class TestBuildDisplayName:
     def test_with_foundation_model_name(self):
-        entities = [{"foundation_model_name": "Claude Opus 4.6"}]
-        assert _build_display_name("databricks-claude-opus-4-6", entities) == "Claude Opus 4.6"
+        entities = [{"foundation_model_name": "Claude Opus 4.7"}]
+        assert _build_display_name("databricks-claude-opus-4-7", entities) == "Claude Opus 4.7"
 
     def test_without_entities(self):
-        result = _build_display_name("databricks-gpt-5-4", [])
+        result = _build_display_name("databricks-gpt-5-5", [])
         assert "Gpt" in result or "5" in result
 
     def test_strip_databricks_prefix(self):

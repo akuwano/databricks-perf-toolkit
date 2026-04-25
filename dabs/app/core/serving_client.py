@@ -15,8 +15,8 @@ logger = logging.getLogger(__name__)
 
 # Default models shown when API is unavailable
 DEFAULT_MODELS = [
-    {"name": "databricks-claude-opus-4-6", "display": "Claude Opus 4.6"},
-    {"name": "databricks-gpt-5-4", "display": "GPT-5-4"},
+    {"name": "databricks-claude-opus-4-7", "display": "Claude Opus 4.7"},
+    {"name": "databricks-gpt-5-5", "display": "GPT-5-5"},
     {"name": "databricks-meta-llama-3-3-70b-instruct", "display": "Llama 3.3 70B"},
 ]
 

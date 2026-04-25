@@ -32,13 +32,13 @@ def _add_analysis_args(parser: argparse.ArgumentParser) -> None:
     )
     parser.add_argument(
         "--model",
-        help="Primary LLM model for analysis (default: databricks-claude-opus-4-6)",
-        default="databricks-claude-opus-4-6",
+        help="Primary LLM model for analysis (default: databricks-claude-opus-4-7)",
+        default="databricks-claude-opus-4-7",
     )
     parser.add_argument(
         "--review-model",
-        help="Secondary LLM model for reviewing the analysis (default: databricks-claude-opus-4-6)",
-        default="databricks-claude-opus-4-6",
+        help="Secondary LLM model for reviewing the analysis (default: databricks-claude-opus-4-7)",
+        default="databricks-claude-opus-4-7",
     )
     parser.add_argument(
         "--tuning-file",

@@ -373,7 +373,7 @@ async function loadCrossModels() {
     try {
         const r = await fetch('/api/v1/models');
         if (!r.ok) {
-            sel.innerHTML = '<option value="databricks-claude-opus-4-6">Claude Opus 4.6</option>';
+            sel.innerHTML = '<option value="databricks-claude-opus-4-7">Claude Opus 4.7</option>';
             return;
         }
         const models = await r.json();
@@ -382,7 +382,7 @@ async function loadCrossModels() {
             const o = document.createElement('option');
             o.value = m.name;
             o.textContent = m.display_name || m.name;
-            if (m.name === 'databricks-claude-opus-4-6') o.selected = true;
+            if (m.name === 'databricks-claude-opus-4-7') o.selected = true;
             sel.appendChild(o);
         });
     } catch(e) {
