@@ -38,11 +38,14 @@ _MODEL_MAX_OUTPUT_TOKENS: dict[str, int] = {
 # Default when model is not in the map
 _DEFAULT_MAX_OUTPUT_TOKENS = 16384
 
-# Models that reject the `temperature` parameter (Databricks Foundation Model API
-# returns BAD_REQUEST: "does not support the temperature parameter"). Newer
-# Anthropic reasoning-tuned endpoints drop this knob.
+# Models that reject a non-default `temperature` value. Newer reasoning-tuned
+# endpoints either drop the knob entirely (Anthropic Opus 4.7 → "does not
+# support the temperature parameter") or pin it to 1 and reject other values
+# (OpenAI GPT-5.5 → "Only the default (1) value is supported"). For both we
+# omit the parameter from the request rather than try to negotiate.
 _MODELS_WITHOUT_TEMPERATURE: set[str] = {
     "databricks-claude-opus-4-7",
+    "databricks-gpt-5-5",
 }
 
 
