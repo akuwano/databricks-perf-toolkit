@@ -38,6 +38,18 @@ _MODEL_MAX_OUTPUT_TOKENS: dict[str, int] = {
 # Default when model is not in the map
 _DEFAULT_MAX_OUTPUT_TOKENS = 16384
 
+# Models that reject the `temperature` parameter (Databricks Foundation Model API
+# returns BAD_REQUEST: "does not support the temperature parameter"). Newer
+# Anthropic reasoning-tuned endpoints drop this knob.
+_MODELS_WITHOUT_TEMPERATURE: set[str] = {
+    "databricks-claude-opus-4-7",
+}
+
+
+def supports_temperature(model: str) -> bool:
+    """Return False for models that reject the `temperature` parameter."""
+    return model not in _MODELS_WITHOUT_TEMPERATURE
+
 
 def get_model_max_tokens(model: str) -> int:
     """Get max output tokens for a model.
@@ -211,16 +223,19 @@ def call_llm_with_retry(
 
     last_exception: APITimeoutError | TimeoutException | APIStatusError | None = None
 
+    create_kwargs: dict = {
+        "model": model,
+        "messages": messages,
+        "max_tokens": max_tokens,
+        "timeout": timeout,
+    }
+    if supports_temperature(model):
+        create_kwargs["temperature"] = temperature
+
     for attempt in range(LLM_MAX_RETRIES):
         try:
             start_time = time.monotonic()
-            response = client.chat.completions.create(
-                model=model,
-                messages=messages,  # type: ignore[arg-type]
-                max_tokens=max_tokens,
-                temperature=temperature,
-                timeout=timeout,
-            )
+            response = client.chat.completions.create(**create_kwargs)
             elapsed = time.monotonic() - start_time
             usage = response.usage
             if usage:
