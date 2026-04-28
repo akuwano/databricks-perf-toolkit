@@ -1,0 +1,40 @@
+case_id: streaming_dlt_q1
+profile_path: json/sdp_streamiing
+description: DLT/SDP ストリーミングプロファイル。バッチ指向ではなくマイクロバッチ視点での分析が必要。
+domain: dbsql
+workload_type: streaming
+expected_severity: medium
+
+must_cover_issues:
+  - id: streaming_detected
+    severity: low
+    keywords: [streaming, ストリーミング, micro-batch, マイクロバッチ]
+    description: ストリーミングクエリと認識すること
+
+  - id: micro_batch_throughput
+    severity: medium
+    keywords: [throughput, バッチ間隔, batch, スループット]
+    description: マイクロバッチのスループット / 間隔に言及
+
+forbidden_claims:
+  - id: cold_cache_for_streaming
+    description: ストリーミングは cold cache が常態なので「cache hit 低い」アラートは禁止
+  - id: one_shot_optimization
+    description: 「OPTIMIZE 一回実行」のような one-shot 提案はストリーミングでは不適切
+
+must_have_actions:
+  - target: trigger_interval
+    type: configuration
+    keyword: trigger
+    description: trigger interval / processingTime の調整提案
+  - target: sink_optimization
+    type: maintenance
+    keyword: autoCompact
+    description: 書き込み先の autoCompact / optimizeWrite
+
+expected_l3_min: 3
+expected_recall_min: 0.75
+
+notes: |
+  v4.29 で追加された streaming context detection を回帰防止。
+  バッチ系メトリクス (total scan bytes 等) ではなくマイクロバッチ統計を見る。

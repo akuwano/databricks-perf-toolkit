@@ -58,7 +58,7 @@ curl https://<app-url>/api/v1/debug/config | python -m json.tool
 ```json
 {
   "settings": {
-    "catalog": {"value": "my_catalog", "source": "runtime_config"},
+    "catalog": {"value": "kuwano_catalog", "source": "runtime_config"},
     "http_path": {"value": "/sql/1.0/warehouses/abc123", "source": "runtime_config"},
     "table_write_enabled": {"value": "true", "source": "runtime_config"}
   },
@@ -75,10 +75,10 @@ curl https://<app-url>/api/v1/debug/config | python -m json.tool
 
 ```bash
 # アプリのログを表示
-databricks apps logs <your-app-name> -p DEFAULT
+databricks apps logs dbsql-profiler-analyzer-dev -p DEFAULT
 
 # 直近のログだけ見る場合
-databricks apps logs <your-app-name> -p DEFAULT | tail -50
+databricks apps logs dbsql-profiler-analyzer-dev -p DEFAULT | tail -50
 ```
 
 ### 注目すべきログパターン

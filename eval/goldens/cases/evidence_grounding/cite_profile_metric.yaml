@@ -1,0 +1,41 @@
+case_id: cite_profile_metric_q1
+profile_path: json/query-profile_01f0fb29-f60f-1f30-8ee5-381a3ca8936a.json
+description: spill_to_disk_bytes 等、profile に実在する metric を Evidence で正しく引用しているかの検証 case。
+domain: dbsql
+workload_type: join_heavy
+expected_severity: high
+
+must_cover_issues:
+  - id: spill_dominant
+    severity: high
+    keywords: [spill]
+
+# Q3-specific expectations (W3 #6)
+must_cite_evidence:
+  - metric: spill_to_disk_bytes
+    source_prefix: profile
+    description: スピル指摘では profile.queryMetrics.spill_to_disk_bytes を引用すべき
+  - metric: peak_memory_bytes
+    source_prefix: node
+    description: メモリ系指摘では node[i].operator_stats.peak_memory を引用すべき
+
+forbidden_evidence_claim:
+  - description: 「8GB のスピル」のような数値断定で profile に anchor がないものは禁止
+    pattern: "GB"
+    require_anchor: true
+
+forbidden_claims: []
+
+must_have_actions:
+  - target: warehouse_size
+    type: configuration
+    keyword: warehouse
+
+expected_l3_min: 4
+expected_recall_min: 0.85
+expected_q3_min: 0.85  # W3 Day 6 新指標: composite >= 0.85 を期待
+
+notes: |
+  W3 #6 evidence_grounding case: profile-anchored citation の必要性を golden で固定。
+  Week 4 で LLM canonical-direct 出力を有効にした際、この case の Q3 スコアが
+  上がる (現状 normalizer 経由では grounded=true が limited) はず。

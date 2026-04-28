@@ -1,0 +1,42 @@
+case_id: short_query_overhead_q1
+profile_path: json/query-profile_01f0040b-dc95-1246-9b5e-556646ad2e88.json
+description: 短時間クエリで driver overhead や compilation overhead が支配的なケース。スピル/シャッフル系の提案は不適切。
+domain: dbsql
+workload_type: short_query
+expected_severity: medium
+
+must_cover_issues:
+  - id: driver_overhead
+    severity: medium
+    keywords: [driver, ドライバー, overhead, オーバーヘッド]
+    description: driver overhead が支配的
+
+  - id: compilation_overhead
+    severity: medium
+    keywords: [compilation, コンパイル, plan]
+    description: コンパイル時間が支配的
+
+forbidden_claims:
+  - id: spill_alert_no_evidence
+    description: スピル証拠がないのにスピル指摘するのは禁止
+  - id: shuffle_alert_no_evidence
+    description: シャッフル証拠がないのにシャッフル提案するのは禁止
+  - id: lc_for_short_query
+    description: 短時間クエリには LC 提案は ROI が合わない
+
+must_have_actions:
+  - target: query_caching
+    type: optimization
+    keyword: cache
+    description: 結果キャッシュ / Query Result Cache の活用
+  - target: prepared_statement
+    type: pattern
+    keyword: parametrize
+    description: パラメータ化されたクエリで compilation 削減
+
+expected_l3_min: 3
+expected_recall_min: 0.75
+
+notes: |
+  v4.42 の絶対値 vs 相対値補正が効くケース。
+  short query では shuffle/spill 系の固定閾値で誤検知しがち。

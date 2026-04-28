@@ -1,0 +1,226 @@
+{% extends "base.html" %}
+{% block title %}{{ _('Send all feedback as a ZIP') }} - Performance Toolkit{% endblock %}
+
+{% block content %}
+<div style="max-width: 920px; margin: 0 auto; padding: 2rem;">
+    <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 1rem;">
+        <i class="bi bi-box-seam" style="color: hsl(var(--info)); font-size: 1.4rem;"></i>
+        <h2 style="margin: 0; font-size: 1.4rem;">{{ _('Send all feedback as a ZIP') }}</h2>
+    </div>
+    <p style="color: hsl(var(--muted-foreground)); margin-bottom: 1rem; font-size: 0.9rem;">
+        {{ _('Download all feedback in this workspace plus the related reports as a single ZIP. This is the primary monthly workflow.') }}
+    </p>
+
+    {% if not admin_allowed %}
+    <div class="card" style="padding: 1rem; border: 1px solid hsl(var(--destructive) / 0.3); background: hsl(var(--destructive) / 0.07);">
+        <strong style="color: hsl(var(--destructive));"><i class="bi bi-shield-lock"></i> {{ _('Permission denied') }}</strong>
+        <p style="margin: 0.5rem 0 0; font-size: 0.85rem;">
+            {{ _('Bulk feedback ZIP export requires workspace_admin-equivalent permission. Add your email to the FEEDBACK_EXPORT_ADMIN_EMAILS env var.') }}
+        </p>
+        <div style="margin-top: 0.5rem; font-size: 0.78rem; color: hsl(var(--muted-foreground));">
+            <code>{{ admin_user_email or _('(unauthenticated)') }}</code> / reason: <code>{{ admin_reason }}</code>
+        </div>
+    </div>
+    {% else %}
+
+    {% if admin_reason == 'dev_mode' %}
+    <div class="card" style="padding: 0.75rem; border: 1px solid hsl(var(--warning) / 0.4); background: hsl(var(--warning) / 0.08); margin-bottom: 1rem; font-size: 0.85rem;">
+        <i class="bi bi-exclamation-triangle"></i>
+        {{ _('FEEDBACK_EXPORT_ADMIN_EMAILS is not set, so all authenticated users can currently export (dev_mode). Set this in production.') }}
+    </div>
+    {% endif %}
+
+    <div class="card" style="padding: 1.25rem; margin-bottom: 1rem;">
+        <h6 style="margin: 0 0 0.75rem; font-size: 0.95rem;">{{ _('1. Select date range') }}</h6>
+        <div style="display: flex; gap: 0.75rem; align-items: center; flex-wrap: wrap;">
+            <select id="bulkRange" class="form-control" style="max-width: 240px; font-size: 0.85rem;" onchange="loadBulkSummary()">
+                <option value="30" selected>{{ _('Last 30 days') }}</option>
+                <option value="7">{{ _('Last 7 days') }}</option>
+                <option value="90">{{ _('Last 90 days') }}</option>
+                <option value="all">{{ _('All time (use with care)') }}</option>
+            </select>
+            <button onclick="loadBulkSummary()" class="btn" style="background: hsl(var(--secondary)); color: hsl(var(--secondary-foreground)); border: none; padding: 0.4rem 0.8rem; font-size: 0.85rem; border-radius: var(--radius);">
+                <i class="bi bi-arrow-clockwise"></i> {{ _('Recalculate') }}
+            </button>
+        </div>
+    </div>
+
+    <div class="card" style="padding: 1.25rem; margin-bottom: 1rem;">
+        <h6 style="margin: 0 0 0.75rem; font-size: 0.95rem;">{{ _('2. Scope') }}</h6>
+        <div id="bulkSummary" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 0.75rem; font-size: 0.85rem;">
+            <div style="padding: 0.6rem; border: 1px solid hsl(var(--border)); border-radius: var(--radius);">
+                <div style="font-size: 0.7rem; color: hsl(var(--muted-foreground)); text-transform: uppercase;">{{ _('Feedback') }}</div>
+                <div id="sum-feedback" style="font-size: 1.2rem; font-weight: 600;">…</div>
+            </div>
+            <div style="padding: 0.6rem; border: 1px solid hsl(var(--border)); border-radius: var(--radius);">
+                <div style="font-size: 0.7rem; color: hsl(var(--muted-foreground)); text-transform: uppercase;">{{ _('Analyses in scope') }}</div>
+                <div id="sum-analyses" style="font-size: 1.2rem; font-weight: 600;">…</div>
+            </div>
+            <div style="padding: 0.6rem; border: 1px solid hsl(var(--border)); border-radius: var(--radius);">
+                <div style="font-size: 0.7rem; color: hsl(var(--muted-foreground)); text-transform: uppercase;">{{ _('Estimated size') }}</div>
+                <div id="sum-size" style="font-size: 1.2rem; font-weight: 600;">…</div>
+            </div>
+            <div style="padding: 0.6rem; border: 1px solid hsl(var(--border)); border-radius: var(--radius);">
+                <div style="font-size: 0.7rem; color: hsl(var(--muted-foreground)); text-transform: uppercase;">{{ _('Vs. all-time totals') }}</div>
+                <div id="sum-alltime" style="font-size: 0.9rem;">…</div>
+            </div>
+        </div>
+        <div id="sum-warnings" style="margin-top: 0.75rem; font-size: 0.82rem;"></div>
+    </div>
+
+    <div class="card" style="padding: 1.25rem; margin-bottom: 1rem;">
+        <h6 style="margin: 0 0 0.75rem; font-size: 0.95rem;">{{ _('3. Confirm → download') }}</h6>
+        <div style="background: hsl(var(--muted) / 0.4); padding: 0.75rem; border-radius: var(--radius); margin-bottom: 0.75rem; font-size: 0.82rem;">
+            <strong>{{ _('Included:') }}</strong> manifest.json, bundles/&lt;analysis_id&gt;/{report.md, canonical_report.json, profile_redacted.json, feedback.json}, orphan_feedback.json, checksums.json, README.txt
+            <div style="margin-top: 0.5rem; color: hsl(var(--warning));">
+                ⚠ {{ _('The bulk ZIP never includes profile.json (raw). When raw is needed, use the per-analysis ZIP from /shared/<id>.') }}
+            </div>
+            <div style="margin-top: 0.3rem; color: hsl(var(--muted-foreground));">
+                {{ _('user_email is hashed (sha256:16 chars; only the domain stays in plaintext). This is not full anonymization.') }}
+            </div>
+        </div>
+        <label style="display: flex; align-items: flex-start; gap: 0.5rem; padding: 0.6rem; border: 1px solid hsl(var(--border)); border-radius: var(--radius); margin-bottom: 0.6rem; font-size: 0.85rem; cursor: pointer;">
+            <input type="checkbox" id="bulkConfirmReview" style="margin-top: 0.2rem;" onchange="updateBulkButton()">
+            <span>{{ _('I have reviewed the contents and confirm forwarding.') }}</span>
+        </label>
+        <div style="display: flex; justify-content: flex-end; align-items: center; gap: 0.5rem;">
+            <span id="bulkStatus" style="font-size: 0.82rem; margin-right: auto; color: hsl(var(--muted-foreground));"></span>
+            <button id="bulkDownloadBtn" onclick="downloadBulk()" disabled
+                    style="padding: 0.5rem 1.1rem; border-radius: var(--radius); background: hsl(var(--primary)); color: hsl(var(--primary-foreground)); border: none; cursor: pointer; font-size: 0.9rem; opacity: 0.5;">
+                <i class="bi bi-download"></i> {{ _('Download ZIP') }}
+            </button>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<script>
+function _rangeToParams() {
+    const sel = document.getElementById('bulkRange');
+    if (!sel) return {since: null, until: null};
+    const v = sel.value;
+    if (v === 'all') return {since: null, until: null};
+    const days = parseInt(v, 10) || 30;
+    const since = new Date(Date.now() - days * 86400000).toISOString();
+    return {since, until: null};
+}
+
+function _fmtSize(mb) {
+    if (mb == null || isNaN(mb)) return '…';
+    if (mb < 1) return (mb * 1024).toFixed(0) + ' KB';
+    if (mb < 1024) return mb.toFixed(1) + ' MB';
+    return (mb / 1024).toFixed(2) + ' GB';
+}
+
+let _lastSummary = null;
+
+async function loadBulkSummary() {
+    const {since, until} = _rangeToParams();
+    const fb = document.getElementById('sum-feedback');
+    const aN = document.getElementById('sum-analyses');
+    const sz = document.getElementById('sum-size');
+    const at = document.getElementById('sum-alltime');
+    const warn = document.getElementById('sum-warnings');
+    if (fb) fb.textContent = '…';
+    if (aN) aN.textContent = '…';
+    if (sz) sz.textContent = '…';
+    if (at) at.textContent = '…';
+    if (warn) warn.innerHTML = '';
+    try {
+        const res = await fetch('/api/v1/feedback/bundle/bulk/prepare', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({since, until}),
+        });
+        if (!res.ok) {
+            const err = await res.json();
+            if (warn) {
+                warn.style.color = 'hsl(var(--destructive))';
+                warn.textContent = '{{ _('Preparation error: ') }}' + (err.error || res.status);
+            }
+            return;
+        }
+        const data = await res.json();
+        _lastSummary = data;
+        const s = data.summary || {};
+        if (fb) fb.textContent = (s.feedback_count || 0).toLocaleString();
+        if (aN) aN.textContent = (s.distinct_analyses || 0).toLocaleString();
+        if (sz) sz.textContent = _fmtSize(s.estimated_size_mb || 0);
+        if (at) at.innerHTML = '{{ _('All time') }} ' + (s.all_time_count || 0).toLocaleString()
+                              + ' {{ _('items') }} / ' + (s.all_time_distinct_analyses || 0).toLocaleString() + ' {{ _('analyses') }}'
+                              + (s.oldest_feedback_at ? '<br>{{ _('Oldest: ') }}' + new Date(s.oldest_feedback_at).toLocaleDateString() : '');
+        if (warn && (s.limits_hit || []).length > 0) {
+            warn.style.color = 'hsl(var(--warning))';
+            warn.innerHTML = '⚠ {{ _('Over limit: ') }}' + s.limits_hit.join(', ')
+                           + '. {{ _('Narrow the date range or revisit the scope.') }}';
+        }
+        updateBulkButton();
+    } catch(e) {
+        if (warn) {
+            warn.style.color = 'hsl(var(--destructive))';
+            warn.textContent = '{{ _('Network error: ') }}' + e.message;
+        }
+    }
+}
+
+function updateBulkButton() {
+    const conf = document.getElementById('bulkConfirmReview');
+    const btn = document.getElementById('bulkDownloadBtn');
+    if (!btn) return;
+    const ok = !!(conf && conf.checked) && _lastSummary && _lastSummary.summary
+            && (_lastSummary.summary.feedback_count > 0);
+    btn.disabled = !ok;
+    btn.style.opacity = ok ? '1' : '0.5';
+    btn.style.cursor = ok ? 'pointer' : 'not-allowed';
+}
+
+async function downloadBulk() {
+    const status = document.getElementById('bulkStatus');
+    const btn = document.getElementById('bulkDownloadBtn');
+    if (!_lastSummary || !_lastSummary.token) {
+        if (status) {
+            status.style.color = 'hsl(var(--destructive))';
+            status.textContent = '{{ _('Recalculate and retry') }}';
+        }
+        return;
+    }
+    if (btn) btn.disabled = true;
+    if (status) {
+        status.style.color = 'hsl(var(--muted-foreground))';
+        status.textContent = '{{ _('Preparing...') }}';
+    }
+    try {
+        const {since, until} = _rangeToParams();
+        const params = new URLSearchParams();
+        params.set('token', _lastSummary.token);
+        if (since) params.set('since', since);
+        if (until) params.set('until', until);
+        const url = '/api/v1/feedback/bundle/bulk?' + params.toString();
+        const a = document.createElement('a');
+        a.href = url;
+        a.style.display = 'none';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        if (status) {
+            status.style.color = 'hsl(var(--success))';
+            status.innerHTML = '<i class="bi bi-check-circle-fill"></i> {{ _('Download started') }}';
+        }
+    } catch(e) {
+        if (status) {
+            status.style.color = 'hsl(var(--destructive))';
+            status.textContent = '{{ _('Failed: ') }}' + e.message;
+        }
+    } finally {
+        if (btn) btn.disabled = false;
+        updateBulkButton();
+    }
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    {% if admin_allowed %}
+    loadBulkSummary();
+    {% endif %}
+});
+</script>
+{% endblock %}

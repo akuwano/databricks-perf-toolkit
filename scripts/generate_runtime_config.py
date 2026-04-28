@@ -58,8 +58,15 @@ def main():
         "spark_perf_summary_job_id": variables.get("spark_perf_summary_job_id", ""),
     }
 
-    # Remove empty values
-    config = {k: v for k, v in config.items() if v}
+    # V6 feature flags: forward any `v6_*` keys from local-overrides.yml
+    # variables straight into runtime-config.json so feature_flags.py can
+    # read them. Values are stringified to keep the JSON simple ("true"/"false").
+    for key, value in variables.items():
+        if isinstance(key, str) and key.lower().startswith("v6_"):
+            config[key.lower()] = str(value).lower() if isinstance(value, bool) else str(value)
+
+    # Remove empty values (preserves "false" / "0" since they are non-empty strings)
+    config = {k: v for k, v in config.items() if v != ""}
 
     OUTPUT_PATH.parent.mkdir(parents=True, exist_ok=True)
     with open(OUTPUT_PATH, "w", encoding="utf-8") as f:

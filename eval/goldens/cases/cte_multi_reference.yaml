@@ -1,0 +1,35 @@
+case_id: cte_multi_reference_q1
+profile_path: json/query-profile_01f01ffb-be61-1732-85ef-36c4d6ee52de.json
+description: 同じ CTE が複数回参照され ReusedExchange が出ない再計算ケース。
+domain: dbsql
+workload_type: join_heavy
+expected_severity: medium
+
+must_cover_issues:
+  - id: cte_recompute
+    severity: medium
+    keywords: [CTE, 再計算, ReusedExchange]
+    description: CTE が複数参照されているが ReusedExchange なし
+
+forbidden_claims:
+  - id: temp_view_recommendation
+    description: TEMP VIEW でマテリアライズできないので推奨禁止 (v5.16 fix)
+  - id: blanket_ctas
+    description: 一度限りクエリで CTAS は書き込みコストが上回るので無条件推奨禁止
+
+must_have_actions:
+  - target: cte_materialization_decision
+    type: rewrite
+    keyword: 再利用
+    description: 再利用が複数セッション/クエリで明確な場合のみ CTAS、それ以外は optimizer 任せ
+  - target: select_pruning
+    type: rewrite
+    keyword: 列削減
+    description: CTE で必要列のみに絞ることで再計算コストを下げる
+
+expected_l3_min: 4
+expected_recall_min: 0.80
+
+notes: |
+  v5.16 で「TEMP VIEW を CTE 代替に推奨しない」「CTAS は反復実行が確認できる場合のみ」を fix。
+  この case で TEMP VIEW 推奨が出たら回帰として検知。

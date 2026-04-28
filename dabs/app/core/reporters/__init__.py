@@ -54,242 +54,6 @@ from .summary import (
 )
 
 
-def generate_report_legacy(
-    analysis: ProfileAnalysis,
-    llm_analysis: str,
-    review_analysis: str = "",
-    refined_analysis: str = "",
-    primary_model: str = "",
-    review_model: str = "",
-    refine_model: str = "",
-    verbose: bool = False,
-) -> str:
-    """Generate final Markdown report (legacy format).
-
-    This is the old report format kept for backward compatibility.
-    Will be removed after CLI/app.py migration to generate_report().
-    """
-    qm = analysis.query_metrics
-    bi = analysis.bottleneck_indicators
-    is_serverless = analysis.query_metrics.query_typename == "LakehouseSqlQuery" or (
-        analysis.warehouse_info.is_serverless if analysis.warehouse_info else False
-    )
-
-    # Calculate key metrics for summary
-    spill_gb = bi.spill_bytes / (1024**3)
-
-    report = f"""# 📊 {_("Query Performance Report")}
-
----
-
-## 📌 {_("Summary")}
-
-| {_("Execution Time")} | {_("Read Data")} | {_("Cache Hit Ratio")} | {_("Photon Utilization")} | {_("Disk Spill")} |
-|:--------:|:--------------:|:------------------:|:------------:|:--------------:|
-| **{format_time_ms(qm.total_time_ms)}** | **{format_bytes(qm.read_bytes)}** | **{bi.cache_hit_ratio:.0%}** | **{bi.photon_ratio:.0%}** | **{spill_gb:.1f} GB** |
-
----
-
-## 🧾 {_("Basic Information")}
-
-- **{_("Query ID")}:** `{qm.query_id}`
-- **{_("Status")}:** {qm.status}
-- **{_("Total Execution Time")}:** {format_time_ms(qm.total_time_ms)} (wall-clock)
-- **{_("Compilation Time")}:** {format_time_ms(qm.compilation_time_ms)}
-- **{_("Execution Time")}:** {format_time_ms(qm.execution_time_ms)}
-- **{_("Task Total Time")}:** {format_time_ms(qm.task_total_time_ms)} ({_("cumulative across all parallel tasks")})
-- **{_("Photon Total Time")}:** {format_time_ms(qm.photon_total_time_ms)}
-- **{_("Photon Utilization")}:** {bi.photon_ratio:.1%} (= photonTotalTimeMs / taskTotalTimeMs = {qm.photon_total_time_ms:,} / {qm.task_total_time_ms:,})
-{generate_warehouse_section(analysis.warehouse_info, analysis.endpoint_id, query_metrics=qm)}{generate_sql_section(analysis.sql_analysis)}{generate_explain_section(analysis.explain_analysis) if analysis.explain_analysis else ""}{generate_io_metrics_section(qm, bi, analysis.top_scanned_tables, explain_analysis=analysis.explain_analysis)}{generate_cloud_storage_section(bi)}---
-
-## 🚦 {_("Bottleneck Indicators")}
-
-{generate_bottleneck_summary(bi)}
-
-{generate_photon_blockers_section(bi)}{generate_spill_analysis_section(bi)}"""
-
-    # Add structured alerts section (preferred) or legacy critical issues/warnings
-    if bi.alerts:
-        report += generate_alerts_section(bi.alerts)
-    else:
-        # Legacy: Add critical issues
-        if bi.critical_issues:
-            report += f"""---
-
-## 🛑 {_("Critical Issues")}
-
-"""
-            for issue in bi.critical_issues:
-                report += f"> **! {issue}**\n>\n"
-            report += "\n"
-
-        # Legacy: Add warnings
-        if bi.warnings:
-            report += f"""---
-
-## ⚠️ {_("Warnings")}
-
-"""
-            for warning in bi.warnings:
-                report += f"- {warning}\n"
-            report += "\n"
-
-    # Add join analysis
-    if analysis.join_info:
-        report += f"""---
-
-## 🔗 {_("Join Type Analysis")}
-
-| {_("Join Operator")} | {_("Type")} | {_("Type Support")} | {_("Photon Execution")} |
-|----------------|--------|:----------:|:----------:|
-"""
-        for ji in analysis.join_info:
-            type_photon = "OK" if ji.join_type.photon_supported else "X"
-            # Handle None (unknown) case for actual Photon execution
-            if ji.is_photon is True:
-                actual_photon = "OK"
-            elif ji.is_photon is False:
-                actual_photon = "X"
-            else:
-                actual_photon = "-"  # Unknown
-            node_name = ji.node_name[:40] + "..." if len(ji.node_name) > 40 else ji.node_name
-            report += (
-                f"| {node_name} | {ji.join_type.display_name} | {type_photon} | {actual_photon} |\n"
-            )
-        report += "\n"
-
-    # Add shuffle analysis
-    inefficient_shuffles = [sm for sm in analysis.shuffle_metrics if not sm.is_memory_efficient]
-    if inefficient_shuffles:
-        report += f"""---
-
-## 🔀 {_("Shuffle Operations Requiring Optimization")}
-
-> **{_("Evidence source")}:** {_("Partition count from Sink - Number of partitions metric, peak memory from peakMemoryBytes in JSON profile.")}
-
-"""
-        for sm in inefficient_shuffles:
-            report += f"### {_('Node')} {sm.node_id}\n\n"
-            # Show partition count evidence
-            report += f"- **{_('Partition Count')}:** {sm.partition_count} ({_('from Sink - Number of partitions metric')})\n"
-            # Show peak memory evidence
-            peak_mb = sm.peak_memory_bytes / (1024 * 1024)
-            report += f"- **{_('Peak Memory')}:** {peak_mb:.0f} MB ({_('from peakMemoryBytes')})\n"
-            report += f"- **{_('Memory Usage')}:** {sm.memory_per_partition_mb:.0f} MB/{_('per partition')}\n"
-            report += f"- **{_('Optimization Priority')}:** {sm.optimization_priority.value} ({_('exceeds 128MB/partition guideline')})\n"
-            if sm.shuffle_attributes:
-                # Calculate optimal partitions based on data size targeting 128MB per partition
-                target_partition_size_bytes = 128 * 1024 * 1024  # 128MB
-                # Prefer aqe_data_size if available, otherwise use peak_memory_bytes
-                data_size = sm.aqe_data_size if sm.aqe_data_size > 0 else sm.peak_memory_bytes
-                if data_size > 0:
-                    optimal = max(1, int(data_size / target_partition_size_bytes))
-                    # Ensure we recommend at least current count if it's higher
-                    optimal = max(optimal, sm.partition_count)
-                else:
-                    optimal = max(1, sm.partition_count * 2)
-                report += f"- **{_('Recommended')}:** `REPARTITION({optimal}, {', '.join(sm.shuffle_attributes)})`\n"
-            report += "\n"
-
-    # Add AQE Shuffle Health section
-    report += generate_aqe_shuffle_section(analysis.shuffle_metrics, is_serverless=is_serverless)
-
-    # Add Scan Locality per-node breakdown (Verbose mode)
-    report += generate_scan_locality_section(analysis.node_metrics)
-
-    # Add Action Plan + Top Findings section (sorted by priority_score descending)
-    if analysis.action_cards:
-        sorted_cards = sorted(analysis.action_cards, key=lambda c: c.priority_score, reverse=True)
-        report += generate_action_plan_section(sorted_cards)
-
-    # Add Hot Operators section
-    if analysis.hot_operators:
-        report += generate_hot_operators_section(analysis.hot_operators)
-
-    # Add LLM analysis section(s) based on mode
-    if refined_analysis and not verbose:
-        # Refined mode (default): show only final refined analysis
-        refine_info = f" ({refine_model})" if refine_model else ""
-        report += f"""---
-
-## 🤖 {_("LLM Analysis Report")}{refine_info}
-
-{refined_analysis}
-
-"""
-    elif verbose and llm_analysis:
-        # Verbose mode: show all stages
-        primary_info = f" ({primary_model})" if primary_model else ""
-        report += f"""---
-
-## 📝 {_("Initial Analysis")}{primary_info}
-
-{llm_analysis}
-
-"""
-        if review_analysis:
-            reviewer_info = f" ({review_model})" if review_model else ""
-            report += f"""---
-
-## 🔍 {_("Review")}{reviewer_info}
-
-{review_analysis}
-
-"""
-        if refined_analysis:
-            refine_info = f" ({refine_model})" if refine_model else ""
-            report += f"""---
-
-## ✨ {_("Final Analysis")}{refine_info}
-
-{refined_analysis}
-
-"""
-    elif llm_analysis:
-        # Legacy mode (--no-refine): show initial analysis and review separately
-        model_info = f" ({primary_model})" if primary_model else ""
-        report += f"""---
-
-## 🤖 {_("LLM Analysis Report")}{model_info}
-
-{llm_analysis}
-
-"""
-        if review_analysis:
-            reviewer_info = f" ({review_model})" if review_model else ""
-            report += f"""---
-
-## 🔍 {_("Review Result")}{reviewer_info}
-
-{review_analysis}
-
-"""
-
-    # Add Validation Checklist
-    if analysis.action_cards or bi.critical_issues or bi.warnings:
-        report += generate_validation_checklist(
-            analysis.action_cards, bi, analysis.sql_analysis, analysis.join_info
-        )
-
-    # Determine serverless status for config filtering
-    is_serverless = analysis.query_metrics.query_typename == "LakehouseSqlQuery" or (
-        analysis.warehouse_info.is_serverless if analysis.warehouse_info else False
-    )
-
-    # Add dynamic Tuning Guide based on detected bottlenecks
-    report += generate_tuning_guide_section(bi, analysis.shuffle_metrics)
-
-    # Add dynamic Recommended Spark Parameters based on detected issues
-    report += generate_recommended_spark_params(
-        bi, analysis.shuffle_metrics, is_serverless=is_serverless
-    )
-
-    report += f"""---
-
-*{_("This report was generated using Databricks Foundation Model APIs.")}*
-"""
-
-    return report
 
 
 def generate_report(
@@ -388,12 +152,25 @@ def generate_report(
         )
     else:
         parts.append(generate_rule_based_summary(bi.alerts, qm, analysis.action_cards))
-    parts.append(format_warehouse_sizing_executive_bullets(sizing_recs))
+    # v6.7.12: thread the 3-band recommendation + warehouse_info through
+    # so the executive bullet doesn't print "no change needed" purely
+    # because the SP failed to fetch warehouse info.
+    from ..sizing_recommendation import recommend_size
+    _three_band = recommend_size(qm)
+    parts.append(
+        format_warehouse_sizing_executive_bullets(
+            sizing_recs, _three_band, analysis.warehouse_info
+        )
+    )
     parts.append("")
 
-    # --- 2. Top Alerts ---
-    # Sort CRITICAL → HIGH (stable within severity) and number them so the
-    # Recommended Actions section can cite `→ アラート #N` references.
+    # --- Compact Key Alerts subsection at end of Section 1 ---
+    # Codex review (2026-04-26) replaced the standalone "## 2. Top
+    # Alerts" section with a 1-2 alert subsection here, since the
+    # standalone form was redundant with Appendix H + Section 1's
+    # bottleneck summary. The Recommended Actions cross-reference now
+    # uses issue tags ("→ 対応課題: shuffle, spill") so alert numbering
+    # is no longer needed. (V6_COMPACT_TOP_ALERTS retired in v6.6.4.)
     sorted_top_alerts: list = []
     if bi.alerts:
         from .alert_crossref import sort_alerts_by_severity
@@ -401,12 +178,22 @@ def generate_report(
         critical_high = [a for a in bi.alerts if a.severity in (Severity.CRITICAL, Severity.HIGH)]
         if critical_high:
             sorted_top_alerts = sort_alerts_by_severity(critical_high)[:5]
-            parts.append("---\n")
-            parts.append(f"## 2. {_('Top Alerts')}\n")
-            for idx, a in enumerate(sorted_top_alerts, start=1):
-                icon = "🔴" if a.severity == Severity.CRITICAL else "🟠"
-                parts.append(f"- **#{idx}** {icon} **[{a.severity.value.upper()}]** {a.message}\n")
-            parts.append("")
+
+    if sorted_top_alerts:
+        parts.append(f"### {_('Key Alerts')}\n")
+        for a in sorted_top_alerts[:2]:
+            icon = "🔴" if a.severity == Severity.CRITICAL else "🟠"
+            # Strip multi-line "Top contributors" that hash_resize and
+            # similar alerts append — those belong in Appendix H.
+            msg = (a.message or "").split("\n", 1)[0]
+            if len(msg) > 140:
+                msg = msg[:137] + "..."
+            parts.append(f"- {icon} **[{a.severity.value.upper()}]** {msg}\n")
+        if len(sorted_top_alerts) > 2:
+            parts.append(
+                f"- _{_('Additional alerts in Appendix H')} ({len(sorted_top_alerts) - 2} more)_\n"
+            )
+        parts.append("")
 
     # --- 3. Recommended Actions ---
     # Strategy: Top 5 selected cards are surfaced prominently; remaining
@@ -534,7 +321,11 @@ def generate_report(
             cost_lines.append(f"> *{cost.note}*\n")
         parts.append("\n".join(cost_lines))
 
-    parts.append(format_warehouse_sizing_subsection(sizing_recs))
+    parts.append(
+        format_warehouse_sizing_subsection(
+            sizing_recs, _three_band, analysis.warehouse_info
+        )
+    )
 
     # --- 5. Root Cause Analysis ---
     if "root_cause_analysis" in llm_sections:
@@ -741,8 +532,18 @@ def generate_report(
 
     # --- Footer ---
     model_info = f" ({primary_model})" if primary_model else ""
+    # Tool version — pinned in the footer so customers (and L5 feedback
+    # bundles) can attribute behavior to a specific build. APP_VERSION
+    # is overwritten by deploy.sh from pyproject.toml; if the import
+    # fails (test contexts) we fall back to "unknown" silently.
+    try:
+        from app import APP_VERSION as _app_version  # noqa: WPS433
+    except Exception:  # nosec
+        _app_version = "unknown"
+    version_info = f" — Performance Toolkit v{_app_version}"
     parts.append(
-        f"\n---\n\n*{_('This report was generated using Databricks Foundation Model APIs.')}{model_info}*\n"
+        f"\n---\n\n*{_('This report was generated using Databricks Foundation Model APIs.')}"
+        f"{model_info}{version_info}*\n"
     )
 
     return "\n".join(parts)
@@ -764,7 +565,6 @@ __all__ = [
     "generate_query_overview",
     "generate_recommended_spark_params",
     "generate_report",
-    "generate_report_legacy",
     "generate_rule_based_recommendations",
     "generate_rule_based_summary",
     "generate_scan_locality_section",

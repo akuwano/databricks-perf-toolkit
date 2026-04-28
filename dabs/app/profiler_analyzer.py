@@ -44,7 +44,6 @@ from core import (
     format_time_ms,
     # Reporters
     generate_bottleneck_summary,
-    generate_report_legacy,
     load_tuning_knowledge,
     refine_with_llm,
     review_with_llm,
@@ -84,7 +83,6 @@ __all__ = [
     "review_with_llm",
     # Reporters
     "generate_bottleneck_summary",
-    "generate_report_legacy",
     # CLI
     "main",
 ]

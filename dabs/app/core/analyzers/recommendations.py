@@ -18,6 +18,35 @@ from ..models import (
 from .operators import _update_top_scanned_with_clustering
 
 
+_IMPACT_RANK = {"high": 0, "medium": 1, "low": 2}
+_EFFORT_RANK = {"low": 0, "medium": 1, "high": 2}
+
+
+def quick_win_sort_key(card: ActionCard) -> tuple[int, int, float]:
+    """Order action cards by 「より簡単で効果の大きい」 first (v6.6.9).
+
+    Sort key: (impact desc, effort asc, priority_score desc).
+
+    - High-impact items beat medium beat low.
+    - Within the same impact bucket, low-effort items beat medium beat
+      high — the cheap fix should always be tried before the expensive
+      one when their expected payoffs are equal.
+    - Fall back to ``priority_score`` (descending) as the tiebreaker so
+      registry-defined ordering still wins when impact and effort are
+      identical.
+
+    Cards with missing or unrecognised impact/effort land at the end of
+    their bucket (rank 3) — they should set those fields explicitly.
+    """
+    impact = (card.expected_impact or "").lower()
+    effort = (card.effort or "").lower()
+    return (
+        _IMPACT_RANK.get(impact, 3),
+        _EFFORT_RANK.get(effort, 3),
+        -float(card.priority_score or 0.0),
+    )
+
+
 def normalize_table_ref(table_ref: str) -> str:
     """Normalize a table identifier for matching across name styles.
 
@@ -451,8 +480,12 @@ def generate_action_cards(
     _registry_cards, _ = generate_from_registry(_registry_ctx)
     cards.extend(_registry_cards)
 
-    # Sort by priority score descending
-    cards.sort(key=lambda x: x.priority_score, reverse=True)
+    # v6.6.9: order by 「より簡単で効果の大きい」 first — impact desc,
+    # effort asc, priority_score desc as tiebreaker. Low-effort wins
+    # over high-effort within the same impact bucket so the reader's
+    # first action is always the cheapest viable fix at the highest
+    # available impact tier.
+    cards.sort(key=quick_win_sort_key)
 
     return cards
 

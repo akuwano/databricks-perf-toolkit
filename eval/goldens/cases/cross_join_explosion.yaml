@@ -1,0 +1,40 @@
+case_id: cross_join_explosion_q1
+profile_path: json/query-profile_01f0fcf2-82f8-1aef-9f0f-232841a13eb3.json
+description: Cross join または join condition 不足で行数爆発しているケース。SQL レベルの問題。
+domain: dbsql
+workload_type: join_heavy
+expected_severity: critical
+
+must_cover_issues:
+  - id: row_count_explosion
+    severity: critical
+    keywords: [行数, output rows, cross join, デカルト]
+    description: join 後に行数が爆発している
+
+  - id: missing_join_predicate
+    severity: high
+    keywords: [predicate, ON条件, 結合条件]
+    description: join 条件不足の可能性
+
+forbidden_claims:
+  - id: cluster_first
+    description: 根本原因が SQL 構造なのに clustering を最優先するのは順序が逆
+  - id: warehouse_upsize_first
+    description: SQL 修正で解決できる問題を warehouse upsize で隠すのは禁止
+
+must_have_actions:
+  - target: join_predicate_review
+    type: rewrite
+    keyword: ON
+    description: ON 条件の見直し / 適切な等価条件追加
+  - target: filter_pushdown
+    type: rewrite
+    keyword: WHERE
+    description: 早期フィルタリングで行数を抑える
+
+expected_l3_min: 4
+expected_recall_min: 0.90
+
+notes: |
+  Critical issue を見逃すと L3 大幅減点。
+  「症状ではなく原因に戻る」ことを評価する case。

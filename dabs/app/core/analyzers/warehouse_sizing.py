@@ -413,35 +413,128 @@ def analyze_warehouse_sizing(
     return out
 
 
-def format_warehouse_sizing_executive_bullets(recs: list[SizingRecommendation]) -> str:
+# v6.7.12 (Codex review): the subsection used to print "Current
+# warehouse configuration appears appropriate" whenever ``recs`` was
+# empty — but ``recs`` is empty for the common case where the SP
+# cannot fetch ``warehouse_info`` from the API, so the badge was
+# effectively a permanent "no change needed" lie that contradicted
+# the 3-band ``SizingRecommendation`` widget and the LLM's Section 7
+# "scale up" recommendation. New rules:
+#   1. 3-band recommendation present → render it as the primary section.
+#   2. ``recs`` (B-list, multi-cluster / overload heuristics) present →
+#      append as supplementary observations.
+#   3. Both empty → "insufficient information" (NOT "no change needed").
+#   4. "✅ no change needed" only when ``warehouse_info`` is present
+#      AND its cluster_size matches the 3-band ``recommended`` band.
+#      ``minimum_viable`` does NOT count as appropriate — it is the
+#      operational floor, not a recommendation.
+
+
+def _three_band_summary_line(rec: "SizingRecommendation") -> str:
+    """One-line summary of the 3-band recommendation for executive bullets."""
+    parts = [_("Recommended {size}").format(size=rec.recommended.cluster_size)]
+    if rec.recommended.cluster_size != rec.minimum_viable.cluster_size:
+        parts.append(
+            _("(min viable {size})").format(size=rec.minimum_viable.cluster_size)
+        )
+    if rec.confidence:
+        parts.append(_("confidence: {c}").format(c=rec.confidence))
+    return " ".join(parts)
+
+
+def _is_size_appropriate(
+    three_band: "SizingRecommendation | None",
+    warehouse_info: "WarehouseInfo | None",
+) -> bool:
+    """``True`` only when warehouse_info is present AND its cluster_size
+    matches the 3-band ``recommended`` band. ``minimum_viable`` does NOT
+    count — that is the operational floor, not a recommendation."""
+    if three_band is None or warehouse_info is None:
+        return False
+    current = getattr(warehouse_info, "cluster_size", "") or ""
+    return current == three_band.recommended.cluster_size
+
+
+def format_warehouse_sizing_executive_bullets(
+    recs: list[SizingRecommendation],
+    three_band: "SizingRecommendation | None" = None,
+    warehouse_info: "WarehouseInfo | None" = None,
+) -> str:
     """Markdown fragment: bullet list of sizing summaries for Section 1."""
     lines = [f"**{_('Warehouse Sizing')}:**\n"]
-    if not recs:
+    if _is_size_appropriate(three_band, warehouse_info):
         lines.append(
-            f"- ✅ {_('Current warehouse configuration appears appropriate for this query — no sizing changes recommended.')}"
+            f"- ✅ {_('Current warehouse size matches the recommended band — no change needed.')}"
         )
-    else:
+    elif three_band is not None:
+        lines.append(f"- 📊 **{_three_band_summary_line(three_band)}**")
+    if recs:
         for r in recs:
             lines.append(f"- **[{r.severity}]** {r.summary}")
+    elif three_band is None:
+        lines.append(
+            f"- ℹ️ {_('Insufficient signal for a sizing recommendation (warehouse info unavailable and the workload does not show clear under/over-utilization patterns).')}"
+        )
     lines.append("")
     return "\n".join(lines)
 
 
-def format_warehouse_sizing_subsection(recs: list[SizingRecommendation]) -> str:
+def format_warehouse_sizing_subsection(
+    recs: list[SizingRecommendation],
+    three_band: "SizingRecommendation | None" = None,
+    warehouse_info: "WarehouseInfo | None" = None,
+) -> str:
     """Markdown subsection under Performance Metrics (after cost estimation)."""
     parts: list[str] = [f"### {_('Warehouse Sizing Recommendations')}\n"]
-    if not recs:
+
+    if _is_size_appropriate(three_band, warehouse_info):
         parts.append(
-            f"✅ {_('Current warehouse configuration appears appropriate for this query — no sizing changes recommended.')}\n"
+            f"✅ {_('Current warehouse size matches the recommended band — no change needed.')}\n\n"
         )
+    elif three_band is not None:
+        # Primary: 3-band. Mirrors the cost-estimation widget's table
+        # so this section reads as the canonical sizing output without
+        # forcing the reader to scroll back.
+        rec = three_band.recommended
+        mv = three_band.minimum_viable
+        ov = three_band.oversized_beyond
+        parts.append(
+            f"📊 **{_('Recommended size')}**: {rec.cluster_size} "
+            f"({rec.dbu_per_hour} DBU/h, {_('confidence')}: {three_band.confidence})\n"
+        )
+        if mv.cluster_size != rec.cluster_size:
+            parts.append(
+                f"- {_('Minimum viable')}: {mv.cluster_size} ({mv.dbu_per_hour} DBU/h)\n"
+            )
+        if ov is not None:
+            parts.append(
+                f"- {_('Oversized beyond')}: {ov.cluster_size} ({ov.dbu_per_hour} DBU/h)\n"
+            )
+        if warehouse_info is not None and getattr(warehouse_info, "cluster_size", ""):
+            parts.append(f"- {_('Current')}: {warehouse_info.cluster_size}\n")
+        if three_band.rationale:
+            parts.append(f"\n**{_('Rationale')}:**\n")
+            for r in three_band.rationale:
+                parts.append(f"- {r}\n")
+        if three_band.scope_notice:
+            parts.append(f"\n> {three_band.scope_notice}\n")
         parts.append("")
+    elif not recs:
+        parts.append(
+            f"ℹ️ {_('Insufficient signal for a sizing recommendation. Configure DATABRICKS_HOST / DATABRICKS_TOKEN so the warehouse API can be reached, or analyze a longer-running profile to surface parallelism / spill signals.')}\n\n"
+        )
         return "\n".join(parts)
-    for r in recs:
-        badge = "🔴" if r.severity == "HIGH" else "🟠" if r.severity == "MEDIUM" else "🟡"
-        parts.append(f"#### {badge} **[{r.severity}]** {r.summary}\n")
-        parts.append(f"{r.detail}\n")
-        parts.append(f"**{_('Recommended action')}:** {r.sql_or_action}\n")
-        if r.estimated_savings:
-            parts.append(f"**{_('Cost impact')}:** {r.estimated_savings}\n")
-        parts.append("")
+
+    if recs:
+        # B (specialised heuristics: multi-cluster / overload / cold
+        # start) — supplementary, never overrides the 3-band primary.
+        parts.append(f"\n#### {_('Additional observations')}\n")
+        for r in recs:
+            badge = "🔴" if r.severity == "HIGH" else "🟠" if r.severity == "MEDIUM" else "🟡"
+            parts.append(f"##### {badge} **[{r.severity}]** {r.summary}\n")
+            parts.append(f"{r.detail}\n")
+            parts.append(f"**{_('Recommended action')}:** {r.sql_or_action}\n")
+            if r.estimated_savings:
+                parts.append(f"**{_('Cost impact')}:** {r.estimated_savings}\n")
+            parts.append("")
     return "\n".join(parts)

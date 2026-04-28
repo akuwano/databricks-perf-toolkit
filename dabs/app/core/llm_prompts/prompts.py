@@ -441,6 +441,160 @@ def _format_explain_v2_insights(ea) -> list[str]:
 # =============================================================================
 
 
+def _v6_canonical_output_directive(lang: str) -> str:
+    """V6 (Codex指摘 #1): when V6_CANONICAL_SCHEMA=on, ask the LLM to emit
+    a canonical Report JSON block in addition to the human-readable output.
+
+    The block must be wrapped in triple-backtick fence with language tag
+    `json:canonical_v6` so downstream extraction is unambiguous.
+
+    Returns empty string when flag is off (preserves v5.19 prompt verbatim).
+    """
+    try:
+        from core import feature_flags  # noqa: WPS433
+        if not feature_flags.canonical_schema():
+            return ""
+    except ImportError:
+        return ""
+
+    # Build the canonical issue_id allowlist from the registry. Smoke n=5
+    # (2026-04-26) showed V6 LLM-direct emits creative issue_ids
+    # ("full_outer_join_data_explosion", "cache_hit_ratio_medium")
+    # instead of canonical ones, breaking recall_strict scoring.
+    # Codex review (2026-04-27): the 31-id long-form list was too
+    # verbose and competed with the canonical_v6 emission directive
+    # (40% LLM-direct success rate). Compress to a single-line group
+    # of ``id (category)`` tokens — same allowlist, ~80% fewer tokens.
+    try:
+        from core.v6_schema.issue_registry import ISSUES  # noqa: WPS433
+
+        issue_list = ", ".join(f"{i.id} ({i.category})" for i in ISSUES)
+    except ImportError:
+        issue_list = ""
+
+    if lang == "ja":
+        template = """
+
+---
+
+**【必須】最終出力の最後に canonical_v6 ブロックを置くこと (V6_CANONICAL_SCHEMA=on)**
+
+人間向けレポートを書き終えたら、**応答の最後**に必ず以下の triple-backtick fence で `json:canonical_v6` ブロックを追加してください。これは省略不可です。フォーマット:
+
+```json:canonical_v6
+{
+  "schema_version": "v6.0",
+  "summary": {"headline": "...", "verdict": "healthy|needs_attention|critical|skipped_cached|informational"},
+  "findings": [
+    {
+      "issue_id": "spill_dominant",
+      "category": "memory",
+      "severity": "high",
+      "confidence": "high|medium|low|needs_verification",
+      "title": "...",
+      "evidence": [
+        {"metric": "peak_memory_bytes", "value_display": "12 GB", "value_raw": 12884901888, "source": "profile.queryMetrics", "grounded": true}
+      ],
+      "actions": [
+        {
+          "action_id": "increase_warehouse",
+          "target": "warehouse_size",
+          "fix_type": "configuration",
+          "what": "...",
+          "why": "...",
+          "fix_sql": "SET ...",
+          "expected_effect": "...",
+          "verification": [{"type": "metric", "metric": "spill_bytes", "expected": "0"}]
+        }
+      ]
+    }
+  ]
+}
+```
+
+ルール:
+- **`issue_id` は以下の allowlist から選ぶこと** (creative naming 禁止、該当する id が無ければ finding 自体を出さない): {issue_list}
+- profile に存在する metric 名のみを `evidence.metric` に
+- `evidence.grounded=true` は profile に metric が実在する場合のみ
+- 根拠不足のフィールドは省略すること (formatの全項目を埋めなくて良い)
+- `evidence.source` は次の prefix のみ: `profile.{{queryMetrics,alerts,shuffleDetails,scanCoverage,signals}}` / `alert:{{io,shuffle,spill,photon,join,cluster,cache}}` / `node[<id>]` / `knowledge:<section_id>`。「I/O Metrics」等の自由記述は禁止
+- **`evidence.value_raw` の型は厳密に `number | string | null` のみ**。Boolean (`true` / `false`)、配列、オブジェクトは schema 違反で reject される。「該当しない / 検出されず」を表したい場合は `value_raw` を**省略する**か `null` を使うこと。値が存在しないのに `false` を入れない
+- **数値 grounding（厳守）**: narrative / executive summary / recommendations 内に登場する**全ての数値** (バイト数 / 秒 / 倍率 / パーセンテージ / 件数) は、対応する `evidence.value_display` に **逐語一致** で出ていなければならない。派生比率 (X倍 / Y%) は計算元 metric と derived ratio を別 evidence エントリで明示。アンカー無しの「約 12GB」「概ね 50% 程度」「数倍」のような曖昧表現は禁止 — anchor が無い場合は数値を出さず質的記述で済ませること"""
+        return template.replace("{issue_list}", issue_list)
+    template = """
+
+---
+
+**[REQUIRED] End your response with a canonical_v6 block (V6_CANONICAL_SCHEMA=on)**
+
+After the human-readable report, **the very last thing in your response** MUST be a triple-backtick fence with language tag `json:canonical_v6` containing the canonical Report. Do NOT omit this block. Format:
+
+```json:canonical_v6
+{
+  "schema_version": "v6.0",
+  "summary": {"headline": "...", "verdict": "healthy|needs_attention|critical|skipped_cached|informational"},
+  "findings": [
+    {
+      "issue_id": "spill_dominant",
+      "category": "memory",
+      "severity": "high",
+      "confidence": "high|medium|low|needs_verification",
+      "title": "...",
+      "evidence": [
+        {"metric": "peak_memory_bytes", "value_display": "12 GB", "value_raw": 12884901888, "source": "profile.queryMetrics", "grounded": true}
+      ],
+      "actions": [
+        {
+          "action_id": "increase_warehouse",
+          "target": "warehouse_size",
+          "fix_type": "configuration",
+          "what": "...",
+          "why": "...",
+          "fix_sql": "SET ...",
+          "expected_effect": "...",
+          "verification": [{"type": "metric", "metric": "spill_bytes", "expected": "0"}]
+        }
+      ]
+    }
+  ]
+}
+```
+
+Rules:
+- **`issue_id` MUST be from this allowlist** (creative naming forbidden; if none fit, omit the finding): {issue_list}
+- Only profile-existing metric names go into `evidence.metric`
+- `evidence.grounded=true` only when the metric is actually present in the profile
+- Omit fields you cannot ground in the profile (do NOT force-fill the format)
+- `evidence.source` prefixes only: `profile.{{queryMetrics,alerts,shuffleDetails,scanCoverage,signals}}` / `alert:{{io,shuffle,spill,photon,join,cluster,cache}}` / `node[<id>]` / `knowledge:<section_id>`. No free-form labels like "I/O Metrics".
+- **`evidence.value_raw` type is strictly `number | string | null`**. Booleans (`true`/`false`), arrays, and objects violate the schema and are rejected. To indicate "absent / not detected", **omit** `value_raw` or use `null` — do NOT emit `false` to mean "missing".
+- **Numeric grounding (MANDATORY)**: every number you cite in narrative / executive summary / recommendations (bytes, seconds, ratios, percentages, counts) MUST appear **verbatim** in some `evidence.value_display`. Derived ratios (Nx, Y%) need source metrics PLUS the ratio itself as separate evidence entries. Hand-wavy expressions ("about 12 GB", "roughly 50%", "several times") are forbidden — when no anchor exists, drop the number and use qualitative wording instead."""
+    return template.replace("{issue_list}", issue_list)
+
+
+def _no_force_fill_block(lang: str) -> str:
+    """V6 (Codex指摘 #8): emit "skip if not grounded" instruction when
+    `feature_flags.recommendation_no_force_fill()` is on. Empty string
+    otherwise — keeps default v5.19 behavior unchanged."""
+    try:
+        from core import feature_flags  # noqa: WPS433
+        if not feature_flags.recommendation_no_force_fill():
+            return ""
+    except ImportError:
+        return ""
+    if lang == "ja":
+        return (
+            "\n\n**根拠が profile に anchor できないフィールドは省略してください。"
+            "数値予測（% / GB / 倍 / 秒）は profile evidence に明示的に対応する場合のみ。"
+            "推測で format を埋めないでください。 (V6_RECOMMENDATION_NO_FORCE_FILL)**"
+        )
+    return (
+        "\n\n**Omit fields that cannot be anchored in profile evidence. "
+        "Numeric predictions (%/GB/x/s) only when they correspond to a specific "
+        "profile metric. Do NOT fill the format on speculation. "
+        "(V6_RECOMMENDATION_NO_FORCE_FILL)**"
+    )
+
+
 def _recommendation_format_block(lang: str) -> str:
     """Return the evidence-constrained recommendation format template.
 
@@ -458,6 +612,8 @@ def _recommendation_format_block(lang: str) -> str:
 
 **重要: 出力に `Priority` 列・バッジ・スコア（例: `10/10`）を一切含めないこと。**
 サマリー表の列は下記 3 列のみ、各項目の見出し直下のバッジ行も Impact と Effort だけを書くこと。
+
+**並び順（厳守）:** 「**より簡単で効果の大きいもの**」を上に置く。具体的には Impact 降順 (HIGH → MEDIUM → LOW) を主キー、Effort 昇順 (LOW → MEDIUM → HIGH) を副キーで並べる。同 impact 内では low effort の quick win が必ず先頭、HIGH/HIGH（大効果だが大改修）は同 impact の HIGH/LOW より下に置くこと。
 
 | # | アクション | 予測改善 |
 |---|-----------|---------|
@@ -489,13 +645,15 @@ def _recommendation_format_block(lang: str) -> str:
 
 Impact/Effort の基準:
 - Impact: HIGH=大幅な改善が見込める, MEDIUM=一定の改善, LOW=軽微な改善
-- Effort: LOW=設定変更のみ, MEDIUM=SQL書き換え必要, HIGH=テーブル再設計必要"""
+- Effort: LOW=設定変更のみ, MEDIUM=SQL書き換え必要, HIGH=テーブル再設計必要""" + _no_force_fill_block("ja")
     else:
         return """**Output the summary table FIRST, then detailed items below.**
 
 **IMPORTANT: Do NOT include any `Priority` column, badge, or score (e.g. `10/10`) in the output.**
 The summary table has only the 3 columns below, and each item's badge
 line under the heading must contain only Impact and Effort.
+
+**Ordering rule (MANDATORY):** put the **easier-and-higher-impact** action first. Primary key is Impact descending (HIGH → MEDIUM → LOW); within the same impact bucket, Effort ascending (LOW → MEDIUM → HIGH). A LOW-effort quick win must always come before a HIGH-effort fix at the same impact tier — HIGH/HIGH (big payoff, big rewrite) ranks below HIGH/LOW.
 
 | # | Action | Predicted Improvement |
 |---|--------|-----------------------|
@@ -527,7 +685,7 @@ When quantification is not possible, use directional language ("expected improve
 
 Impact/Effort criteria:
 - Impact: HIGH=significant improvement expected, MEDIUM=moderate improvement, LOW=minor improvement
-- Effort: LOW=config change only, MEDIUM=SQL rewrite needed, HIGH=table redesign needed"""
+- Effort: LOW=config change only, MEDIUM=SQL rewrite needed, HIGH=table redesign needed""" + _no_force_fill_block("en")
 
 
 def _constraints_block(lang: str) -> str:
@@ -614,7 +772,7 @@ def _action_plan_json_schema(lang: str) -> str:
     "priority": 1,
     "problem": "問題の簡潔な説明",
     "fix": "具体的な修正アクション",
-    "fix_sql": "SQLスニペット（あれば）",
+    "fix_sql": "fix が SQL/DDL/DML/SET/OPTIMIZE/ALTER/ANALYZE 系アクションを述べる場合は必須。実行可能な完全な SQL を 1 行で記載すること。warehouse サイズ変更など non-SQL アクションのみの場合は空文字で可",
     "risk": "low/medium/high",
     "risk_reason": "リスクの理由",
     "expected_impact": "high/medium/low",
@@ -638,7 +796,7 @@ def _action_plan_json_schema(lang: str) -> str:
     "priority": 1,
     "problem": "Brief problem description",
     "fix": "Specific fix action",
-    "fix_sql": "SQL snippet if applicable",
+    "fix_sql": "Required when fix describes a SQL/DDL/DML/SET/OPTIMIZE/ALTER/ANALYZE action. Provide a complete executable single-line SQL statement. Use an empty string only for non-SQL actions such as warehouse resizing",
     "risk": "low/medium/high",
     "risk_reason": "Why this risk level",
     "expected_impact": "high/medium/low",
@@ -782,6 +940,32 @@ def _build_fact_pack_summary(analysis: "ProfileAnalysis", lang: str) -> str:
             )
         parts.append("\n".join(cov_lines))
 
+    # lakehouse_federation: surface the extractor's authoritative
+    # detection in the Fact Pack so the LLM treats it as ground truth
+    # rather than something to deduce from raw evidence. Without this
+    # block, narratives hedge with "BigQuery / Lakehouse Federation 経由
+    # である可能性が高い" even though ROW_DATA_SOURCE_SCAN_EXEC has
+    # already been observed. v6.6.8.
+    if qm.is_federation_query:
+        fed_lines = ["lakehouse_federation:"]
+        fed_lines.append("  is_federation_query: true")
+        if qm.federation_source_type:
+            fed_lines.append(f"  source_type: {qm.federation_source_type}")
+        else:
+            fed_lines.append("  source_type: unknown")
+        if qm.federation_tables:
+            shown = qm.federation_tables[:5]
+            fed_lines.append(f"  tables: [{', '.join(shown)}]")
+            if len(qm.federation_tables) > 5:
+                fed_lines.append(f"  tables_total: {len(qm.federation_tables)}")
+        fed_lines.append(
+            "  evidence: ROW_DATA_SOURCE_SCAN_EXEC node tag detected — "
+            "this is authoritative metric-based classification, NOT a "
+            "guess from the table name. Do NOT hedge with 'possibly via "
+            "Lakehouse Federation'; state it as a confirmed fact."
+        )
+        parts.append("\n".join(fed_lines))
+
     if not parts:
         return ""
 
@@ -920,7 +1104,7 @@ def _federation_constraints_block(lang: str) -> str:
         return """
 ### Lakehouse Federation クエリ制約（厳守）
 
-このクエリは **Lakehouse Federation** で外部エンジン (BigQuery / Snowflake / Postgres / MySQL / Redshift 等) を読んでいます。
+**確定済み事実（authoritative）**: このクエリは **Lakehouse Federation** で外部エンジン (BigQuery / Snowflake / Postgres / MySQL / Redshift 等) を読んでいます。具体的な `source_type` と `tables` はファクトパックの `lakehouse_federation:` ブロックに記載されています — それらは ROW_DATA_SOURCE_SCAN_EXEC node tag に基づく確定情報であり、推測ではありません。「BigQuery 経由である **可能性が高い**」のような hedge は禁止 — 「BigQuery 経由」と断定してください。
 以下の制約で推奨してください：
 
 - **無効な推奨（提案禁止）**: Liquid Clustering, パーティション設計変更, ディスクキャッシュ拡大, Photon 適合性, OPTIMIZE / VACUUM, file pruning, SCAN_CLUSTERS 系の全て。外部データに対しては意味を持ちません。
@@ -939,7 +1123,7 @@ def _federation_constraints_block(lang: str) -> str:
         return """
 ### Lakehouse Federation Query Constraints (MANDATORY)
 
-This query reads through **Lakehouse Federation** from an external engine (BigQuery / Snowflake / Postgres / MySQL / Redshift, …).
+**Confirmed (authoritative)**: this query reads through **Lakehouse Federation** from an external engine (BigQuery / Snowflake / Postgres / MySQL / Redshift, …). The specific `source_type` and `tables` are reported in the Fact Pack `lakehouse_federation:` block — those values are confirmed from the ROW_DATA_SOURCE_SCAN_EXEC node tag, not deduced. Do NOT hedge with "possibly via Lakehouse Federation" or "the table name suggests BigQuery"; state the source as a fact.
 Use the following constraints when recommending fixes:
 
 - **Forbidden recommendations**: Liquid Clustering, partition redesign, disk-cache expansion, Photon compatibility, OPTIMIZE / VACUUM, file pruning, any SCAN_CLUSTERS advice. These targets do not exist for federated data.
@@ -1005,7 +1189,10 @@ def create_system_prompt(
 上記の分析結果に基づき、SQLの最適化案を提示してください。
 - **変更箇所のみ**を抜粋して提示し、未変更部分は `-- ... (変更なし)` で省略すること（全文を出力しない）
 - **ただし**: 「オプションA/B/C」のように複数候補を提示する場合、**各オプション内には最低 1 行の具体的な SQL ステートメント（ALTER / SET / SELECT 等の実行可能文）を必ず含めること**。オプションヘッダ + `-- ... (変更なし)` だけで中身が空の提示は禁止
-- Hierarchical Clustering の有効化・無効化・キー変更など DDL 例を示す場合は、`ALTER TABLE ... SET TBLPROPERTIES (...)` や `ALTER TABLE ... CLUSTER BY (...)` のような**完全な 1 行コマンド**を省略せずに記載すること
+- `fix` が SQL アクションを述べる場合、`fix_sql` は必須です。DDL/DML/SET/OPTIMIZE/ALTER/ANALYZE を含む SQL 系アクションでは、実行可能な**完全な 1 行コマンド**を省略せずに記載してください。warehouse サイズ変更など SQL を伴わない運用アクションだけを推奨する場合に限り、`fix_sql` は空文字で構いません
+- Hierarchical Clustering の有効化・無効化・キー変更を含め、構成変更やメンテナンス系の推奨では、省略記法や疑似 SQL ではなく approved syntax を優先してください。例: `ALTER TABLE catalog.schema.table CLUSTER BY (col1, col2)` / `ALTER TABLE catalog.schema.table SET TBLPROPERTIES ('delta.liquid.hierarchicalClusteringColumns' = 'col1,col2')` / `OPTIMIZE catalog.schema.table FULL`
+- 未確認の property 名、略称、推測ベースの SQL 構文は出力しないでください。特に TBLPROPERTIES 名は verify 済みの canonical 名のみを使用し、未確認の別名や legacy 名を作らないこと
+- SQL 例を出す場合は approved syntax を優先してください。特に次の形式はそのまま使って構いません: `ALTER TABLE ... CLUSTER BY (...)` / `ALTER TABLE ... SET TBLPROPERTIES ('delta.liquid.hierarchicalClusteringColumns' = '...')` / `OPTIMIZE ... FULL`
 - BROADCASTヒント、パーティショニングヒント等のクエリヒントを適切に追加
 - 非効率なサブクエリがあればCTEへの書き換えを検討
 - Photon非対応の関数や構文があれば代替手段を提示
@@ -1057,7 +1244,10 @@ Each item MUST include BOTH the bottleneck description AND the specific remediat
 Based on the analysis above, provide SQL optimization suggestions.
 - Show **only the changed parts** of the SQL, abbreviating unchanged sections with `-- ... (no changes)`  (do NOT output the full SQL)
 - **However**: when presenting multiple candidates (e.g., Option A/B/C), EACH option MUST contain at least one concrete, executable SQL statement (ALTER / SET / SELECT etc.). An option header followed by only `-- ... (no changes)` is FORBIDDEN
-- When showing DDL examples for Hierarchical Clustering enable/disable/key-change, use complete single-line commands (``ALTER TABLE ... SET TBLPROPERTIES (...)`` / ``ALTER TABLE ... CLUSTER BY (...)``) — never abbreviate these
+- If `fix` describes a SQL action, `fix_sql` is required. For any SQL-oriented action including DDL, DML, SET, OPTIMIZE, ALTER, or ANALYZE, provide a complete executable single-line command with no abbreviation. Only leave `fix_sql` empty when the recommendation is purely non-SQL, such as resizing a warehouse
+- For Hierarchical Clustering and other configuration or maintenance recommendations, prefer approved syntax instead of abbreviated or pseudo-SQL examples. Examples: `ALTER TABLE catalog.schema.table CLUSTER BY (col1, col2)` / `ALTER TABLE catalog.schema.table SET TBLPROPERTIES ('delta.liquid.hierarchicalClusteringColumns' = 'col1,col2')` / `OPTIMIZE catalog.schema.table FULL`
+- Do not output unverified property names, shorthand forms, or guessed SQL syntax. For TBLPROPERTIES, use only verified canonical property names and never invent unconfirmed aliases or legacy names
+- When providing SQL examples, prefer approved syntax. In particular, the following forms are safe to use as written: `ALTER TABLE ... CLUSTER BY (...)` / `ALTER TABLE ... SET TBLPROPERTIES ('delta.liquid.hierarchicalClusteringColumns' = '...')` / `OPTIMIZE ... FULL`
 - Add appropriate query hints (BROADCAST, REPARTITION, etc.) where beneficial
 - Rewrite inefficient subqueries as CTEs where applicable
 - Replace Photon-incompatible functions/syntax with supported alternatives
@@ -2185,7 +2375,7 @@ def create_structured_system_prompt(
 3段落目: 根本原因の推定、改善方向性、および十分な根拠がある場合は目標実行時間の範囲（例:「~10分から2-4分に短縮可能」）を2-3文で。高確度ボトルネックが総時間の大部分を占める場合のみ目標時間を記載し、それ以外は「目標時間は適用する修正に依存 — 実装後に計測」と記載すること
 4段落目: 次に見るべきセクションを一文で（例: Action PlanのP0から着手してください。）
 
-アラートの個別列挙は不要です（Top Alertsセクションに委譲）。
+アラートの個別列挙は不要です（サマリー末尾の主要アラート / 付録の全アラート一覧に委譲）。
 
 ## 4. 根本原因分析
 ### 4.1 直接原因
@@ -2229,6 +2419,7 @@ Fact Packに「Detected Signals」セクションが含まれます。
 {"" if not is_serverless else _serverless_constraints_block("ja")}
 {"" if not is_streaming else _streaming_constraints_block("ja")}
 {"" if not is_federation else _federation_constraints_block("ja")}
+{_v6_canonical_output_directive("ja")}
 """
     else:
         return f"""You are a Databricks SQL performance tuning expert.
@@ -2249,7 +2440,7 @@ Paragraph 2: Status, execution time, data read, alert counts in 1-2 concise sent
 Paragraph 3: 2-3 sentences on the likely root cause, expected improvement direction, and (if enough evidence) a target execution time range (e.g., "could reduce from ~10 min to 2-4 min"). Only state a target when high-confidence bottlenecks account for a significant fraction of total time. Otherwise write: "Target time depends on applied fixes — measure after implementation."
 Paragraph 4: One sentence on what to look at next (e.g., Start with the P0 actions in the Action Plan.)
 
-Do NOT list individual alerts (those go in Top Alerts section).
+Do NOT list individual alerts (those go in the compact "Key Alerts" subsection of the Executive Summary, plus the full Appendix alerts list).
 
 ## 4. Root Cause Analysis
 ### 4.1 Direct Cause
@@ -2293,6 +2484,7 @@ Example: spill_detected with spill_ratio_of_read=0.005 (0.5%) is informational, 
 {"" if not is_serverless else _serverless_constraints_block("en")}
 {"" if not is_streaming else _streaming_constraints_block("en")}
 {"" if not is_federation else _federation_constraints_block("en")}
+{_v6_canonical_output_directive("en")}
 """
 
 
@@ -2324,9 +2516,11 @@ def create_structured_analysis_prompt(analysis: ProfileAnalysis, lang: str | Non
 - Task Total Time (CPU): {format_time_ms(qm.task_total_time_ms)}
 - Photon Total Time: {format_time_ms(qm.photon_total_time_ms)}""")
 
-    # Cost estimation — size is inferred from parallelism when warehouse
-    # API could not provide it. See dbsql_cost._infer_size_from_parallelism
-    # for the rationale and confidence tiers.
+    # Cost estimation — minimum viable size is inferred from parallelism
+    # when warehouse API could not provide it. See
+    # dbsql_cost._infer_size_from_parallelism for the rationale and
+    # confidence tiers. This is a lower bound, not a normative
+    # recommendation (the recommendation is produced separately).
     cost = estimate_query_cost(qm, analysis.warehouse_info)
     if cost:
         cost_lines = ["## Cost Estimation", f"- Billing Model: {cost.billing_model}"]
@@ -2345,9 +2539,11 @@ def create_structured_analysis_prompt(analysis: ProfileAnalysis, lang: str | Non
             cost_lines.append(f"- Parallelism Ratio: {cost.parallelism_ratio:.1f}x")
         if cost.is_estimated_size:
             cost_lines.append(
-                "- Note: Cluster size is inferred from parallelism. For low-parallelism "
-                "queries this is a minimum-required-size estimate; the actual "
-                "provisioned warehouse may be larger (over-provisioned workload)."
+                "- Note: Minimum viable size is inferred from parallelism. For "
+                "low-parallelism queries this is a *minimum-viable-size* lower "
+                "bound; the actual provisioned warehouse may be larger "
+                "(over-provisioned workload). This is NOT a normative "
+                "right-sizing recommendation."
             )
         if not cost.is_per_query:
             cost_lines.append(

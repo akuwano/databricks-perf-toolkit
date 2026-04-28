@@ -344,7 +344,7 @@ class TestRewriteEndpoint:
         finally:
             analysis_store.pop(aid, None)
 
-    @patch("routes.genie_chat._load_analysis_for_rewrite", return_value=None)
+    @patch("routes.query_rewrite._load_analysis_for_rewrite", return_value=None)
     def test_returns_404_when_delta_also_missing(self, mock_load, app):
         """When analysis is not in memory AND not in Delta, return 404."""
         with app.test_client() as c:
@@ -443,7 +443,7 @@ class TestValidateEndpoint:
             r = c.post("/api/v1/rewrite/validate", json={})
             assert r.status_code == 400
 
-    @patch("routes.genie_chat._validate_with_explain")
+    @patch("routes.query_rewrite._validate_with_explain")
     def test_explain_success(self, mock_explain, app):
         mock_explain.return_value = {"valid": True, "method": "explain"}
         with app.test_client() as c:
@@ -453,7 +453,7 @@ class TestValidateEndpoint:
             assert data["valid"] is True
             assert data["method"] == "explain"
 
-    @patch("routes.genie_chat._validate_with_explain")
+    @patch("routes.query_rewrite._validate_with_explain")
     def test_explain_syntax_error(self, mock_explain, app):
         mock_explain.return_value = {
             "valid": False,
@@ -467,7 +467,7 @@ class TestValidateEndpoint:
             assert data["method"] == "explain"
 
     @patch(
-        "routes.genie_chat._validate_with_explain", side_effect=RuntimeError("PERMISSION_DENIED")
+        "routes.query_rewrite._validate_with_explain", side_effect=RuntimeError("PERMISSION_DENIED")
     )
     def test_fallback_to_sqlglot(self, mock_explain, app):
         with app.test_client() as c:
@@ -478,7 +478,7 @@ class TestValidateEndpoint:
             assert "fallback_reason" in data
 
     @patch(
-        "routes.genie_chat._validate_with_explain", side_effect=RuntimeError("connection refused")
+        "routes.query_rewrite._validate_with_explain", side_effect=RuntimeError("connection refused")
     )
     def test_fallback_sqlglot_syntax_error(self, mock_explain, app):
         with app.test_client() as c:
@@ -486,3 +486,280 @@ class TestValidateEndpoint:
             data = r.get_json()
             assert data["valid"] is False
             assert data["method"] == "sqlglot"
+
+
+class TestRewritePage:
+    """Tests for GET /rewrite/<analysis_id> (Phase 2 dedicated UX, v6.7.4)."""
+
+    def test_renders_with_completed_analysis(self, app):
+        from app import analysis_store
+
+        aid = "rewrite-page-ok"
+        analysis_store[aid] = {
+            "status": "completed",
+            "analysis": _make_analysis(),
+        }
+        try:
+            with app.test_client() as c:
+                r = c.get(f"/rewrite/{aid}")
+                assert r.status_code == 200
+                body = r.get_data(as_text=True)
+                # Source SQL is rendered into the page (substring check
+                # — full SQL with HTML-escaped chars also fine).
+                assert "SELECT o.*, c.name FROM orders o JOIN" in body
+                # Toolbar buttons present so the page is the new
+                # dedicated UX, not a re-render of shared_result.html.
+                assert "Generate rewrite" in body or "rw-go" in body
+                assert "rw-history" in body
+        finally:
+            analysis_store.pop(aid, None)
+
+    def test_returns_404_when_analysis_missing(self, app):
+        with app.test_client() as c:
+            r = c.get("/rewrite/this-id-does-not-exist")
+            assert r.status_code == 404
+
+    def test_returns_400_when_analysis_has_no_sql(self, app):
+        from app import analysis_store
+
+        aid = "rewrite-page-empty-sql"
+        analysis = _make_analysis(
+            query_metrics=QueryMetrics(query_id="empty", query_text="")
+        )
+        analysis_store[aid] = {"status": "completed", "analysis": analysis}
+        try:
+            with app.test_client() as c:
+                r = c.get(f"/rewrite/{aid}")
+                assert r.status_code == 400
+        finally:
+            analysis_store.pop(aid, None)
+
+
+class TestRewritePersistence:
+    """Phase 3 (v6.7.5) — RewriteArtifact append-only persistence."""
+
+    def test_hash_source_sql_is_stable_under_whitespace_collapse(self):
+        from routes.query_rewrite import _hash_source_sql
+
+        assert _hash_source_sql("SELECT 1") == _hash_source_sql("  SELECT   1  ")
+        assert _hash_source_sql("SELECT 1\nFROM t") == _hash_source_sql("SELECT 1 FROM t")
+
+    def test_hash_source_sql_is_case_sensitive(self):
+        """Object names are case-sensitive on Databricks; the hash
+        must NOT collapse case."""
+        from routes.query_rewrite import _hash_source_sql
+
+        assert _hash_source_sql("SELECT * FROM t") != _hash_source_sql("select * from T")
+
+    @patch("routes.query_rewrite._persist_rewrite_artifact", return_value="art-123")
+    @patch("core.llm.rewrite_with_llm", return_value="```sql\nSELECT 1\n```")
+    def test_completed_response_carries_artifact_id(self, mock_llm, mock_persist, app):
+        """When persistence succeeds, the completed-task response
+        includes ``artifact_id`` so the UI can link history back to
+        the live result."""
+        from app import analysis_store
+
+        aid = "rewrite-persist-1"
+        analysis_store[aid] = {"status": "completed", "analysis": _make_analysis()}
+        try:
+            with app.test_client() as c:
+                r = c.post("/api/v1/rewrite", json={"analysis_id": aid})
+                assert r.status_code == 200
+                task_id = r.get_json()["task_id"]
+                # Poll a bit (background thread)
+                import time as _t
+                for _ in range(40):
+                    pr = c.get(f"/api/v1/rewrite/{task_id}")
+                    data = pr.get_json()
+                    if data.get("status") != "running":
+                        break
+                    _t.sleep(0.05)
+                assert data["status"] == "completed"
+                assert data.get("artifact_id") == "art-123"
+                # Persistence was called with the right inputs.
+                mock_persist.assert_called_once()
+                kwargs = mock_persist.call_args.kwargs
+                assert kwargs["analysis_id"] == aid
+                assert "SELECT 1" in kwargs["rewritten_sql"]
+        finally:
+            analysis_store.pop(aid, None)
+
+    @patch("routes.query_rewrite._persist_rewrite_artifact", return_value=None)
+    @patch("core.llm.rewrite_with_llm", return_value="SELECT 1")
+    def test_persistence_failure_does_not_break_response(self, mock_llm, mock_persist, app):
+        from app import analysis_store
+
+        aid = "rewrite-persist-fail"
+        analysis_store[aid] = {"status": "completed", "analysis": _make_analysis()}
+        try:
+            with app.test_client() as c:
+                r = c.post("/api/v1/rewrite", json={"analysis_id": aid})
+                task_id = r.get_json()["task_id"]
+                import time as _t
+                for _ in range(40):
+                    data = c.get(f"/api/v1/rewrite/{task_id}").get_json()
+                    if data.get("status") != "running":
+                        break
+                    _t.sleep(0.05)
+                assert data["status"] == "completed"
+                assert data["rewrite"]
+                assert "artifact_id" not in data  # write returned None
+        finally:
+            analysis_store.pop(aid, None)
+
+    @patch("routes.query_rewrite._persist_rewrite_artifact", return_value="art-2")
+    @patch("core.llm.fix_rewrite_with_llm", return_value="SELECT /*+ BROADCAST(d) */ 2")
+    def test_parent_id_round_trip_on_refine(self, mock_fix, mock_persist, app):
+        """Codex Q5 (v6.7.6): when the UI sends ``parent_id`` on a
+        feedback / refine call, the persistence helper must receive
+        the same value so the refine chain is reconstructable."""
+        from app import analysis_store
+
+        aid = "rewrite-parent-1"
+        analysis_store[aid] = {"status": "completed", "analysis": _make_analysis()}
+        try:
+            with app.test_client() as c:
+                r = c.post(
+                    "/api/v1/rewrite",
+                    json={
+                        "analysis_id": aid,
+                        "feedback": "use BROADCAST",
+                        "previous_rewrite": "SELECT 1",
+                        "parent_id": "art-1",
+                    },
+                )
+                assert r.status_code == 200
+                task_id = r.get_json()["task_id"]
+                import time as _t
+                for _ in range(40):
+                    data = c.get(f"/api/v1/rewrite/{task_id}").get_json()
+                    if data.get("status") != "running":
+                        break
+                    _t.sleep(0.05)
+                assert data["status"] == "completed"
+                assert data.get("artifact_id") == "art-2"
+                # The persistence helper saw parent_id="art-1" verbatim.
+                kwargs = mock_persist.call_args.kwargs
+                assert kwargs["parent_id"] == "art-1"
+                assert kwargs["feedback"] == "use BROADCAST"
+        finally:
+            analysis_store.pop(aid, None)
+
+
+class TestRewriteHistoryEndpoint:
+    """GET /api/v1/rewrite/history — Phase 3 list endpoint."""
+
+    def test_requires_filter(self, app):
+        with app.test_client() as c:
+            r = c.get("/api/v1/rewrite/history")
+            assert r.status_code == 400
+
+    def test_persistence_disabled_returns_empty(self, app, monkeypatch):
+        """When no warehouse is configured, the endpoint returns an
+        empty list rather than 500. Disabled state is signalled in the
+        ``persistence`` field for the UI."""
+        # Force config.http_path to be empty by monkeypatching
+        # TableWriterConfig.from_env so the route's "no warehouse"
+        # short-circuit fires.
+        from services import table_writer as tw
+
+        class _Cfg:
+            enabled = True
+            http_path = ""
+        monkeypatch.setattr(tw.TableWriterConfig, "from_env", classmethod(lambda cls: _Cfg()))
+        with app.test_client() as c:
+            r = c.get("/api/v1/rewrite/history?analysis_id=x")
+            assert r.status_code == 200
+            data = r.get_json()
+            assert data["items"] == []
+            assert data["persistence"] == "disabled"
+
+    def test_owner_only_filter_passed_in_non_admin_mode(self, app, monkeypatch):
+        """Codex Q4 (v6.7.6): when the admin allowlist is set and the
+        caller is not on it, the reader is called with their email so
+        only their rows come back."""
+        from services import table_reader as tr
+        from services import table_writer as tw
+
+        class _Cfg:
+            enabled = True
+            http_path = "/sql/1.0/warehouses/test"
+            databricks_host = "https://test.cloud"
+            databricks_token = "tok"
+            catalog = "main"
+            schema = "profiler"
+        captured: dict = {}
+
+        def fake_list(self, **kwargs):
+            captured.update(kwargs)
+            return [{
+                "artifact_id": "art-1",
+                "analysis_id": kwargs.get("analysis_id"),
+                "user_email": "alice@example.com",
+                "rewritten_sql": "SELECT 1",
+                "model": "m",
+                "created_at": None,
+            }]
+        monkeypatch.setenv("REWRITE_HISTORY_ADMIN_EMAILS", "admin@example.com")
+        monkeypatch.setattr(tw.TableWriterConfig, "from_env", classmethod(lambda cls: _Cfg()))
+        monkeypatch.setattr(tr.TableReader, "list_rewrite_artifacts", fake_list)
+        with app.test_client() as c:
+            r = c.get(
+                "/api/v1/rewrite/history?analysis_id=x",
+                headers={"X-Forwarded-Email": "alice@example.com"},
+            )
+            assert r.status_code == 200
+            data = r.get_json()
+            assert captured.get("user_email") == "alice@example.com"
+            assert data["filter"]["owner_only"] is True
+
+    def test_admin_caller_sees_all_rows(self, app, monkeypatch):
+        """Admin email → reader called with user_email=None so the
+        owner filter is dropped."""
+        from services import table_reader as tr
+        from services import table_writer as tw
+
+        class _Cfg:
+            enabled = True
+            http_path = "/sql/1.0/warehouses/test"
+            databricks_host = "https://test.cloud"
+            databricks_token = "tok"
+            catalog = "main"
+            schema = "profiler"
+        captured: dict = {}
+
+        def fake_list(self, **kwargs):
+            captured.update(kwargs)
+            return []
+        monkeypatch.setenv("REWRITE_HISTORY_ADMIN_EMAILS", "admin@example.com")
+        monkeypatch.setattr(tw.TableWriterConfig, "from_env", classmethod(lambda cls: _Cfg()))
+        monkeypatch.setattr(tr.TableReader, "list_rewrite_artifacts", fake_list)
+        with app.test_client() as c:
+            r = c.get(
+                "/api/v1/rewrite/history?analysis_id=x",
+                headers={"X-Forwarded-Email": "admin@example.com"},
+            )
+            assert r.status_code == 200
+            assert captured.get("user_email") is None
+            assert r.get_json()["filter"]["owner_only"] is False
+
+    def test_no_identity_in_prod_returns_empty(self, app, monkeypatch):
+        """When admin allowlist is set but the caller has no
+        forwarded email, the endpoint refuses to leak rows."""
+        from services import table_writer as tw
+
+        class _Cfg:
+            enabled = True
+            http_path = "/sql/1.0/warehouses/test"
+            databricks_host = "https://test.cloud"
+            databricks_token = "tok"
+            catalog = "main"
+            schema = "profiler"
+        monkeypatch.setenv("REWRITE_HISTORY_ADMIN_EMAILS", "admin@example.com")
+        monkeypatch.setattr(tw.TableWriterConfig, "from_env", classmethod(lambda cls: _Cfg()))
+        with app.test_client() as c:
+            r = c.get("/api/v1/rewrite/history?analysis_id=x")
+            assert r.status_code == 200
+            data = r.get_json()
+            assert data["items"] == []
+            assert data["persistence"] == "no_identity"

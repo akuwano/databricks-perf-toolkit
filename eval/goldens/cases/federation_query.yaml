@@ -1,0 +1,41 @@
+case_id: federation_query_q1
+profile_path: json/federation
+description: Lakehouse Federation 経由のリモートクエリ。federation 固有のアラート抑制が正しく働くか検証。
+domain: dbsql
+workload_type: federation
+expected_severity: medium
+
+must_cover_issues:
+  - id: federation_detected
+    severity: low
+    keywords: [federation, リモート, remote_query]
+    description: federation クエリと認識すること
+
+  - id: driver_overhead_or_compilation
+    severity: medium
+    keywords: [driver, compilation, コンパイル]
+    description: federation で支配的になる driver / compilation を優先
+
+forbidden_claims:
+  - id: lc_for_federation
+    description: federation では LC 推奨は無意味なので禁止 (v5.18 で suppression 済み)
+  - id: low_cache_for_federation
+    description: federation では cache hit ratio アラートは抑制対象 (v5.18)
+  - id: photon_blocker_for_federation
+    description: federation では Photon 関連の提案は無効
+  - id: stats_fresh_for_federation
+    description: federation では統計鮮度は推奨対象外
+
+must_have_actions:
+  - target: pushdown
+    type: rewrite
+    keyword: pushdown
+    description: フィルタ pushdown / 必要列のみ取得の確認
+
+expected_l3_min: 4
+expected_recall_min: 0.85
+
+notes: |
+  federation case のディレクトリを参照。
+  v5.18 の federation suppression が回帰しないことを golden で固定。
+  driver overhead / compilation overhead / shuffle / spill / hash resize を優先。

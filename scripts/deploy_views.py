@@ -317,6 +317,34 @@ SELECT *,
 FROM paired
 """
 
+# L5 (2026-04-26): monthly triage view for user feedback.
+# Joins profiler_feedback against the analysis header so the reviewer
+# can see what query was being analyzed when feedback was filed.
+VIEW_FEEDBACK_TRIAGE = """
+CREATE OR REPLACE VIEW {catalog}.{schema}.vw_feedback_triage AS
+SELECT
+  f.feedback_id,
+  f.created_at,
+  f.user_email,
+  f.category,
+  f.target_type,
+  f.target_id,
+  f.sentiment,
+  f.free_text,
+  f.analysis_id,
+  h.analyzed_at AS analysis_analyzed_at,
+  h.query_id   AS analysis_query_id,
+  h.experiment_id AS analysis_experiment_id,
+  h.variant      AS analysis_variant,
+  -- Codex (a)(d) フォロー: per-action 改善要望と whole-report 欠落申告を
+  -- 集計時に区別しやすくするためフラグ列を追加
+  CASE WHEN f.target_type = 'action' THEN true ELSE false END AS is_per_action_feedback
+FROM {catalog}.{schema}.profiler_feedback f
+LEFT JOIN {catalog}.{schema}.profiler_analysis_header h
+  ON f.analysis_id = h.analysis_id
+ORDER BY f.created_at DESC
+"""
+
 # Ordered list: views with dependencies must come after their sources
 ALL_STATEMENTS: list[tuple[str, str]] = [
     ("vw_latest_analysis_by_fingerprint", VIEW_LATEST_BY_FINGERPRINT),
@@ -327,6 +355,7 @@ ALL_STATEMENTS: list[tuple[str, str]] = [
     ("vw_genie_comparison_summary", VIEW_GENIE_COMPARISON),
     ("vw_genie_recommendations", VIEW_GENIE_RECOMMENDATIONS),
     ("vw_variant_ranking", VIEW_VARIANT_RANKING),
+    ("vw_feedback_triage", VIEW_FEEDBACK_TRIAGE),
 ]
 
 
@@ -343,6 +372,7 @@ _ALL_TABLES = [
     "profiler_knowledge_documents",
     "profiler_knowledge_tags",
     "profiler_metric_directions",
+    "profiler_feedback",
 ]
 
 

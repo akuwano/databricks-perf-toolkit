@@ -1,0 +1,41 @@
+case_id: cache_cold_start_q1
+profile_path: json/medium_qp (1).json
+description: キャッシュヒット率が低く、cold start (warehouse スケールアウト直後) の可能性。
+domain: dbsql
+workload_type: scan_heavy
+expected_severity: medium
+
+must_cover_issues:
+  - id: low_cache_hit
+    severity: medium
+    keywords: [cache, キャッシュ, hit_ratio]
+    description: Delta cache hit ratio が低い
+
+  - id: cold_node_possibility
+    severity: medium
+    keywords: [cold, scale-out, non-local, ノードローカリティ]
+    description: ノードローカリティが低い、cold node 由来の可能性
+
+forbidden_claims:
+  - id: misattribute_to_skew
+    description: skew でないのに skew が原因と断定するのは禁止
+  - id: blanket_warehouse_upsize
+    description: 根拠なく warehouse upsize を推奨するのは禁止
+
+must_have_actions:
+  - target: warm_up
+    type: operational
+    keyword: warm
+    description: 初回実行時のキャッシュウォームアップ確認
+  - target: scan_locality
+    type: investigation
+    keyword: locality
+    description: スキャンローカリティの調査
+
+expected_l3_min: 3
+expected_recall_min: 0.75
+
+notes: |
+  medium_qp は反復実行で hit ratio < 30%。
+  scale-out 直後の cold node 配置の可能性を疑う必要あり。
+  「キャッシュ低い → warehouse 大きく」は安易、まず原因切り分けを推奨。

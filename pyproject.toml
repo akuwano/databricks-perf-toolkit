@@ -1,6 +1,6 @@
 [project]
 name = "dbsql-profiler-analyzer"
-version = "5.19.5"
+version = "6.7.13"
 description = "Databricks SQL Query Profile Analyzer using LLM"
 readme = "README.md"
 requires-python = ">=3.11"
@@ -72,10 +72,6 @@ ignore = [
 quote-style = "double"
 indent-style = "space"
 
-[[tool.uv.index]]
-url = "https://pypi-proxy.dev.databricks.com/simple"
-default = true
-
 [dependency-groups]
 test = [
     "pytest>=8.0.0",
@@ -89,4 +85,5 @@ ui-smoke = [
 ]
 dev = [
     "babel>=2.18.0",
+    "jsonschema>=4.26.0",
 ]

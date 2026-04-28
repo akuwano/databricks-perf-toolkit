@@ -1,0 +1,59 @@
+case_id: spill_heavy_q1
+profile_path: json/query-profile_01f0fb29-f60f-1f30-8ee5-381a3ca8936a.json
+description: ディスクスピルが支配的なクエリ。peak_memory が warehouse 容量を超え shuffle/aggregate でスピル発生。
+domain: dbsql
+workload_type: join_heavy
+expected_severity: high
+
+must_cover_issues:
+  - id: spill_dominant
+    severity: high
+    keywords: [spill, peak_memory, ディスクスピル]
+    description: シャッフル・集計でディスクスピル発生
+
+  - id: shuffle_volume
+    severity: medium
+    keywords: [shuffle, シャッフル]
+    description: シャッフルデータ量が大きい
+
+forbidden_claims:
+  - id: federation_recommendation
+    description: federation クエリではないので federation 関連の提案は禁止
+  - id: lc_for_small_table
+    description: 小テーブルではないので「小テーブルなので LC 不要」の推奨は禁止
+
+must_have_actions:
+  - target: warehouse_size
+    type: configuration
+    keyword: warehouse
+    description: メモリ増強または warehouse サイズアップを提案
+  - target: shuffle_partitions
+    type: configuration
+    keyword: shuffle.partitions
+    description: shuffle partition 数の調整提案
+
+expected_l3_min: 4
+expected_recall_min: 0.85
+
+# W5 Day 6: SQL skeleton + action template + Q5 failure expectations
+expected_action_template:
+  - field: target
+    description: spark.sql.* または warehouse_size 等の concrete target
+  - field: fix_sql_skeleton
+    description: 短い SET 文 or skeleton method=fullsql を期待
+
+expected_failure_categories:
+  forbidden:
+    - parse_failure
+    - false_positive
+  allow_max:
+    over_recommendation: 0
+    missing_critical: 0
+
+notes: |
+  Profile は 2XL warehouse で 60GB+ shuffle、spill 8GB のクエリ。
+  AQE は有効だが skew 検出に至っていない。
+  Photon は有効だが peak_memory 超過によりスピル発生。
+
+  W5 Day 6: SQL skeleton 期待値追加。spill 系は通常 SET 文ベースの
+  fix_sql で skeleton method=fullsql になるはず。

@@ -1,0 +1,35 @@
+case_id: serverless_with_photon_blocker_q1
+profile_path: json/query-profile_01f0fb29-f60f-1f30-8ee5-381a3ca8936a.json
+description: Serverless で Photon fallback が起きているケース。serverless でも有効な改善 (実 photon blocker fix) と、無効な改善 (classic 専用 spark conf) を区別できるかを検証。
+domain: dbsql
+workload_type: scan_heavy
+expected_severity: high
+
+must_cover_issues:
+  - id: serverless_detected
+    severity: low
+    keywords: [serverless, サーバーレス]
+  - id: photon_partial_fallback
+    severity: high
+    keywords: [photon, fallback]
+    description: Photon 部分 fallback (有効な指摘)
+
+forbidden_claims:
+  - id: classic_only_config
+    description: spark.databricks.photon.enabled 等 classic 専用設定の SET は無効
+  - id: spark_param_tuning_unsupported
+    description: serverless でサポートされない spark param 推奨は禁止
+
+must_have_actions:
+  - target: photon_blocker_pattern
+    type: rewrite
+    keyword: rewrite
+    description: クエリ書き換えで Photon 阻害要因を回避
+
+expected_l3_min: 4
+expected_recall_min: 0.85
+
+notes: |
+  W2.5 #8 組み合わせケース: serverless + photon blocker。
+  「正しい photon 指摘」「serverless suppression が必要な spark conf 推奨」を
+  両立して捕捉できているかを確認するケース。

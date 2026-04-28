@@ -62,12 +62,46 @@ def validate_profile(data: dict[str, Any]) -> ValidationResult:
         result.valid = False
         result.errors.append("Missing 'query' field in profile JSON")
 
-    if not has_graphs:
+    # Two legitimate cases for missing ``graphs``:
+    # 1. Result-cache hit (plansState=EMPTY, planMetadatas=[]) — the
+    #    downstream pipeline handles them via the "skipped_cached" verdict.
+    # 2. Streaming (DLT/SDP) profile — micro-batch info lives in
+    #    ``planMetadatas`` and the streaming code path doesn't require
+    #    a global execution graph.
+    is_cache_hit = False
+    is_streaming = False
+    q = data.get("query") or {}
+    if isinstance(q, dict):
+        m = q.get("metrics") or {}
+        is_cache_hit = bool(
+            (isinstance(m, dict) and m.get("resultFromCache"))
+            or q.get("cacheQueryId")
+        )
+        qm = q.get("queryMetadata") or {}
+        if isinstance(qm, dict):
+            is_streaming = bool(qm.get("isStreaming"))
+
+    if not has_graphs and not (is_cache_hit or is_streaming):
         result.valid = False
         result.errors.append("Missing 'graphs' field in profile JSON")
 
     if not result.valid:
         return result
+
+    if not has_graphs and is_cache_hit:
+        # Cache hit with no plan — analysis runs in degraded mode.
+        result.warnings.append(
+            "Profile is a result-cache hit (no execution plan). Analysis "
+            "will be limited to query metadata; bottleneck / scan / shuffle "
+            "details are unavailable."
+        )
+    if not has_graphs and is_streaming:
+        # Streaming without a global graph — micro-batch metrics are
+        # the analysis source.
+        result.warnings.append(
+            "Streaming profile without a global execution graph. "
+            "Analysis will use micro-batch metrics from planMetadatas."
+        )
 
     # Check graphs have nodes
     graphs = data.get("graphs", [])

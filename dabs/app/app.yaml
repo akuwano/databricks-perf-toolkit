@@ -10,5 +10,5 @@ command:
 resources:
 - name: sql-warehouse
   sql_warehouse:
-    id: your-warehouse-id
+    id: bec52b183a4cfe2a
     permission: CAN_USE

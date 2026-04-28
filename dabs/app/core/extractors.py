@@ -487,7 +487,7 @@ def _guess_federation_source_type(table_ref: str) -> str:
     for tokens, source in checks:
         for tok in tokens:
             # Look for the token as a whole segment or a surrounding
-            # underscore-delimited fragment (``pococha_bq_prod`` →
+            # underscore-delimited fragment (``bq_prod`` →
             # ``_bq_``). This avoids false positives like ``sfr`` or
             # ``mysqldump`` in a catalog name.
             if f"_{tok}_" in f"_{catalog}_" or catalog == tok:
@@ -1722,9 +1722,22 @@ def extract_target_table_info(data: dict[str, Any]) -> TargetTableInfo | None:
     if not graphs:
         return None
     for g in graphs:
+        # Defensive: some profile shapes contain non-dict entries in `graphs`
+        # (e.g. plain strings). Skip them rather than crash. (Week 2.5 #1)
+        if not isinstance(g, dict):
+            continue
         pe_list = g.get("photonExplain") or []
+        if not isinstance(pe_list, list):
+            continue
         for pe in pe_list:
-            for p in pe.get("params") or []:
+            if not isinstance(pe, dict):
+                continue
+            params = pe.get("params") or []
+            if not isinstance(params, list):
+                continue
+            for p in params:
+                if not isinstance(p, dict):
+                    continue
                 pv = p.get("paramValue") or ""
                 if not isinstance(pv, str) or not pv:
                     continue

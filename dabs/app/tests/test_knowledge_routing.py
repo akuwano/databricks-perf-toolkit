@@ -246,7 +246,15 @@ class TestFilterKnowledgeByAlerts:
         result = filter_knowledge_by_alerts(sections, alerts)
         assert "Photon利用率の改善" in result
 
-    def test_always_includes_reference_sections(self, sections):
+    def test_always_includes_reference_sections(self, sections, monkeypatch):
+        """Kill-switch path: V6_ALWAYS_INCLUDE_MINIMUM disabled → all 3
+        legacy reference sections (bottleneck_summary + spark_params +
+        appendix) are auto-included. V6 standard reduces this to just
+        bottleneck_summary."""
+        from core import feature_flags
+        monkeypatch.setenv(feature_flags.V6_ALWAYS_INCLUDE_MINIMUM, "0")
+        feature_flags.reset_cache()
+
         alerts = [_make_alert("photon")]  # Only photon
         result = filter_knowledge_by_alerts(sections, alerts)
         assert "ボトルネック指標サマリー" in result

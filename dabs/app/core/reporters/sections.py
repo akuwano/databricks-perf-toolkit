@@ -120,6 +120,9 @@ def _format_cost_rows(cost: CostEstimate) -> str:
         lines.append(
             f"\n> *{_('Note: Cluster size is assumed. Connect warehouse API for accurate estimation.')}*"
         )
+    rec_block = _format_recommendation_block(cost.recommendation)
+    if rec_block:
+        lines.append(rec_block)
     return "\n".join(lines) + "\n"
 
 
@@ -159,6 +162,11 @@ def _format_cost_table_standalone(cost: CostEstimate) -> str:
         lines.append(f"> *{cost.note}*")
     lines.append("")
 
+    rec_block = _format_recommendation_block(cost.recommendation)
+    if rec_block:
+        lines.append(rec_block)
+        lines.append("")
+
     # Reference cost table by T-shirt size
     if cost.reference_costs:
         lines.append(f"**{_('Reference Cost by Warehouse Size')}**\n")
@@ -172,6 +180,52 @@ def _format_cost_table_standalone(cost: CostEstimate) -> str:
         lines.append("")
 
     return "\n".join(lines)
+
+
+def _format_recommendation_block(rec: Any) -> str:
+    """Render the 3-band sizing recommendation as a Markdown block.
+
+    The recommendation is intentionally separated from "this is what
+    the query cost" — it answers "what size *should* this workload
+    use, and what would it cost at that size?". See
+    ``core/sizing_recommendation.py`` for the model.
+
+    Returns an empty string when ``rec`` is None so callers can append
+    unconditionally.
+    """
+    if rec is None:
+        return ""
+    parts = [f"\n**{_('Recommended Warehouse Size for This Workload')}**\n"]
+    parts.append(f"| {_('Band')} | {_('Size')} | DBU/h | {rec.billing_label} |")
+    parts.append("|:------|:------|------:|--------------:|")
+    parts.append(
+        f"| **{_('Recommended')}** | {rec.recommended.cluster_size} | "
+        f"{rec.recommended.dbu_per_hour} | "
+        f"{format_cost_usd(rec.recommended.estimated_cost_usd)} |"
+    )
+    parts.append(
+        f"| {_('Minimum viable')} | {rec.minimum_viable.cluster_size} | "
+        f"{rec.minimum_viable.dbu_per_hour} | "
+        f"{format_cost_usd(rec.minimum_viable.estimated_cost_usd)} |"
+    )
+    if rec.oversized_beyond is not None:
+        parts.append(
+            f"| {_('Oversized beyond')} | {rec.oversized_beyond.cluster_size} | "
+            f"{rec.oversized_beyond.dbu_per_hour} | "
+            f"{format_cost_usd(rec.oversized_beyond.estimated_cost_usd)} |"
+        )
+    parts.append("")
+    parts.append(f"> *{_(rec.scope_notice)}*")
+    parts.append(f"> {_('Confidence')}: {_(rec.confidence)}")
+    if rec.rationale:
+        parts.append("")
+        for line in rec.rationale:
+            parts.append(f"- {line}")
+    if not rec.billing_label.lower().startswith("estimated"):
+        parts.append(
+            f"\n> *{_('Note: actual billing for Classic/Pro warehouses is uptime-based; the value shown here is what this workload alone would consume at the recommended size.')}*"
+        )
+    return "\n".join(parts)
 
 
 def generate_sql_section(sql_analysis: SQLAnalysis, *, include_header: bool = True) -> str:

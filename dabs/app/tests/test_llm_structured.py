@@ -471,6 +471,46 @@ class TestFactPackSummary:
         prompt = create_review_prompt(analysis, "test report", "model-a", lang="en")
         assert "Fact Pack Summary" in prompt
 
+    def test_lakehouse_federation_block_emitted(self):
+        """v6.6.8: when ``is_federation_query`` is set, surface the
+        detection in the Fact Pack so the LLM treats it as ground truth
+        instead of hedging ('possibly via Lakehouse Federation')."""
+        from core.llm_prompts.prompts import _build_fact_pack_summary
+
+        analysis = _make_analysis_with_alerts_and_flow()
+        analysis.query_metrics.is_federation_query = True
+        analysis.query_metrics.federation_source_type = "bigquery"
+        analysis.query_metrics.federation_tables = [
+            "bq_prod.example.users",
+        ]
+        summary = _build_fact_pack_summary(analysis, "en")
+        assert "lakehouse_federation:" in summary
+        assert "is_federation_query: true" in summary
+        assert "source_type: bigquery" in summary
+        assert "bq_prod.example.users" in summary
+        assert "ROW_DATA_SOURCE_SCAN_EXEC" in summary
+
+    def test_lakehouse_federation_block_absent_when_not_federation(self):
+        from core.llm_prompts.prompts import _build_fact_pack_summary
+
+        analysis = _make_analysis_with_alerts_and_flow()
+        # default is_federation_query=False
+        summary = _build_fact_pack_summary(analysis, "en")
+        assert "lakehouse_federation:" not in summary
+
+    def test_lakehouse_federation_unknown_source_type(self):
+        """When the catalog name doesn't carry a source hint, source_type
+        falls back to 'unknown' rather than dropping the block."""
+        from core.llm_prompts.prompts import _build_fact_pack_summary
+
+        analysis = _make_analysis_with_alerts_and_flow()
+        analysis.query_metrics.is_federation_query = True
+        analysis.query_metrics.federation_source_type = ""
+        analysis.query_metrics.federation_tables = ["main.x.y"]
+        summary = _build_fact_pack_summary(analysis, "en")
+        assert "lakehouse_federation:" in summary
+        assert "source_type: unknown" in summary
+
 
 # --- Confidence Criteria tests (#11) ---
 

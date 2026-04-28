@@ -1,0 +1,37 @@
+case_id: federation_with_low_pruning_q1
+profile_path: json/federation
+description: Federation クエリでファイルプルーニング率が低く見える。federation では pruning は意味を持たないので alert 抑制すべき組み合わせ negative case。
+domain: dbsql
+workload_type: federation
+expected_severity: medium
+
+must_cover_issues:
+  - id: federation_detected
+    severity: low
+    keywords: [federation, リモート]
+    description: federation 認識
+  - id: driver_overhead_or_compilation
+    severity: medium
+    keywords: [driver, compilation]
+    description: federation で支配的になる項目
+
+forbidden_claims:
+  - id: low_file_pruning
+    description: federation では pruning は意味を持たないので alert 禁止
+  - id: missing_clustering
+    description: federation では LC 推奨は無意味
+  - id: large_scan_volume
+    description: federation での scan 量は別の意味なので scan_volume alert 禁止
+
+must_have_actions:
+  - target: pushdown
+    type: rewrite
+    keyword: pushdown
+    description: フィルタ pushdown で remote 通信削減
+
+expected_l3_min: 4
+expected_recall_min: 1.0
+
+notes: |
+  W2.5 #8 組み合わせケース: federation + low pruning 表面値。
+  v5.18 で導入した federation suppression の組み合わせ動作を回帰防止。

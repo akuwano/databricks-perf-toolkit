@@ -1,0 +1,47 @@
+case_id: long_sql_skeleton_q1
+profile_path: json/xlarge_qp (1).json
+description: "長い SQL (> 3000 chars) で skeleton method=sqlglot が選択され、compression が顕著であることを golden で固定 (W6 Day 5 boundary case)。"
+domain: dbsql
+workload_type: scan_heavy
+expected_severity: high
+
+must_cover_issues:
+  - id: low_file_pruning
+    severity: high
+    keywords: [pruning, データスキッピング]
+  - id: large_scan_volume
+    severity: medium
+    keywords: [scan, bytes_read]
+
+forbidden_claims:
+  - id: blanket_lc
+    description: "具体的な列名なしの LC 推奨は禁止"
+
+must_have_actions:
+  - target: clustering_columns
+    type: clustering
+    keyword: CLUSTER BY
+
+# W6 Day 5 boundary expectations
+expected_skeleton:
+  method_preferred: sqlglot
+  method_fallback: head_tail
+  compression_max: 0.30  # 元 SQL の 30% 以下に縮む
+
+expected_action_template:
+  - field: fix_sql_skeleton_method
+    description: "sqlglot 期待 (parse 成功)"
+
+expected_failure_categories:
+  allow_max:
+    parse_failure: 0  # 長い SQL でも sqlglot で parse できることを期待
+
+expected_l3_min: 4
+expected_recall_min: 0.85
+
+notes: |
+  W6 boundary case (Codex W5 #4): rule-based でも skeleton method 分布を
+  測れるよう、長い SQL の行く末を golden で明示。
+
+  sqlglot 失敗時の head_tail fallback でも許容。
+  parse_failure (truncate 経路) は 0 必須。

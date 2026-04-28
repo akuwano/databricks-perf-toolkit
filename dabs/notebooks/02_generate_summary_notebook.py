@@ -24,7 +24,7 @@ try:
     _kb_ctx = dbutils.notebook.entry_point.getDbutils().notebook().getContext()
     _kb_token = _kb_ctx.apiToken().get()
     _kb_host = _kb_ctx.apiUrl().get().rstrip("/")
-    _kb_path = "/Users/your-user@example.com/spark-perf-job/optimization_knowledge_base"
+    _kb_path = "/Users/<your-email>/spark-perf-job/optimization_knowledge_base"
 
     _kb_resp = requests.get(
         f"{_kb_host}/api/2.0/workspace/export",

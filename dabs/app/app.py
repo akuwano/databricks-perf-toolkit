@@ -32,7 +32,7 @@ logging.getLogger("werkzeug").setLevel(logging.WARNING)
 logging.getLogger("sqlglot").setLevel(logging.ERROR)
 
 # Overwritten by deploy.sh from pyproject.toml at deploy time
-APP_VERSION = "5.19.4"
+APP_VERSION = "6.7.2"
 
 app = Flask(__name__)
 app.config["MAX_CONTENT_LENGTH"] = 10 * 1024 * 1024  # 10MB limit
@@ -395,8 +395,10 @@ def run_analysis_background(
 
 from routes.analysis import bp as analysis_bp
 from routes.compare import bp as compare_bp
+from routes.feedback import bp as feedback_bp
 from routes.genie_chat import bp as genie_chat_bp
 from routes.history import bp as history_bp
+from routes.query_rewrite import bp as query_rewrite_bp
 from routes.report import bp as report_bp
 from routes.schema_analysis import bp as schema_analysis_bp
 from routes.settings import bp as settings_bp
@@ -414,6 +416,8 @@ app.register_blueprint(report_bp)
 app.register_blueprint(share_bp)
 app.register_blueprint(workload_bp)
 app.register_blueprint(genie_chat_bp)
+app.register_blueprint(query_rewrite_bp)
+app.register_blueprint(feedback_bp)
 
 
 # =============================================================================

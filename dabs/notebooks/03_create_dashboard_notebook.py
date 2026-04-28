@@ -22,9 +22,9 @@ dbutils.widgets.text("schema",        "base2",                                  
 # テーブル名プレフィックス（01_Spark Perf Pipeline の table_prefix と合わせてください）
 dbutils.widgets.text("table_prefix",  "PERF_",                                                   "Table Name Prefix")
 # SQL ウェアハウス ID（Databricks UI → SQL Warehouses → 接続の詳細タブで確認）
-dbutils.widgets.text("warehouse_id",  "your-warehouse-id",                                       "SQL Warehouse ID")
+dbutils.widgets.text("warehouse_id",  "bec52b183a4cfe2a",                                        "SQL Warehouse ID")
 # ダッシュボードファイルの保存先ワークスペースパス
-dbutils.widgets.text("parent_path",   "/Users/your-user@example.com/spark-perf-dlt",              "Dashboard Parent Path")
+dbutils.widgets.text("parent_path",   "/Users/<your-email>/spark-perf-dlt",   "Dashboard Parent Path")
 # ダッシュボード表示名
 dbutils.widgets.text("dash_name",     "Spark Job Performance Analysis",                           "Dashboard Display Name")
 # ──────────────────────────────────────────────────────────────────────────

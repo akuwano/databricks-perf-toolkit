@@ -383,6 +383,86 @@ USING DELTA
 CLUSTER BY (compared_at)
 """
 
+# L5 (2026-04-26): user feedback (欠落申告) — Codex (d) recommended Delta
+# over JSONL for analysis_id join + Genie usability. analysis_id is FK
+# to profiler_analysis_header (loose; we don't enforce). target_type /
+# sentiment / category are intentionally STRING with a small enum
+# checked by the route, not a Delta CHECK constraint, so the schema
+# stays flexible as new feedback kinds are added.
+_FEEDBACK_DDL = """
+CREATE TABLE IF NOT EXISTS {fqn} (
+  feedback_id STRING,
+  analysis_id STRING,
+  target_type STRING,
+  target_id STRING,
+  sentiment STRING,
+  category STRING,
+  free_text STRING,
+  user_email STRING,
+  created_at TIMESTAMP
+)
+USING DELTA
+CLUSTER BY (created_at)
+"""
+
+# L5 Phase 1.5 (2026-04-26): bulk export audit log. Codex (a) requirement
+# — every workspace_admin export gets a row so we can investigate later.
+# user_email_hash mirrors the bundle file's hashing scheme so per-user
+# attribution survives even after the email column policy changes.
+_FEEDBACK_EXPORT_LOG_DDL = """
+CREATE TABLE IF NOT EXISTS {fqn} (
+  export_id STRING,
+  exported_at TIMESTAMP,
+  workspace_slug STRING,
+  user_email_hash STRING,
+  user_email_domain STRING,
+  scope STRING,
+  since_ts TIMESTAMP,
+  until_ts TIMESTAMP,
+  feedback_count BIGINT,
+  bundle_count BIGINT,
+  size_bytes BIGINT,
+  profile_included BOOLEAN,
+  success BOOLEAN,
+  error_reason STRING
+)
+USING DELTA
+CLUSTER BY (exported_at)
+"""
+
+# Phase 3 (v6.7.5) of docs/v6/query-rewrite-extraction.md: append-only
+# log of every rewrite attempt. ``source_sql_hash`` (sha256 of the
+# normalised source SQL) is the grouping key for multi-model compare;
+# ``parent_id`` walks the refine chain. ``source_sql_hash_version``
+# (Codex Q1) lets us evolve the normalisation contract later — a v2
+# scheme can be backfilled side-by-side without invalidating existing
+# group/compare queries that pinned to v1. validation_* are nullable
+# because the user may copy a rewrite without ever running validate.
+# ``output_format`` (v6.7.9, Codex follow-up) discriminates executable
+# SQL from diff patches so downstream consumers (history, validate,
+# refine) don't treat a patch as runnable SQL.
+_REWRITE_ARTIFACTS_DDL = """
+CREATE TABLE IF NOT EXISTS {fqn} (
+  artifact_id STRING,
+  analysis_id STRING,
+  source_sql STRING,
+  source_sql_hash STRING,
+  source_sql_hash_version STRING,
+  rewritten_sql STRING,
+  output_format STRING,
+  model STRING,
+  feedback STRING,
+  parent_id STRING,
+  validation_method STRING,
+  validation_passed BOOLEAN,
+  validation_error STRING,
+  user_email STRING,
+  created_at TIMESTAMP
+)
+USING DELTA
+CLUSTER BY (analysis_id, created_at)
+"""
+
 # Table name → DDL template mapping
 _TABLE_DDLS: dict[str, str] = {
     "profiler_analysis_header": _HEADER_DDL,
@@ -397,6 +477,9 @@ _TABLE_DDLS: dict[str, str] = {
     "profiler_knowledge_tags": _KNOWLEDGE_TAGS_DDL,
     "profiler_metric_directions": _METRIC_DIRECTIONS_DDL,
     "profiler_compare_result": _COMPARE_RESULT_DDL,
+    "profiler_feedback": _FEEDBACK_DDL,
+    "profiler_feedback_export_log": _FEEDBACK_EXPORT_LOG_DDL,
+    "profiler_rewrite_artifacts": _REWRITE_ARTIFACTS_DDL,
 }
 
 
@@ -1064,6 +1147,180 @@ class TableWriter:
         except Exception:
             logger.exception("Failed to write compare result")
             return None
+
+    def write_feedback(
+        self,
+        *,
+        analysis_id: str | None,
+        target_type: str,
+        sentiment: str,
+        category: str,
+        free_text: str,
+        user_email: str,
+        target_id: str | None = None,
+    ) -> str | None:
+        """Persist a user feedback record (L5, 2026-04-26).
+
+        Returns the new feedback_id on success, ``None`` when writes are
+        disabled / unavailable. ``user_email`` MUST come from the trusted
+        request header (see ``services.user_context``); the route layer
+        is responsible for not passing client-controlled values.
+        """
+        if not self._config.enabled or not self._config.http_path:
+            return None
+
+        feedback_id = str(uuid.uuid4())
+        now = datetime.now(UTC)
+        try:
+            with self._get_connection() as conn:
+                with conn.cursor() as cursor:
+                    table_name = "profiler_feedback"
+                    self._ensure_table(cursor, table_name)
+                    params = {
+                        "feedback_id": feedback_id,
+                        "analysis_id": analysis_id or None,
+                        "target_type": target_type,
+                        "target_id": target_id or None,
+                        "sentiment": sentiment,
+                        "category": category,
+                        "free_text": free_text or None,
+                        "user_email": user_email or None,
+                        "created_at": now,
+                    }
+                    cols = ", ".join(params.keys())
+                    placeholders = ", ".join(f":{k}" for k in params.keys())
+                    fqn = self._fqn(table_name)
+                    sql = f"INSERT INTO {fqn} ({cols}) VALUES ({placeholders})"
+                    cursor.execute(sql, parameters=params)
+
+            logger.info(
+                "Feedback written: id=%s analysis_id=%s category=%s",
+                feedback_id, analysis_id or "(none)", category,
+            )
+            return feedback_id
+        except Exception:
+            logger.exception("Failed to write feedback")
+            return None
+
+    def write_feedback_export_audit(
+        self,
+        *,
+        export_id: str,
+        workspace_slug: str,
+        user_email_hash: str | None,
+        user_email_domain: str | None,
+        scope: str,                 # "per_analysis" | "bulk"
+        since_ts: datetime | None,
+        until_ts: datetime | None,
+        feedback_count: int,
+        bundle_count: int,
+        size_bytes: int,
+        profile_included: bool,
+        success: bool,
+        error_reason: str = "",
+    ) -> bool:
+        """Append one row to ``profiler_feedback_export_log`` (Codex (a)
+        requirement: every bulk export gets an audit row).
+
+        Returns True when the write succeeded. Failure is non-fatal —
+        the caller should still surface the ZIP, audit failures are
+        logged as warnings."""
+        if not self._config.enabled or not self._config.http_path:
+            return False
+        try:
+            with self._get_connection() as conn:
+                with conn.cursor() as cursor:
+                    table_name = "profiler_feedback_export_log"
+                    self._ensure_table(cursor, table_name)
+                    params = {
+                        "export_id": export_id,
+                        "exported_at": datetime.now(UTC),
+                        "workspace_slug": workspace_slug or None,
+                        "user_email_hash": user_email_hash or None,
+                        "user_email_domain": user_email_domain or None,
+                        "scope": scope,
+                        "since_ts": since_ts,
+                        "until_ts": until_ts,
+                        "feedback_count": int(feedback_count),
+                        "bundle_count": int(bundle_count),
+                        "size_bytes": int(size_bytes),
+                        "profile_included": bool(profile_included),
+                        "success": bool(success),
+                        "error_reason": (error_reason or "")[:500] or None,
+                    }
+                    cols = ", ".join(params.keys())
+                    placeholders = ", ".join(f":{k}" for k in params.keys())
+                    fqn = self._fqn(table_name)
+                    sql = f"INSERT INTO {fqn} ({cols}) VALUES ({placeholders})"
+                    cursor.execute(sql, parameters=params)
+            return True
+        except Exception:
+            logger.exception("Failed to write feedback export audit row")
+            return False
+
+    def write_rewrite_artifact(
+        self,
+        *,
+        artifact_id: str,
+        analysis_id: str,
+        source_sql: str,
+        source_sql_hash: str,
+        source_sql_hash_version: str = "v1",
+        rewritten_sql: str,
+        output_format: str = "full",
+        model: str,
+        feedback: str | None = None,
+        parent_id: str | None = None,
+        validation_method: str | None = None,
+        validation_passed: bool | None = None,
+        validation_error: str | None = None,
+        user_email: str | None = None,
+    ) -> bool:
+        """Append one row to ``profiler_rewrite_artifacts`` (Phase 3 of
+        ``docs/v6/query-rewrite-extraction.md``).
+
+        Append-only — every rewrite attempt persists. Multi-model
+        compare is a query joining rows that share ``source_sql_hash``
+        and have ``parent_id IS NULL``. Refine chain is a tree walk
+        on ``parent_id``.
+
+        Returns True on success, False on failure / writes-disabled.
+        Failure is non-fatal — the rewrite is still surfaced to the
+        user; persistence drift only affects history / compare.
+        """
+        if not self._config.enabled or not self._config.http_path:
+            return False
+        try:
+            with self._get_connection() as conn:
+                with conn.cursor() as cursor:
+                    table_name = "profiler_rewrite_artifacts"
+                    self._ensure_table(cursor, table_name)
+                    params = {
+                        "artifact_id": artifact_id,
+                        "analysis_id": analysis_id,
+                        "source_sql": source_sql or None,
+                        "source_sql_hash": source_sql_hash,
+                        "source_sql_hash_version": source_sql_hash_version,
+                        "rewritten_sql": rewritten_sql or None,
+                        "output_format": output_format,
+                        "model": model or None,
+                        "feedback": feedback or None,
+                        "parent_id": parent_id or None,
+                        "validation_method": validation_method or None,
+                        "validation_passed": validation_passed,
+                        "validation_error": (validation_error or "")[:500] or None,
+                        "user_email": user_email or None,
+                        "created_at": datetime.now(UTC),
+                    }
+                    cols = ", ".join(params.keys())
+                    placeholders = ", ".join(f":{k}" for k in params.keys())
+                    fqn = self._fqn(table_name)
+                    sql = f"INSERT INTO {fqn} ({cols}) VALUES ({placeholders})"
+                    cursor.execute(sql, parameters=params)
+            return True
+        except Exception:
+            logger.exception("Failed to write rewrite artifact %s", artifact_id)
+            return False
 
     def write_knowledge_document(self, document: KnowledgeDocument) -> str | None:
         """Write a knowledge document. Returns document_id."""

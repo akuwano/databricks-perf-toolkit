@@ -17,8 +17,15 @@ DBU unit prices (Premium tier, us-west-2, PAYGO):
 Fallback estimation (no warehouse API):
   When warehouse info is unavailable, we use the parallelism ratio
   (task_total_time_ms / execution_time_ms) as a proxy for effective
-  DBU/hour.  Additionally, we provide a reference cost table showing
-  what the cost would be at each standard T-shirt size.
+  DBU/hour.  This is treated as the **minimum viable size** the
+  workload would need — not the actual provisioned cluster, which
+  may be larger.  Additionally, we provide a reference cost table
+  showing what the cost would be at each standard T-shirt size.
+
+  Iter 3 (V6.2) will add a separate ``recommend_size`` model that
+  produces a normative recommendation for the observed workload
+  (fit floor + SLA gate + diminishing returns cap). This file's
+  fallback continues to surface only the lower bound.
 """
 
 from __future__ import annotations
@@ -28,6 +35,7 @@ from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from .models import QueryMetrics
+    from .sizing_recommendation import SizingRecommendation
     from .warehouse_client import WarehouseInfo
 
 
@@ -113,6 +121,10 @@ class CostEstimate:
     parallelism_ratio: float = 0.0  # task_total_time_ms / execution_time_ms (0 = not computed)
     reference_costs: list[SizeReferenceCost] = field(default_factory=list)
     note: str = ""  # Additional context about the estimate
+    # Normative sizing recommendation — independent of whether warehouse_info
+    # was available. See ``core/sizing_recommendation.py``. Always populated
+    # when the workload has a typename (i.e. billing model is known).
+    recommendation: SizingRecommendation | None = None
 
 
 def estimate_query_cost(
@@ -133,11 +145,24 @@ def estimate_query_cost(
     Returns:
         CostEstimate, or None only when neither warehouse_info nor
         query_typename is available.
+
+    The returned ``CostEstimate.recommendation`` is the workload-level
+    normative sizing recommendation (independent of warehouse_info).
+    It is always populated when ``query_typename`` is set, so callers
+    in both modes get the same comparison surface.
     """
     if warehouse_info is not None:
-        return _estimate_with_warehouse_info(query_metrics, warehouse_info)
+        cost = _estimate_with_warehouse_info(query_metrics, warehouse_info)
+    else:
+        cost = _estimate_from_typename(query_metrics)
+    if cost is None:
+        return None
 
-    return _estimate_from_typename(query_metrics)
+    # Lazy import to break the dbsql_cost ↔ sizing_recommendation cycle.
+    from .sizing_recommendation import recommend_size
+
+    cost.recommendation = recommend_size(query_metrics)
+    return cost
 
 
 def _estimate_with_warehouse_info(
@@ -189,7 +214,7 @@ def _estimate_with_warehouse_info(
 
 
 def _infer_size_from_parallelism(parallelism: float) -> tuple[str, int, str]:
-    """Rule-based cluster size inference from average parallelism.
+    """Rule-based **minimum viable size** inference from average parallelism.
 
     Returns (size_name, dbu_per_hour, confidence).
 
@@ -198,16 +223,20 @@ def _infer_size_from_parallelism(parallelism: float) -> tuple[str, int, str]:
     ``1 DBU ≈ 3 vCPU`` ratio for DBSQL Serverless, then pick the nearest
     standard T-shirt size by DBU/h (smaller-side preferred on ties).
 
-    Confidence heuristic:
+    Confidence heuristic (interpreted as "how tight the lower bound is"):
       - ``high``    : parallelism >= 80 (cluster was likely saturated,
-                      so the average is close to the true vCPU count)
+                      so the lower bound is close to the actual size)
       - ``medium``  : 20 <= parallelism < 80
       - ``low``     : parallelism < 20 (workload used so few threads
-                      the actual cluster could easily be much larger)
+                      the actual cluster could easily be much larger
+                      and the lower bound is loose)
 
-    Non-saturated queries produce a *minimum-required-size* estimate,
-    not the actual provisioned size. The note explains this and the
-    reference table lets the reader bracket the likely billing.
+    Non-saturated queries produce a **minimum viable size** — i.e. "a
+    Small would have been enough" — not the actual provisioned size.
+    The note explains this and the reference table lets the reader
+    bracket the likely billing. The normative recommendation (what
+    size *should* be used for this workload) is produced separately
+    by the upcoming ``recommend_size`` model.
     """
     if parallelism <= 0:
         return (_DEFAULT_CLUSTER_SIZE, _DEFAULT_DBU_PER_HOUR, "low")
@@ -232,9 +261,9 @@ def _infer_size_from_parallelism(parallelism: float) -> tuple[str, int, str]:
 
 
 def _estimate_from_typename(query_metrics: QueryMetrics) -> CostEstimate | None:
-    """Fallback when warehouse API is unavailable: infer a likely cluster
-    size from observed parallelism, price the query at that size, and
-    surface the full reference table for cross-checking.
+    """Fallback when warehouse API is unavailable: infer the **minimum
+    viable size** from observed parallelism, price the query at that
+    size, and surface the full reference table for cross-checking.
 
     Primary signal is ``parallelism = task_total_time_ms / execution_time_ms``.
     Converted to an implied DBU/h via ``1 DBU ≈ 3 vCPU`` (empirically
@@ -249,9 +278,11 @@ def _estimate_from_typename(query_metrics: QueryMetrics) -> CostEstimate | None:
 
     Trade-off: saturated queries (parallelism >= 80) land within ~±20%
     of real billing because the average is close to the actual vCPU
-    count. Low-parallelism queries produce a *minimum-required size*
+    count. Low-parallelism queries produce a **minimum viable size**
     estimate — i.e. "a Small would have been enough" — not the actual
-    provisioned size, and the note labels this clearly.
+    provisioned size, and the note labels this clearly. The normative
+    recommendation (what size *should* be used) is produced separately
+    by ``recommend_size``.
     """
     typename = query_metrics.query_typename
     if not typename:
@@ -292,13 +323,13 @@ def _estimate_from_typename(query_metrics: QueryMetrics) -> CostEstimate | None:
     abbrev = _SIZE_ABBREV.get(inferred_size, inferred_size)
     note_parts = [
         note_prefix,
-        f"Cluster size inferred from parallelism ({parallelism:.1f}) "
+        f"Minimum viable size inferred from parallelism ({parallelism:.1f}) "
         f"→ {abbrev} ({inferred_dbu_h} DBU/h). Confidence: {confidence} "
         f"({confidence_label}).",
     ]
     if confidence == "low":
         note_parts.append(
-            f"Low parallelism ({parallelism:.1f}): this is a *minimum-required* "
+            f"Low parallelism ({parallelism:.1f}): this is a *minimum-viable* "
             "size estimate. The actual provisioned warehouse may be larger "
             "(over-provisioned workload). Pure compute consumption "
             f"cost: {format_cost_usd(consumption_cost)}."
@@ -306,21 +337,21 @@ def _estimate_from_typename(query_metrics: QueryMetrics) -> CostEstimate | None:
     elif confidence == "medium":
         note_parts.append(
             f"Medium confidence: parallelism ({parallelism:.1f}) suggests the "
-            "workload was partially saturating the inferred size; actual "
+            "workload was partially saturating the minimum viable size; actual "
             f"billing may differ. Pure compute consumption: "
             f"{format_cost_usd(consumption_cost)}."
         )
     else:
         note_parts.append(
             f"High confidence: parallelism ({parallelism:.1f}) is high enough "
-            "that the workload likely saturated the inferred size, so the "
+            "that the workload likely saturated the minimum viable size, so the "
             "estimate tracks real billing closely."
         )
     note = " ".join(note_parts)
 
     return CostEstimate(
         billing_model=billing,
-        cluster_size=f"{inferred_size} (inferred, confidence: {confidence})",
+        cluster_size=f"{inferred_size} (minimum viable, confidence: {confidence})",
         dbu_per_hour=inferred_dbu_h,
         dbu_unit_price=unit_price,
         execution_time_ms=execution_time_ms,

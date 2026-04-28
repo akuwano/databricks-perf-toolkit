@@ -426,3 +426,73 @@ class TableReader:
         except Exception:
             logger.exception("Failed to load compare result: %s", comparison_id)
             return None
+
+    def list_rewrite_artifacts(
+        self,
+        *,
+        analysis_id: str | None = None,
+        source_sql_hash: str | None = None,
+        user_email: str | None = None,
+        limit: int = 100,
+    ) -> list[dict[str, Any]]:
+        """Phase 3 (v6.7.5): list past rewrite attempts.
+
+        Filter mode (mutually inclusive but at least one of
+        ``analysis_id`` / ``source_sql_hash`` is required):
+        - ``analysis_id``: every rewrite attempted on this analysis,
+          newest first. Drives the rewrite page's "history" tab.
+        - ``source_sql_hash``: every rewrite of the same SQL across
+          analyses / models / refine chains. Drives the
+          "multi-model compare" view.
+        - ``user_email`` (Codex Q4 — owner gating): when supplied,
+          rows where ``user_email`` does not match (case-insensitive)
+          are dropped. Rows with NULL ``user_email`` are returned
+          regardless — they belong to the dev-mode / anonymous era and
+          aren't claimable by anyone.
+
+        ``rewritten_sql`` and ``source_sql`` are returned in full —
+        callers needing only the metadata can ignore them.
+        """
+        if not analysis_id and not source_sql_hash:
+            return []
+        where = []
+        params: dict[str, Any] = {"limit": int(limit)}
+        if analysis_id:
+            where.append("analysis_id = :analysis_id")
+            params["analysis_id"] = analysis_id
+        if source_sql_hash:
+            where.append("source_sql_hash = :source_sql_hash")
+            params["source_sql_hash"] = source_sql_hash
+        if user_email:
+            # owner-only: NULL emails (legacy / anonymous) are still
+            # returned so historical rows aren't silently dropped.
+            where.append(
+                "(user_email IS NULL OR LOWER(user_email) = LOWER(:user_email))"
+            )
+            params["user_email"] = user_email
+        sql = f"""
+            SELECT
+                artifact_id, analysis_id, source_sql, source_sql_hash,
+                source_sql_hash_version,
+                rewritten_sql, output_format,
+                model, feedback, parent_id,
+                validation_method, validation_passed, validation_error,
+                user_email, created_at
+            FROM {self._fqn("profiler_rewrite_artifacts")}
+            WHERE {' AND '.join(where)}
+            ORDER BY created_at DESC
+            LIMIT {int(limit)}
+        """
+        try:
+            with self._get_connection() as conn:
+                with conn.cursor() as cursor:
+                    cursor.execute(sql, parameters=params)
+                    rows = cursor.fetchall()
+                    columns = [desc[0] for desc in cursor.description]
+                    return [dict(zip(columns, row)) for row in rows]
+        except Exception:
+            logger.exception(
+                "Failed to list rewrite artifacts (analysis_id=%s, hash=%s)",
+                analysis_id, source_sql_hash,
+            )
+            return []

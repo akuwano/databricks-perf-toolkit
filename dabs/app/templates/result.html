@@ -129,6 +129,34 @@
         </div>
         {% endif %}
 
+        {# v6.7.7 (Codex review on Phase 3 UX): Rewrite is a "next
+           action on the analysis", not a Genie chat feature. Surface
+           it as a primary CTA on the result page so users don't have
+           to open the chat panel to find it. The /rewrite/<id> page
+           hosts the full workspace (side-by-side, validate, refine,
+           persisted history). #}
+        {% if analysis.query_metrics.query_text %}
+        <div class="card mb-4" style="border:1px solid hsl(var(--primary)/0.45); background:hsl(var(--primary)/0.04);">
+            <div class="card-header" style="border-bottom:1px solid hsl(var(--primary)/0.2);">
+                <h6>
+                    <i class="bi bi-magic"></i>
+                    {{ _('Next action') }}
+                </h6>
+            </div>
+            <div class="card-body" style="display:flex; flex-direction:column; gap:0.5rem;">
+                <a href="/rewrite/{{ analysis_id }}" class="btn btn-primary"
+                   style="display:flex; align-items:center; justify-content:center; gap:0.4rem;">
+                    <i class="bi bi-pencil-square"></i>
+                    {{ _('Rewrite SQL with LLM') }}
+                    <i class="bi bi-arrow-right"></i>
+                </a>
+                <span style="font-size:0.75rem; color:hsl(var(--muted-foreground)); line-height:1.4;">
+                    {{ _('Open the Rewrite workspace: side-by-side diff, validation, feedback refine, and persisted history.') }}
+                </span>
+            </div>
+        </div>
+        {% endif %}
+
         <!-- Actions Card -->
         <div class="card mb-4">
             <div class="card-header">
@@ -369,5 +397,6 @@ async function copySlackSummary() {
 
 // Genie Chat removed from result.html — only available on pages with persisted Delta data
 // (shared_result.html, spark_perf.html, report_view.html)
+// L5 feedback box は /shared/<id> 専用 (shared_result.html)。
 </script>
 {% endblock %}

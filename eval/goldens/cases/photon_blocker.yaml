@@ -1,0 +1,57 @@
+case_id: photon_blocker_q1
+profile_path: json/temp_view_bad_perf_query_profile.json
+description: Photon が一部 fallback、CTE/TEMP VIEW 経由でマテリアライズされず再計算が発生。
+domain: dbsql
+workload_type: etl
+expected_severity: high
+
+must_cover_issues:
+  - id: photon_partial_fallback
+    severity: high
+    keywords: [photon, fallback, 非Photon]
+    description: Photon 化が部分的、UDF/特定演算子で fallback
+
+  - id: cte_recompute
+    severity: medium
+    keywords: [CTE, 再計算, ReusedExchange]
+    description: CTE が再計算されている (ReusedExchange 出現せず)
+
+forbidden_claims:
+  - id: temp_view_for_cte
+    description: TEMP VIEW は materialize しないので CTE 代替推奨は禁止 (v5.16 で修正済み)
+  - id: federation_recommendation
+    description: federation ではないので federation 提案禁止
+
+must_have_actions:
+  - target: photon_blocker
+    type: rewrite
+    keyword: Photon
+    description: Photon blocker (UDF, 非対応関数) を回避する書き換え提案
+  - target: materialization
+    type: rewrite
+    keyword: CTAS
+    description: 再計算回避のため CTAS / 物理マテリアライズの検討 (反復実行時のみ)
+
+expected_l3_min: 4
+expected_recall_min: 0.85
+
+# W5 Day 6: SQL skeleton + Q5 failure expectations
+expected_action_template:
+  - field: fix_sql_skeleton
+    description: 大きなクエリの場合は skeleton method=sqlglot or head_tail 期待
+  - field: fix_sql_skeleton_method
+    description: 「sqlglot」が 50% 以上の case で出ていれば良好
+
+expected_failure_categories:
+  forbidden:
+    - missing_critical
+  allow_max:
+    parse_failure: 0  # photon_blocker_q1 は parse 可能なはず
+
+notes: |
+  temp_view_bad_perf_query_profile.json は CTE → TEMP VIEW 置換で逆効果になった事例。
+  v5.16 で「TEMP VIEW を CTE 代替に推奨しない」として fix。
+  goldens としては「TEMP VIEW 推奨を出してはならない」を forbidden_claims で固定。
+
+  W5 Day 6: 複雑 CTE クエリなので skeleton method=sqlglot が期待される。
+  parse_failure が出ると W5 完了基準 (≥ 90%) を割る。

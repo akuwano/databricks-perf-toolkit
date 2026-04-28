@@ -1,0 +1,42 @@
+case_id: cite_known_knowledge_section_q1
+profile_path: json/temp_view_bad_perf_query_profile.json
+description: "knowledge を引用する場合、Evidence.source は `knowledge:<section_id>` 形式で、`<section_id>` は core/knowledge/*.md の `<!-- section_id: ... -->` マーカーに実在しなければならない。"
+domain: dbsql
+workload_type: etl
+expected_severity: high
+
+must_cover_issues:
+  - id: photon_partial_fallback
+    severity: high
+    keywords: [photon, fallback]
+  - id: cte_recompute
+    severity: medium
+    keywords: [cte, 再計算]
+
+# Q3 #4: knowledge:<sid> reference must resolve to a real section
+must_cite_evidence:
+  - source_prefix: knowledge
+    description: photon / cte 関連の知識引用が望ましい
+  - section_id_in: [photon, sql_patterns, cte_recompute, photon_oom]
+    description: photon 系セクションのいずれかを引用
+
+forbidden_evidence_claim:
+  - description: knowledge_section_id に存在しない sid を引用してはいけない
+    pattern: "knowledge:made_up"
+
+forbidden_claims:
+  - id: temp_view_for_cte
+    description: TEMP VIEW で CTE を代替する推奨は禁止 (v5.16 fix)
+
+must_have_actions:
+  - target: photon_blocker
+    type: rewrite
+    keyword: Photon
+
+expected_l3_min: 4
+expected_recall_min: 0.85
+expected_q3_min: 0.90
+
+notes: |
+  W3 #6 evidence_grounding case: knowledge_section_id 整合性。
+  Q3 valid_knowledge_section_ratio が 100% を維持することを担保。

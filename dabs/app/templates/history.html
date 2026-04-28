@@ -13,6 +13,9 @@
             <a href="/compare" class="btn btn-sm" style="background:hsl(var(--primary)); color:hsl(var(--primary-foreground)); border:none; text-decoration:none;">
                 <i class="bi bi-arrow-left-right"></i> {{ _('Compare') }}
             </a>
+            <a href="/feedback/export" class="btn btn-sm" style="background:hsl(var(--info) / 0.15); color:hsl(var(--info)); border:1px solid hsl(var(--info) / 0.4); text-decoration:none; font-weight:600;" title="{{ _('Open the bulk feedback ZIP export page') }}">
+                <i class="bi bi-box-seam"></i> {{ _('All feedback ZIP') }}
+            </a>
         </div>
     </div>
 
@@ -239,7 +242,7 @@ function renderPage() {
             <td style="padding:0.4rem; text-align:center;">${row.critical_alert_count>0?'<span style="color:hsl(var(--destructive));font-weight:600;">'+row.critical_alert_count+'</span>':'-'}</td>
             <td style="padding:0.4rem; text-align:center;">${row.lang ? '<span style="font-size:0.65rem; padding:0.1rem 0.35rem; border-radius:3px; background:hsl(var(--primary)/0.1); color:hsl(var(--primary)); font-weight:600;">' + esc(row.lang).toUpperCase() + '</span>' : '-'}</td>
             <td style="padding:0.4rem; text-align:center;" title="${row.has_explain === true ? '{{ _('EXPLAIN attached') }}' : row.has_explain === false ? '{{ _('No EXPLAIN attached') }}' : '{{ _('Unknown (legacy analysis)') }}'}">${row.has_explain === true ? '<span style="color:hsl(var(--success, 142 76% 36%)); font-weight:600;">✓</span>' : row.has_explain === false ? '<span style="color:hsl(var(--muted-foreground));">✗</span>' : '<span style="color:hsl(var(--muted-foreground));">-</span>'}</td>
-            <td style="padding:0.4rem; text-align:center; white-space:nowrap;"><a href="/shared/${row.analysis_id}" style="color:hsl(var(--primary)); text-decoration:none;" title="{{ _('View Report') }}"><i class="bi bi-file-text"></i></a> <a href="/api/v1/history/${row.analysis_id}/download" style="color:hsl(var(--primary)); text-decoration:none; margin-left:0.3rem;" title="{{ _('Download Markdown') }}"><i class="bi bi-download"></i></a></td>
+            <td style="padding:0.4rem; text-align:center; white-space:nowrap;"><a href="/shared/${row.analysis_id}" style="color:hsl(var(--primary)); text-decoration:none;" title="{{ _('View Report') }}"><i class="bi bi-file-text"></i></a> <a href="/rewrite/${row.analysis_id}" style="color:hsl(var(--primary)); text-decoration:none; margin-left:0.3rem;" title="{{ _('Rewrite SQL') }}"><i class="bi bi-pencil-square"></i></a> <a href="/api/v1/history/${row.analysis_id}/download" style="color:hsl(var(--primary)); text-decoration:none; margin-left:0.3rem;" title="{{ _('Download Markdown') }}"><i class="bi bi-download"></i></a></td>
         `;
         tbody.appendChild(tr);
     });

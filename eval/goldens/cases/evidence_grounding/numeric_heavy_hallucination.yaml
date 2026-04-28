@@ -1,0 +1,40 @@
+case_id: numeric_heavy_hallucination_q1
+profile_path: json/xlarge_qp (1).json
+description: "Action.expected_effect / what / why に多数の数値 (% / GB / 倍 / 秒) が出るが、profile evidence にアンカーが取れない hallucinatory action は減点 (W3.5 #4 Codex 推奨)。"
+domain: dbsql
+workload_type: scan_heavy
+expected_severity: high
+
+must_cover_issues:
+  - id: low_file_pruning
+    severity: high
+    keywords: [pruning, データスキッピング]
+
+forbidden_evidence_claim:
+  - description: "Action 内の数値 (例: 30% 改善 / 2 倍高速 / 5GB 削減) は profile evidence に anchor が必要"
+    pattern: "(\\d+\\s*%)|(\\d+\\s*倍)|(\\d+\\s*GB)|(\\d+\\s*秒)"
+    require_anchor: true
+
+forbidden_claims:
+  - id: ungrounded_speculation
+    description: "profile に anchor のない 30% 改善 / 2 倍高速 / 5GB 削減等の予測は禁止"
+
+must_have_actions:
+  - target: clustering_columns
+    type: clustering
+    keyword: CLUSTER BY
+
+expected_l3_min: 4
+expected_recall_min: 0.80
+expected_q3_min: 0.70
+
+# W3.5 #4 specific
+expected_ungrounded_numeric_max: 0.30  # 30% 以下に抑える
+expected_metric_grounded_min: 0.50
+
+notes: |
+  W3.5 #4: numeric-heavy hallucination 検出 case。
+  Q3 ungrounded_numeric_ratio が直接ターゲット。
+  Week 4 で V6_RECOMMENDATION_NO_FORCE_FILL を有効にすれば、
+  根拠不足の数値予測が省略され、この case の ungrounded_numeric が
+  落ちる見込み。

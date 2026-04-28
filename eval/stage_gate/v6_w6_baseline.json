@@ -1,0 +1,71 @@
+{
+  "current_run": "v6_w6_baseline",
+  "baseline_run": "v6_w5_baseline",
+  "stage1_verdict": "pass",
+  "stage2_verdict": "fail",
+  "overall_verdict": "hold",
+  "stage1_violations": [],
+  "stage2_violations": [
+    {
+      "metric": "q3_composite",
+      "current": 0.6422,
+      "target": 0.8,
+      "op": ">="
+    },
+    {
+      "metric": "failure_taxonomy",
+      "current": 0.1758,
+      "target": 0.7,
+      "op": ">="
+    },
+    {
+      "metric": "recall_strict",
+      "current": 0.3065,
+      "target": 0.5,
+      "op": ">="
+    },
+    {
+      "metric": "hallucination_clean",
+      "current": 0.6423,
+      "target": 0.85,
+      "op": ">="
+    },
+    {
+      "metric": "ungrounded_numeric",
+      "current": 0.2224,
+      "target": 0.15,
+      "op": "<="
+    },
+    {
+      "metric": "canonical_parse_failure",
+      "current": 1.0,
+      "target": 0.05,
+      "op": "<="
+    }
+  ],
+  "measured": {
+    "schema_pass": 1.0,
+    "q3_composite": 0.6421967741935484,
+    "actionability_specific": 0.9451612903225807,
+    "failure_taxonomy": 0.17580645161290323,
+    "recall_strict": 0.3064516129032258,
+    "hallucination_clean": 0.6423032258064516,
+    "ungrounded_numeric_avg": 0.22244623655913978,
+    "parse_success_rate": 1.0,
+    "canonical_parse_failure": 1.0,
+    "case_regressions": 0.0
+  },
+  "acceptance": {
+    "schema_pass": 1.0,
+    "q3_composite": 0.8,
+    "actionability_specific": 0.8,
+    "failure_taxonomy": 0.7,
+    "recall_strict": 0.5,
+    "hallucination_clean": 0.85,
+    "ungrounded_numeric_max": 0.15,
+    "parse_success_rate": 0.9,
+    "case_regressions_max": 1,
+    "canonical_parse_failure_max": 0.05
+  },
+  "generated_at": "2026-04-25T12:52:33Z"
+}

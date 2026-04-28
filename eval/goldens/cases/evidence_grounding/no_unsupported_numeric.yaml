@@ -1,0 +1,36 @@
+case_id: no_unsupported_numeric_q1
+profile_path: json/medium_qp (1).json
+description: Action.expected_effect で「30% 改善」「2倍」等の数値予測は、profile evidence に anchor がない限り出してはならない。
+domain: dbsql
+workload_type: scan_heavy
+expected_severity: medium
+
+must_cover_issues:
+  - id: low_cache_hit
+    severity: medium
+    keywords: [cache, キャッシュ]
+
+forbidden_claims:
+  - id: speculative_numeric_prediction
+    description: "profile evidence に anchor のない数値予測は出さない (例: 30% 改善)"
+
+forbidden_evidence_claim:
+  - description: "action.expected_effect / action.what で root のない % / 倍 / 秒 表記は禁止"
+    pattern: "(%|倍|秒)"
+    require_anchor: true
+
+must_have_actions:
+  - target: warm_up
+    type: operational
+    keyword: warm
+
+expected_l3_min: 3
+expected_recall_min: 0.75
+expected_q3_min: 0.85
+expected_ungrounded_numeric_max: 0.10  # 全 Action 合計で 10% 以下
+
+notes: |
+  W3 #6 evidence_grounding case: ungrounded numeric ratio を直接ターゲット。
+  Week 3 で recommendation_no_force_fill flag を on にすれば、根拠不足の
+  数値予測フィールドを LLM が省略するはずで、この case が pass するように
+  なる見込み。

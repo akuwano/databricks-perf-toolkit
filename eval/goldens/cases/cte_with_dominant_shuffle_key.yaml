@@ -1,0 +1,129 @@
+case_id: cte_with_dominant_shuffle_key_q23
+profile_path: json/tpcds_q23.json
+description: |
+  特殊性確認用ケース (specialty check)。CTE 多重参照 + 支配的シャッフルキー +
+  プルーニング不全 + ハッシュリサイズホットスポットの複合で、
+  V5.19.5 が出していた高品質推奨群を V6.0 が部分的に脱落した実例
+  (2026-04-25 観測) を捉える。
+
+  汎用パターン (HC legacy 構文 / TEMP VIEW 推奨など) は
+  `eval/goldens/global_forbidden.yaml` で全ケース共通に検知。
+  このケースは「複合シナリオでも canonical issue_id が漏れず
+  emit されるか」を pin する役割に絞る。
+
+domain: dbsql
+workload_type: join_heavy
+expected_severity: high
+
+# Codex 指摘 (b)(d) を反映: 解法 family を見るのが目的なので、
+# 具体テーブル/CTE 名を keywords に積まず canonical issue_id 中心に。
+must_cover_issues:
+  - id: shuffle_dominant
+    severity: high
+    keywords: [shuffle, シャッフル]
+    description: シャッフル時間が支配的 (41.4%、CRITICAL alert)
+
+  - id: hash_resize_dominant
+    severity: medium
+    keywords: [hash, ハッシュ, リサイズ]
+    description: ハッシュリサイズホットスポット (58606 回)
+
+  - id: cte_recompute
+    severity: medium
+    keywords: [CTE, 再計算, ReusedExchange]
+    description: CTE が複数回参照され ReusedExchange なし
+
+  - id: low_file_pruning
+    severity: high
+    keywords: [pruning, プルーニング]
+    description: 大規模テーブルでファイルプルーニング不足
+
+  - id: decimal_heavy_aggregate
+    severity: medium
+    keywords: [DECIMAL, decimal, DESCRIBE TABLE, 型最適化]
+    description: |
+      Heavy aggregate (peak >= 100 GB) with arithmetic on potentially wide
+      DECIMAL columns. 2026-04-26 V6 alert coverage expansion で rule-based
+      化された退行検知ポイント (V5 が出していて V6 が脱落していた観点)。
+
+# truly-global な forbidden (delta.feature.hierarchicalClustering /
+# WITH (HIERARCHICAL CLUSTERING / temp view) は global_forbidden.yaml
+# 経由で適用されるためここには書かない。
+# このケース固有 (federation/Serverless 系) のみここに残す。
+forbidden_claims:
+  - id: federation
+    description: federation クエリではないので federation 関連の提案は禁止
+
+# Codex 指摘 (d): 「特定解法必須」ではなく「remedy family のいずれか」を
+# 見るべき。must_have_actions は keyword を解法 family レベルに緩める。
+# Q23 固有の table/CTE/column 名 (ss_customer_sk / d_year /
+# best_ss_customer / frequent_ss_items) は keyword から除外し、
+# 「期待された方向性が報告に出ているか」のみを判定する。
+must_have_actions:
+  - target: shuffle_key_clustering_remedy
+    type: clustering
+    keyword: CLUSTER BY
+    description: |
+      支配的シャッフルキーに対する clustering family の remediation
+      (CLUSTER BY 提案、または "already clustered but ineffective" の説明)。
+      具体カラム名は問わず、CLUSTER BY という DDL family が言及されていれば可。
+
+  - target: cte_materialization_remedy
+    type: rewrite
+    keyword: CTAS
+    description: |
+      CTE 多重参照に対する single-materialization family
+      (CTAS / Delta 物理化 / クエリ書き換え / ReusedExchange 確認)。
+      keyword="CTAS" としているが、TEMP VIEW の global forbidden 側で
+      "TEMP VIEW で代替可能" の幻覚は別途検知される。
+
+  - target: scan_pruning_remedy
+    type: rewrite
+    keyword: フィルタ
+    description: |
+      プルーニング不全に対する Filter Early / 列削減 / クラスタリングの
+      いずれかの remedy family。"フィルタ" / "filter" を緩く検知。
+
+  - target: type_review_for_heavy_agg
+    type: investigation
+    keyword: DECIMAL
+    description: |
+      大容量シャッフル/集約 (>10 GB) 検出時の DECIMAL/数値型妥当性確認。
+      DESCRIBE TABLE / 型最適化のいずれかの言及で可。
+      これは V5 が出していて V6 が落とした典型例 — 残しておくと診断指標になる。
+
+expected_l3_min: 4
+expected_recall_min: 0.75
+
+expected_failure_categories:
+  forbidden:
+    - parse_failure
+    - missing_critical
+  allow_max:
+    over_recommendation: 1
+
+# 旧 must_have_actions の Q23 specifics (frequent_ss_items / best_ss_customer /
+# ss_customer_sk / d_year / UNION ALL など) は notes に降格。
+# CI 上の合否判定からは外すが、なぜこのケースを採用したかの記録として残す。
+notes: |
+  V5.19.5 vs V6.0 退行調査 (2026-04-25) で発見された実本番退行ケース。
+  以下は Q23 固有の観察事実 (CI 合否には使わない、ドキュメント目的):
+
+  - Node #58357: ss_customer_sk shuffle 212.8 GB written, 401 MB/part
+  - frequent_ss_items / best_ss_customer 各 CTE が 3 回参照、ReusedExchange なし
+  - best_ss_customer に d_year フィルタが無く、max_store_sales のスコープと不一致
+  - ss_quantity * ss_sales_price 等の DECIMAL 乗算が複数 CTE で発生
+  - store_sales_delta_lc プルーニング 28.1% (大規模テーブルなのに低効率)
+
+  V5 が出していて V6 が脱落した推奨:
+  - DECIMAL 最適化検討 → must_have_actions[type_review_for_heavy_agg]
+  - 支配的シャッフルキーの LC 追加 → must_have_actions[shuffle_key_clustering_remedy]
+  - Filter Early (best_ss_customer) → must_have_actions[scan_pruning_remedy]
+
+  Codex 独立評価 (2026-04-25, 2 回) より:
+  - 主因仮説は knowledge 制限だけでなく canonical_schema 圧縮 + knowledge 不整合の複合
+  - "特定解法必須" の golden 設計は過剰拘束、remedy family ベースに緩めた
+  - 真の global 禁止 (HC legacy / TEMP VIEW) は global_forbidden.yaml に分離
+
+  汎用化されていない退行検知は eval/diff_runner.py での
+  「V5 vs V6 直接 diff」スコアラーで補完予定 (Codex 推奨 (e))。

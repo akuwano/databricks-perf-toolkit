@@ -1274,6 +1274,98 @@ def _build_hier_clustering(ctx: Context) -> list[ActionCard]:
 # ---------------------------------------------------------------------------
 
 
+# ---------------------------------------------------------------------------
+# 48  decimal_heavy_aggregate — wide DECIMAL arithmetic in heavy aggregate
+#
+# Promotes the V5-only LLM-emitted "DECIMAL type review" recommendation to
+# a deterministic rule (Codex (e) follow-up, 2026-04-26). bottleneck.py
+# sets ``indicators.decimal_heavy_aggregate`` when a node with peak agg
+# memory >= 100 GB has aggregate expressions containing arithmetic. This
+# card converts that flag into an ActionCard with a DESCRIBE TABLE +
+# narrow-type fix template.
+# ---------------------------------------------------------------------------
+
+
+def _detect_decimal_heavy_aggregate(ctx: Context) -> bool:
+    return bool(getattr(ctx.indicators, "decimal_heavy_aggregate", False))
+
+
+def _build_decimal_heavy_aggregate(ctx: Context) -> list[ActionCard]:
+    bi = ctx.indicators
+    examples = list(getattr(bi, "decimal_heavy_aggregate_examples", []) or [])
+    if not examples:
+        return []
+
+    sample_node, sample_expr = examples[0]
+    target = ctx.lc_target_table or ctx.primary_table or "<heavy_table>"
+
+    evidence_lines = [
+        _(
+            "Aggregate with arithmetic on Node #{nid}: `{expr}`"
+        ).format(nid=sample_node, expr=sample_expr),
+    ]
+    if len(examples) > 1:
+        evidence_lines.append(
+            _("Additional nodes with arithmetic aggregates: {n} more").format(
+                n=len(examples) - 1
+            )
+        )
+    if ctx.top_scanned_tables:
+        names = [t.table_name for t in ctx.top_scanned_tables[:3] if t.table_name]
+        if names:
+            evidence_lines.append(
+                _("Heavy scanned tables: {tables}").format(tables=", ".join(names))
+            )
+
+    fix_sql = (
+        f"-- {_('Confirm DECIMAL precision/scale of the columns in the aggregate expression')}\n"
+        f"DESCRIBE TABLE {target};\n\n"
+        f"-- {_('If a column is DECIMAL(38, 0) and stores integer values only, migrate it')}\n"
+        f"-- ALTER TABLE {target} ALTER COLUMN <col> TYPE BIGINT;\n\n"
+        f"-- {_('If wider precision is required, narrow rather than keeping DECIMAL(38, x)')}\n"
+        f"-- ALTER TABLE {target} ALTER COLUMN <col> TYPE DECIMAL(18, 2);"
+    )
+
+    card = ActionCard(
+        problem=_(
+            "Heavy aggregate with arithmetic on numeric columns — verify DECIMAL precision"
+        ),
+        evidence=evidence_lines,
+        likely_cause=_(
+            "Arithmetic (* / + / -) on DECIMAL(38, x) columns implicitly widens the "
+            "result to DECIMAL(38, 18). At this aggregate scale, the widening "
+            "inflates per-row CPU and hash-table memory significantly. If the "
+            "columns are integer-valued in practice (counts, quantities), "
+            "migrating to INT/BIGINT eliminates the widening and enables faster "
+            "Photon SIMD paths."
+        ),
+        fix=_(
+            "Use DESCRIBE TABLE on the heaviest scanned table(s) to confirm DECIMAL "
+            "precision/scale. If a column is DECIMAL(38, 0) but holds integers, "
+            "migrate to INT/BIGINT. If wider precision is required, narrow it "
+            "(e.g., DECIMAL(18, 2)) rather than retaining DECIMAL(38, *)."
+        ),
+        fix_sql=fix_sql,
+        expected_impact="medium",
+        effort="medium",
+        validation_metric=_("Aggregate peak memory and hash-table resize count reduced"),
+        risk="medium",
+        risk_reason=_(
+            "Type changes propagate to JOIN counterparts and downstream consumers. "
+            "Coordinate the change across all tables that share the column."
+        ),
+        verification_steps=[
+            {"metric": "agg_peak_memory_bytes", "expected": _("Reduced after type change")},
+            {"metric": "hash_table_resize_count", "expected": _("Reduced if widening was the cause")},
+        ],
+        root_cause_group="data_type",
+        coverage_category="DATA_TYPE",
+        severity="MEDIUM",
+    )
+    _assign_priority(card, 48)
+    return [card]
+
+
 def _detect_hash_resize(ctx: Context) -> bool:
     bi = ctx.indicators
     has_join = bool(ctx.join_info) or (
@@ -2095,6 +2187,12 @@ CARDS: tuple[CardDef, ...] = (
     CardDef("non_photon_join", 60, _detect_non_photon_join, _build_non_photon_join),
     CardDef("hier_clustering", 55, _detect_hier_clustering, _build_hier_clustering),
     CardDef("hash_resize", 50, _detect_hash_resize, _build_hash_resize),
+    CardDef(
+        "decimal_heavy_aggregate",
+        48,
+        _detect_decimal_heavy_aggregate,
+        _build_decimal_heavy_aggregate,
+    ),
     CardDef("aqe_absorbed", 45, _detect_aqe_absorbed, _build_aqe_absorbed),
     CardDef("cte_multi_ref", 40, _detect_cte_multi_ref, _build_cte_multi_ref),
     CardDef("investigate_dist", 38, _detect_investigate_dist, _build_investigate_dist),

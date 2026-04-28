@@ -1,6 +1,28 @@
 # DBSQL Profiler Analyzer ドキュメント
 
-v5.19.0 現行仕様のドキュメント索引。
+**現行: v6.6.0** (`refactor/v6-quality` ブランチ)。V6 (品質基盤リファクタ) の
+仕様は [`v6-spec.md`](v6-spec.md) と [`v6/`](v6/) ディレクトリに集約。
+
+## はじめての方は
+
+1. **新しい開発者**: [`v6/getting-started.md`](v6/getting-started.md) ← 1 ページ onboarding
+2. **品質モデルを知りたい**: [`v6/five-layer-feedback.md`](v6/five-layer-feedback.md) ← L1-L5 解説
+3. **過去版から移行**: [`v5-vs-v6.md`](v5-vs-v6.md) ← V5.19 → V6.x の差分
+
+## V6 ドキュメント (品質基盤リファクタ)
+
+| ドキュメント | 内容 |
+|-------------|------|
+| [`v6/getting-started.md`](v6/getting-started.md) | **開発者 onboarding** (初日に読む順序、主要モジュール、debug シナリオ) |
+| [`v6/five-layer-feedback.md`](v6/five-layer-feedback.md) | **5 層品質モデル** (L1 rule_echo / L2 invariants / L3 drift / L4 panel / L5 customer feedback) |
+| [`v6-spec.md`](v6-spec.md) | V6 仕様総論 (canonical schema / 8 flags / scorers / acceptance gate) |
+| [`v5-vs-v6.md`](v5-vs-v6.md) | V5.19 と V6.x の差分 (新機能 / 削除 / 互換マトリクス / 移行ガイド) |
+| [`v6/README.md`](v6/README.md) | V6 ドキュメント索引 (設計 15 件 / モジュール 23+ / ロードマップ) |
+| [`v6/output_contract.md`](v6/output_contract.md) | canonical Report v6.0 schema policy |
+| [`v6/operations.md`](v6/operations.md) | V6 運用ガイド — 評価基盤の使い分けシナリオ (A-F) |
+| [`v6/api-endpoints.md`](v6/api-endpoints.md) | V6 デバッグ・運用エンドポイントリファレンス (curl 例) |
+| [`eval/v6_acceptance_policy.md`](eval/v6_acceptance_policy.md) | V6 採用判定の正本 (Stage 1+2 閾値) |
+| [`eval/llm_acceptance_runbook.md`](eval/llm_acceptance_runbook.md) | LLM 込み acceptance 実走手順 |
 
 ## 設計ドキュメント (新構成)
 
@@ -34,7 +56,22 @@ v5.19.0 現行仕様のドキュメント索引。
 
 ## 対象バージョン
 
-本 docs セットは v5.19.0 を対象とする。版履歴の単一ソースはこの節とし、各個別ドキュメントでは必要に応じて本ファイルを参照する。
+本 docs セットは **v6.6.0** を対象とする。版履歴の単一ソースはこの節とし、各個別ドキュメントでは必要に応じて本ファイルを参照する。
+
+### V6 系 (`refactor/v6-quality`)
+
+| 版 | 主要変更 |
+|---|---|
+| v6.0.0 | dev deploy: canonical schema (R4) + 7 V6 flag + Q3/Q4/Q5/R10 scorer + R5 acceptance + V6.1 SQL skeleton |
+| v6.1.0 | rule-based `decimal_heavy_aggregate` ActionCard 追加 + Q23 退行修正 + golden 拡充 |
+| v6.2.0 | 5-layer L1 (rule_echo) + L2 (invariants) + L5 feedback box (per-Action thumbs / 欠落申告) |
+| v6.3.0 | per-action 改善要望 UI (各 ActionCard 横の💡 + dropdown) |
+| v6.4.0 | L5 Phase 1: per-analysis ZIP export + HMAC signed token + redaction |
+| v6.5.0 | L5 Phase 1.5: bulk ZIP (admin gate / orphan_reason / vendor_inbox 設計) |
+| v6.5.x | i18n 整理 (67 JA-msgid → EN msgid + ja.po 訳) + UI 文言調整 |
+| v6.6.0 | Top Alerts compact (Section 1 統合 + issue-tag 参照) |
+
+### V5 系 (legacy)
 
 | 版 | 主要変更 |
 |---|---|
@@ -68,7 +105,7 @@ v5.19.0 現行仕様のドキュメント索引。
 
 ## コード参照の表記
 
-本 docs では `file_path:line_number` 形式でソースコードを参照する。現行行番号の基準は v5.19.0。
+本 docs では `file_path:line_number` 形式でソースコードを参照する。現行行番号の基準は v6.6.0。
 
 ## 貢献
 

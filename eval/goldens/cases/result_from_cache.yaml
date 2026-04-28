@@ -1,0 +1,29 @@
+case_id: result_from_cache_q1
+profile_path: json/query-profile_01f0f6d3-5d90-1dd6-848d-a1f29c2a68f0.json
+description: result_from_cache=true のクエリ。レイテンシ系アラートは抑制すべき negative case。
+domain: dbsql
+workload_type: short_query
+expected_severity: low
+
+must_cover_issues:
+  - id: result_from_cache_detected
+    severity: low
+    keywords: [result cache, 結果キャッシュ, cached]
+    description: 結果キャッシュヒットを認識すること
+
+forbidden_claims:
+  - id: latency_alert_when_cached
+    description: 結果キャッシュ済みなのに「レイテンシ改善が必要」と alert するのは禁止
+  - id: spill_alert_when_cached
+    description: 実行されていないので spill alert は禁止
+  - id: shuffle_alert_when_cached
+    description: 実行されていないので shuffle alert は禁止
+
+must_have_actions: []  # 重大対応不要
+
+expected_l3_min: 4
+expected_recall_min: 1.0
+
+notes: |
+  v4.33+ の「result_from_cache 時の分析抑制」を回帰防止する case。
+  TODO.md でも未着手項目として記載されている領域なので、goldens で進捗を可視化。

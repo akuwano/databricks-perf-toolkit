@@ -1,0 +1,42 @@
+case_id: serverless_specific_q1
+profile_path: json/query-profile_01f04372-349e-1f00-a2ec-13deb1aecb74.json
+description: Serverless warehouse 実行で、classic warehouse の設定推奨は不適切なケース。
+domain: dbsql
+workload_type: scan_heavy
+expected_severity: medium
+
+must_cover_issues:
+  - id: serverless_detected
+    severity: low
+    keywords: [serverless, サーバーレス]
+    description: Serverless warehouse と認識すること
+
+  - id: cluster_underutilization
+    severity: medium
+    keywords: [parallelism, 並列度, utilization]
+    description: 並列度活用不足の可能性
+
+forbidden_claims:
+  - id: classic_only_config
+    description: serverless で機能しない設定 (autoBroadcastJoinThreshold 上書き等) は禁止
+  - id: spark_param_tuning_unsupported
+    description: serverless で許可されない spark param 推奨は禁止
+  - id: broadcast_hint_force
+    description: serverless で broadcast hint 強制は不適切
+
+must_have_actions:
+  - target: serverless_compatible_only
+    type: configuration
+    keyword: serverless
+    description: Serverless 互換の設定のみ推奨
+  - target: query_pattern
+    type: rewrite
+    keyword: rewrite
+    description: serverless で効くクエリパターンの推奨
+
+expected_l3_min: 4
+expected_recall_min: 0.85
+
+notes: |
+  v4.13.5 の serverless detection と v5.18 の suppression を回帰防止。
+  knowledge/dbsql_serverless.md の制約を violate する提案を出さないこと。

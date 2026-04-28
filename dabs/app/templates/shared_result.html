@@ -24,6 +24,24 @@
             </span>
         </div>
         <div class="no-print" style="display: flex; gap: 0.5rem;">
+            {# v6.7.8 (Codex Plan C — extends to /shared): primary
+               CTA in the top action row so the Rewrite Workspace is
+               discoverable without opening the chat panel. Mirrors
+               the result.html sidebar CTA. #}
+            {% if analysis and analysis.query_metrics.query_text %}
+            <a href="/rewrite/{{ analysis_id }}" target="_blank" rel="noopener"
+               style="padding: 0.4rem 0.75rem; border-radius: var(--radius); background: hsl(var(--primary)); color: hsl(var(--primary-foreground)); border: 1px solid hsl(var(--primary)); cursor: pointer; font-size: 0.8rem; font-weight: 600; text-decoration: none; display: inline-flex; align-items: center; gap: 0.3rem;"
+               title="{{ _('Open the Rewrite workspace: side-by-side diff, validate, refine, persisted history') }}">
+                <i class="bi bi-pencil-square"></i> {{ _('Rewrite SQL') }}
+                <i class="bi bi-arrow-right"></i>
+            </a>
+            {% endif %}
+            <button onclick="scrollToFeedback()" style="padding: 0.4rem 0.75rem; border-radius: var(--radius); background: hsl(var(--info) / 0.15); color: hsl(var(--info)); border: 1px solid hsl(var(--info) / 0.4); cursor: pointer; font-size: 0.8rem; font-weight: 600;" title="{{ _('Jump to the feedback box at the bottom of the report') }}">
+                <i class="bi bi-lightbulb"></i> {{ _('Feedback') }}
+            </button>
+            <button onclick="openBundleModal()" style="padding: 0.4rem 0.75rem; border-radius: var(--radius); background: hsl(var(--secondary)); color: hsl(var(--secondary-foreground)); border: none; cursor: pointer; font-size: 0.8rem;" title="{{ _('Download report + feedback as a ZIP and forward it') }}">
+                <i class="bi bi-box-seam"></i> {{ _('ZIP') }}
+            </button>
             <button onclick="copyShareLink()" style="padding: 0.4rem 0.75rem; border-radius: var(--radius); background: hsl(var(--secondary)); color: hsl(var(--secondary-foreground)); border: none; cursor: pointer; font-size: 0.8rem;" title="Copy share link">
                 <i class="bi bi-link-45deg"></i> <span id="copy-link-text">{{ _('Copy Link') }}</span>
             </button>
@@ -83,6 +101,85 @@
         {{ _('No report available for this analysis.') }}
     </div>
     {% endif %}
+
+    <!-- L5 (2026-04-26): フィードバック box (whole-report 欠落申告 + per-action 改善要望) -->
+    {% if report %}
+    <div class="card no-print" id="feedback-box" style="margin-top: 1rem; padding: 1.25rem; background: hsl(var(--info) / 0.05); border: 1px solid hsl(var(--info) / 0.3);">
+        <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.75rem;">
+            <i class="bi bi-lightbulb" style="color: hsl(var(--info)); font-size: 1.1rem;"></i>
+            <strong style="font-size: 0.95rem;">{{ _('Feedback on this report') }}</strong>
+        </div>
+        <p style="font-size: 0.85rem; color: hsl(var(--muted-foreground)); margin-bottom: 0.85rem;">
+            {{ _('Use this form for both whole-report omissions and per-action improvement requests. We review submissions monthly.') }}
+        </p>
+        <div style="display: grid; grid-template-columns: 1fr; gap: 0.6rem;">
+            <!-- 対象アクション (任意) -->
+            <select id="feedback-target" class="form-control" style="font-size: 0.85rem;">
+                <option value="" selected>{{ _('Target: whole report (optional)') }}</option>
+                <!-- 個別アクションは renderActionFeedbackLinks() が動的に追加 -->
+            </select>
+            <select id="feedback-category" class="form-control" style="font-size: 0.85rem;">
+                <option value="" disabled selected>{{ _('Select a category...') }}</option>
+                <!-- 値は /api/v1/feedback/categories から動的に埋める -->
+            </select>
+            <textarea id="feedback-text" class="form-control" rows="3" placeholder="{{ _('Describe what is missing or how you would have liked the recommendation to read') }}" style="font-size: 0.85rem; resize: vertical;"></textarea>
+            <div style="display: flex; justify-content: flex-end; align-items: center; gap: 0.75rem;">
+                <span id="feedback-status" style="font-size: 0.8rem; color: hsl(var(--muted-foreground));"></span>
+                <button id="feedback-submit" onclick="submitFeedback()" style="padding: 0.4rem 0.95rem; border-radius: var(--radius); background: hsl(var(--primary)); color: hsl(var(--primary-foreground)); border: none; cursor: pointer; font-size: 0.85rem;">
+                    <i class="bi bi-send"></i> {{ _('Submit') }}
+                </button>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<!-- L5 Phase 1: bundle download modal (Codex spec) -->
+<div id="bundleModalBackdrop" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 1500; align-items: center; justify-content: center;" class="no-print">
+    <div style="background: hsl(var(--background)); border-radius: 8px; max-width: 540px; width: calc(100% - 2rem); padding: 1.5rem; box-shadow: 0 12px 32px rgba(0,0,0,0.3); border: 1px solid hsl(var(--border));">
+        <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.75rem;">
+            <i class="bi bi-box-seam" style="color: hsl(var(--info)); font-size: 1.2rem;"></i>
+            <strong style="font-size: 1rem;">{{ _('Download report + feedback as a ZIP') }}</strong>
+        </div>
+        <p style="font-size: 0.85rem; color: hsl(var(--muted-foreground)); margin-bottom: 0.85rem;">
+            {{ _('Please review the contents on your end before forwarding.') }}
+        </p>
+        <div style="background: hsl(var(--muted) / 0.4); border-radius: var(--radius); padding: 0.75rem; margin-bottom: 0.85rem; font-size: 0.8rem;">
+            <div style="font-weight: 600; margin-bottom: 0.4rem;">{{ _('Always included:') }}</div>
+            <ul style="margin: 0 0 0 1rem; padding: 0; line-height: 1.6;">
+                <li>{{ _('Report (report.md)') }}</li>
+                <li>{{ _('Structured report (canonical_report.json)') }}</li>
+                <li>{{ _('Feedback (feedback.json — emails are hashed)') }}</li>
+                <li>{{ _('Literal-redacted profile (profile_redacted.json)') }}</li>
+                <li>{{ _('Checksums + README (notes that this is not full anonymization)') }}</li>
+            </ul>
+            <div style="margin-top: 0.5rem; color: hsl(var(--warning)); font-weight: 500;">
+                {{ _('⚠ "完全匿名化" ではありません。テーブル名・列名は保持されます。') }}
+            </div>
+        </div>
+        <label style="display: flex; align-items: flex-start; gap: 0.5rem; padding: 0.6rem; border: 1px solid hsl(var(--border)); border-radius: var(--radius); margin-bottom: 0.6rem; font-size: 0.85rem; cursor: pointer;">
+            <input type="checkbox" id="bundleIncludeProfile" style="margin-top: 0.2rem;">
+            <span>
+                <strong>{{ _('Include the raw profile (profile.json)') }}</strong><br>
+                <span style="color: hsl(var(--muted-foreground)); font-size: 0.78rem;">
+                    {{ _('Includes the full SQL, literal values, clustering bounds, etc. Turn on only when problem reproduction is required.') }}
+                </span>
+            </span>
+        </label>
+        <label style="display: flex; align-items: flex-start; gap: 0.5rem; padding: 0.6rem; border: 1px solid hsl(var(--border)); border-radius: var(--radius); margin-bottom: 0.85rem; font-size: 0.85rem; cursor: pointer;">
+            <input type="checkbox" id="bundleConfirmReview" style="margin-top: 0.2rem;">
+            <span>{{ _('I have reviewed the contents and confirm forwarding.') }}</span>
+        </label>
+        <div style="display: flex; justify-content: flex-end; align-items: center; gap: 0.5rem;">
+            <span id="bundleStatus" style="font-size: 0.8rem; margin-right: auto; color: hsl(var(--muted-foreground));"></span>
+            <button onclick="closeBundleModal()" style="padding: 0.4rem 0.95rem; border-radius: var(--radius); background: hsl(var(--secondary)); color: hsl(var(--secondary-foreground)); border: none; cursor: pointer; font-size: 0.85rem;">
+                {{ _('Cancel') }}
+            </button>
+            <button id="bundleDownloadBtn" onclick="confirmBundleDownload()" disabled style="padding: 0.4rem 0.95rem; border-radius: var(--radius); background: hsl(var(--primary)); color: hsl(var(--primary-foreground)); border: none; cursor: pointer; font-size: 0.85rem; opacity: 0.5;">
+                <i class="bi bi-download"></i> {{ _('Download') }}
+            </button>
+        </div>
+    </div>
 </div>
 
 <!-- Genie Chat Toggle -->
@@ -98,12 +195,17 @@
         <div style="display:flex; gap:0.5rem; align-items:center;">
             <select id="chatModel" style="background:transparent; color:hsl(var(--muted-foreground)); border:1px solid hsl(var(--border)); border-radius:4px; padding:0.15rem 0.3rem; font-size:0.7rem; max-width:140px;" title="{{ _('Model for Rewrite') }}">
                 {% for model in available_models|default([]) %}
-                <option value="{{ model.name }}" {% if 'sonnet' in model.name %}selected{% endif %}>{{ model.display_name }}</option>
+                <option value="{{ model.name }}" {% if 'sonnet-4-6' in model.name %}selected{% endif %}>{{ model.display_name }}</option>
                 {% endfor %}
             </select>
             <button id="rewriteBtn" onclick="startRewrite()" style="padding:0.15rem 0.5rem; border-radius:4px; border:1px solid hsl(var(--primary)/0.5); background:hsl(var(--primary)/0.1); color:hsl(var(--primary)); cursor:pointer; font-size:0.7rem; font-weight:600;" title="{{ _('Generate optimized SQL from analysis') }}">
                 <i class="bi bi-pencil-square"></i> {{ _('Rewrite') }}
             </button>
+            <a href="/rewrite/{{ analysis_id }}" target="_blank" rel="noopener"
+               style="padding:0.15rem 0.5rem; border-radius:4px; border:1px solid hsl(var(--border)); color:hsl(var(--muted-foreground)); text-decoration:none; font-size:0.7rem;"
+               title="{{ _('Open dedicated rewrite workspace (side-by-side, history)') }}">
+                <i class="bi bi-box-arrow-up-right"></i>
+            </a>
             <button onclick="clearChat()" style="background:none; border:none; cursor:pointer; color:hsl(var(--muted-foreground)); font-size:0.8rem;" title="{{ _('New Conversation') }}">
                 <i class="bi bi-arrow-counterclockwise"></i>
             </button>
@@ -152,6 +254,10 @@ document.addEventListener('DOMContentLoaded', function() {
             const html = marked.parse(reportMarkdown);
             content.innerHTML = typeof DOMPurify !== 'undefined' ? DOMPurify.sanitize(html) : html;
             renderMermaidBlocks(content, 'mermaid-shared');
+            // L5: 「3. 推奨アクション」セクション配下の各アクション
+            // 見出し ("### 1. ...") に「💡 改善要望」リンクを動的に注入
+            // し、フィードバック対象 dropdown の選択肢にも追加する。
+            renderActionFeedbackLinks(content);
             if (typeof hljs !== 'undefined') {
                 content.querySelectorAll('pre code').forEach(block => hljs.highlightElement(block));
             }
@@ -493,13 +599,38 @@ async function startRewrite() {
                 const _codeBlocks = _tmpDiv.querySelectorAll('pre code');
                 if (_codeBlocks.length) _lastRewriteSql = _codeBlocks[_codeBlocks.length - 1].textContent;
                 const currentSql = _lastRewriteSql;
+                // v6.7.9: server tells us whether the LLM emitted a
+                // diff patch (token_constrained mode) or a full SQL.
+                // Diff outputs must NOT be auto-validated (sqlglot
+                // would fail) and refine must be disabled (the patch
+                // can't be fed back as previous_rewrite — Codex Q5).
+                const isDiff = data.output_format === 'diff';
+                if (data.token_constrained) {
+                    const dbanner = '<div style="padding:0.4rem 0.6rem; margin-bottom:0.5rem; border-radius:4px; background:hsl(var(--warning,40 90% 50%)/0.15); border:1px solid hsl(var(--warning,40 90% 50%)/0.3); font-size:0.75rem;">'
+                        + '<i class="bi bi-exclamation-triangle"></i> '
+                        + '{{ _("Query exceeds the model output budget — output emitted as a diff patch with manual merge steps.") }}'
+                        + '</div>';
+                    rewriteHtml = dbanner + rewriteHtml;
+                }
 
-                // Refine (optional) + validation status below result
-                rewriteHtml += '<div style="margin-top:0.5rem; display:flex; justify-content:flex-end; gap:0.3rem; align-items:center;" data-rewrite-actions>'
-                    + '<button onclick="_showFixInput(this)" style="padding:0.2rem 0.5rem; border-radius:4px; border:1px solid hsl(var(--border)); background:hsl(var(--muted)/0.3); color:hsl(var(--muted-foreground)); cursor:pointer; font-size:0.7rem;">'
+                // v6.7.7 (Codex review): always link out to the
+                // dedicated Rewrite Workspace from the chat preview.
+                // The chat bubble is fine for "did it work?" but the
+                // workspace is where validation / refine chain /
+                // persisted history actually live.
+                const refineBtnAttr = isDiff
+                    ? 'disabled title="{{ _("Refine is disabled for diff outputs — apply the patch first.") }}" style="padding:0.2rem 0.5rem; border-radius:4px; border:1px solid hsl(var(--border)); background:hsl(var(--muted)/0.15); color:hsl(var(--muted-foreground)); cursor:not-allowed; font-size:0.7rem; opacity:0.6;"'
+                    : 'onclick="_showFixInput(this)" style="padding:0.2rem 0.5rem; border-radius:4px; border:1px solid hsl(var(--border)); background:hsl(var(--muted)/0.3); color:hsl(var(--muted-foreground)); cursor:pointer; font-size:0.7rem;"';
+                rewriteHtml += '<div style="margin-top:0.5rem; display:flex; justify-content:space-between; gap:0.3rem; align-items:center;" data-rewrite-actions>'
+                    + '<a href="/rewrite/{{ analysis_id }}" target="_blank" rel="noopener" style="padding:0.2rem 0.5rem; border-radius:4px; border:1px solid hsl(var(--primary)/0.5); background:hsl(var(--primary)/0.1); color:hsl(var(--primary)); text-decoration:none; font-size:0.7rem; font-weight:600;">'
+                    + '<i class="bi bi-box-arrow-up-right"></i> {{ _("Open in Rewrite Workspace") }}'
+                    + '</a>'
+                    + '<button ' + refineBtnAttr + '>'
                     + '<i class="bi bi-pencil"></i> {{ _("Refine") }}'
                     + '</button></div>'
-                    + '<div data-rewrite-validate-status style="font-size:0.7rem; margin-top:0.35rem; min-height:1em;"></div>';
+                    + '<div data-rewrite-validate-status style="font-size:0.7rem; margin-top:0.35rem; min-height:1em;">'
+                    + (isDiff ? '<span style="color:hsl(var(--muted-foreground));">{{ _("Diff output — validate after applying the patch.") }}</span>' : '')
+                    + '</div>';
 
                 _replaceChatMsg(thinkingId, rewriteHtml);
                 const el = document.getElementById(thinkingId);
@@ -507,7 +638,9 @@ async function startRewrite() {
                     if (typeof hljs !== 'undefined') el.querySelectorAll('pre code').forEach(block => hljs.highlightElement(block));
                     if (typeof _addCopyButtons === 'function') _addCopyButtons(el);
                 }
-                _validateRewrite(thinkingId, currentSql);
+                if (!isDiff) {
+                    _validateRewrite(thinkingId, currentSql);
+                }
                 break;
             } catch(pe) { continue; }
         }
@@ -669,6 +802,257 @@ async function _validateRewrite(scopeMsgId, sql) {
     } catch(e) {
         statusEl.style.color = 'hsl(var(--destructive))';
         statusEl.innerHTML = '<i class="bi bi-x-circle-fill"></i> ' + esc(e.message);
+    }
+}
+
+// ─────────────────────────────────────────────────────────────────────
+// L5 feedback box (2026-04-26): 欠落申告
+// ─────────────────────────────────────────────────────────────────────
+async function loadFeedbackCategories() {
+    const sel = document.getElementById('feedback-category');
+    if (!sel) return;
+    try {
+        const res = await fetch('/api/v1/feedback/categories');
+        if (!res.ok) return;
+        const data = await res.json();
+        for (const c of (data.categories || [])) {
+            const opt = document.createElement('option');
+            opt.value = c.id;
+            opt.textContent = c.label;
+            sel.appendChild(opt);
+        }
+    } catch(e) { /* silent — feedback box is optional */ }
+}
+
+async function submitFeedback() {
+    const catEl = document.getElementById('feedback-category');
+    const textEl = document.getElementById('feedback-text');
+    const targetEl = document.getElementById('feedback-target');
+    const statusEl = document.getElementById('feedback-status');
+    const submitBtn = document.getElementById('feedback-submit');
+    if (!catEl || !textEl || !statusEl) return;
+
+    const category = catEl.value;
+    const free_text = textEl.value.trim();
+    if (!category) {
+        statusEl.style.color = 'hsl(var(--destructive))';
+        statusEl.textContent = '{{ _('Please select a category.') }}';
+        return;
+    }
+    if (!free_text && category !== 'other') {
+        statusEl.style.color = 'hsl(var(--destructive))';
+        statusEl.textContent = '{{ _('Please enter a description.') }}';
+        return;
+    }
+
+    // target_id が空 = レポート全体 (whole_report 欠落申告)
+    // target_id 非空 = 個別アクション (action 改善要望)
+    const targetId = (targetEl && targetEl.value) ? targetEl.value : '';
+    const targetType = targetId ? 'action' : 'missing';
+    const sentiment = targetId ? 'down' : 'missing';
+
+    submitBtn.disabled = true;
+    statusEl.style.color = 'hsl(var(--muted-foreground))';
+    statusEl.textContent = '{{ _('Sending...') }}';
+    try {
+        const res = await fetch('/api/v1/feedback', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({
+                analysis_id: analysisId || '',
+                target_type: targetType,
+                target_id: targetId,
+                sentiment: sentiment,
+                category,
+                free_text,
+            }),
+        });
+        const data = await res.json();
+        if (!res.ok || !data.ok) {
+            throw new Error(data.error || ('HTTP ' + res.status));
+        }
+        statusEl.style.color = 'hsl(var(--success))';
+        statusEl.innerHTML = '<i class="bi bi-check-circle-fill"></i> {{ _('Sent — thank you.') }}';
+        textEl.value = '';
+        catEl.value = '';
+        if (targetEl) targetEl.value = '';
+    } catch(e) {
+        statusEl.style.color = 'hsl(var(--destructive))';
+        statusEl.textContent = '{{ _('Failed to send: ') }}' + e.message;
+    } finally {
+        submitBtn.disabled = false;
+    }
+}
+
+function scrollToFeedback(targetId, targetTitle) {
+    const box = document.getElementById('feedback-box');
+    if (!box) return;
+    // 個別アクションリンクから呼ばれた場合、対象 dropdown を pre-fill
+    if (targetId) {
+        const targetEl = document.getElementById('feedback-target');
+        if (targetEl) {
+            // Ensure option exists, then select
+            let found = false;
+            for (const opt of targetEl.options) {
+                if (opt.value === targetId) { found = true; break; }
+            }
+            if (!found && targetTitle) {
+                const opt = document.createElement('option');
+                opt.value = targetId;
+                opt.textContent = targetTitle;
+                targetEl.appendChild(opt);
+            }
+            targetEl.value = targetId;
+        }
+    }
+    box.scrollIntoView({behavior: 'smooth', block: 'center'});
+    // 一瞬枠をフラッシュさせて視認性を上げる
+    box.style.transition = 'box-shadow 0.4s ease';
+    box.style.boxShadow = '0 0 0 4px hsl(var(--info) / 0.5)';
+    setTimeout(() => { box.style.boxShadow = ''; }, 1500);
+    // フォーカス: target が設定されていればカテゴリ、なければ target dropdown
+    const focusEl = targetId
+        ? document.getElementById('feedback-category')
+        : document.getElementById('feedback-target');
+    if (focusEl) focusEl.focus();
+}
+
+// L5: レポート markdown 描画後に「### 1. ...」「### 2. ...」のような
+// アクション見出しを検出し、(a) 各見出しの右に「💡 改善要望」リンクを
+// 生やし、(b) フィードバック対象 dropdown に選択肢を追加する。
+function renderActionFeedbackLinks(rootEl) {
+    if (!rootEl) return;
+    const targetSel = document.getElementById('feedback-target');
+    // h3 のうち「### N. xxx」(N は数字) のテキストを持つものをアクションと見なす。
+    // section 7 などで番号付き見出しがある場合はそれも拾う (固有 ID が無いためベストエフォート)。
+    const actionPattern = /^\s*(\d+)\.\s+(.{1,200})$/;
+    const headings = rootEl.querySelectorAll('h3');
+    let count = 0;
+    headings.forEach(function(h) {
+        const text = (h.textContent || '').trim();
+        const m = text.match(actionPattern);
+        if (!m) return;
+        const num = m[1];
+        const title = m[2].slice(0, 80);
+        const targetId = 'action_' + num;
+        // 既に注入済みなら skip (再描画対策)
+        if (h.querySelector('.feedback-action-link')) return;
+
+        const link = document.createElement('a');
+        link.className = 'feedback-action-link no-print';
+        link.href = '#feedback-box';
+        link.textContent = '💡 ' + '{{ _('Improvement request') }}';
+        link.title = '{{ _('Send feedback for this action') }}';
+        link.style.cssText = 'margin-left: 0.6rem; font-size: 0.75rem; font-weight: normal; color: hsl(var(--info)); text-decoration: none; opacity: 0.7;';
+        link.addEventListener('mouseover', () => link.style.opacity = '1');
+        link.addEventListener('mouseout', () => link.style.opacity = '0.7');
+        link.addEventListener('click', function(ev) {
+            ev.preventDefault();
+            scrollToFeedback(targetId, '#' + num + ' ' + title);
+        });
+        h.appendChild(link);
+
+        // dropdown に追加
+        if (targetSel) {
+            const opt = document.createElement('option');
+            opt.value = targetId;
+            opt.textContent = '#' + num + ' ' + title;
+            targetSel.appendChild(opt);
+        }
+        count++;
+    });
+    return count;
+}
+
+document.addEventListener('DOMContentLoaded', loadFeedbackCategories);
+
+// ─────────────────────────────────────────────────────────────────────
+// L5 Phase 1: bundle download modal
+// ─────────────────────────────────────────────────────────────────────
+function openBundleModal() {
+    const back = document.getElementById('bundleModalBackdrop');
+    if (!back) return;
+    // reset state
+    const inc = document.getElementById('bundleIncludeProfile');
+    const conf = document.getElementById('bundleConfirmReview');
+    const btn = document.getElementById('bundleDownloadBtn');
+    const status = document.getElementById('bundleStatus');
+    if (inc) inc.checked = false;
+    if (conf) conf.checked = false;
+    if (status) status.textContent = '';
+    _updateBundleSubmitState();
+    back.style.display = 'flex';
+    if (conf) conf.addEventListener('change', _updateBundleSubmitState);
+    if (inc) inc.addEventListener('change', _updateBundleSubmitState);
+    // Esc / backdrop click closes
+    back.addEventListener('click', function(e) { if (e.target === back) closeBundleModal(); });
+}
+function closeBundleModal() {
+    const back = document.getElementById('bundleModalBackdrop');
+    if (back) back.style.display = 'none';
+}
+function _updateBundleSubmitState() {
+    const conf = document.getElementById('bundleConfirmReview');
+    const btn = document.getElementById('bundleDownloadBtn');
+    if (!btn) return;
+    const ok = !!(conf && conf.checked);
+    btn.disabled = !ok;
+    btn.style.opacity = ok ? '1' : '0.5';
+    btn.style.cursor = ok ? 'pointer' : 'not-allowed';
+}
+async function confirmBundleDownload() {
+    const inc = document.getElementById('bundleIncludeProfile');
+    const status = document.getElementById('bundleStatus');
+    const btn = document.getElementById('bundleDownloadBtn');
+    if (!analysisId) {
+        if (status) {
+            status.style.color = 'hsl(var(--destructive))';
+            status.textContent = '{{ _('analysis_id not found') }}';
+        }
+        return;
+    }
+    if (btn) btn.disabled = true;
+    if (status) {
+        status.style.color = 'hsl(var(--muted-foreground))';
+        status.textContent = '{{ _('Preparing...') }}';
+    }
+    try {
+        // Step 1: get a signed token (5 min)
+        const prep = await fetch('/api/v1/feedback/bundle/' + encodeURIComponent(analysisId) + '/prepare', {
+            method: 'POST',
+        });
+        if (!prep.ok) throw new Error('prepare HTTP ' + prep.status);
+        const prepData = await prep.json();
+        if (!prepData.token) throw new Error('no token issued');
+
+        // Step 2: trigger download via the URL with token + include_profile
+        const includeProfile = !!(inc && inc.checked);
+        const url = '/api/v1/feedback/bundle/' + encodeURIComponent(analysisId)
+                  + '?token=' + encodeURIComponent(prepData.token)
+                  + '&include_profile=' + (includeProfile ? 'true' : 'false');
+        // Use a hidden anchor to preserve filename from Content-Disposition
+        const a = document.createElement('a');
+        a.href = url;
+        a.style.display = 'none';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+
+        if (status) {
+            status.style.color = 'hsl(var(--success))';
+            status.innerHTML = '<i class="bi bi-check-circle-fill"></i> {{ _('Download started') }}';
+        }
+        setTimeout(closeBundleModal, 1500);
+    } catch(e) {
+        if (status) {
+            status.style.color = 'hsl(var(--destructive))';
+            status.textContent = '{{ _('Failed: ') }}' + e.message;
+        }
+    } finally {
+        if (btn) {
+            btn.disabled = false;
+            _updateBundleSubmitState();
+        }
     }
 }
 </script>

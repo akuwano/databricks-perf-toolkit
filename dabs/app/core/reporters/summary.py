@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from ..analyzers.recommendations import quick_win_sort_key
 from ..constants import Severity
 from ..i18n import gettext as _
 from ..models import (
@@ -55,13 +56,27 @@ def generate_rule_based_summary(
         if qm.read_bytes > 0:
             status_line += f" | {_('Total Read')}: **{format_bytes(qm.read_bytes)}**"
         lines.append(status_line + "\n")
+        # Federation banner — surface authoritative detection so readers
+        # do not have to scan the action cards to learn the query is
+        # federated. v6.6.8.
+        if qm.is_federation_query:
+            src = (qm.federation_source_type or "").upper() or _("unknown source")
+            tables = qm.federation_tables or []
+            shown = ", ".join(tables[:3])
+            if len(tables) > 3:
+                shown += f" (+{len(tables) - 3})"
+            fed_line = f"**{_('Source')}**: {_('Lakehouse Federation')} ({src})"
+            if shown:
+                fed_line += f" — {shown}"
+            lines.append(fed_line + "\n")
 
     # Top issue summary
     lines.append(f"{top_alert.message}\n")
 
-    # Top bottlenecks from action cards (up to 2)
+    # Top bottlenecks from action cards (up to 2). v6.6.9: ordered by
+    # quick_win_sort_key (high impact + low effort first).
     if action_cards:
-        top_cards = sorted(action_cards, key=lambda c: c.priority_score, reverse=True)[:2]
+        top_cards = sorted(action_cards, key=quick_win_sort_key)[:2]
         lines.append(f"**{_('Key Findings')}:**\n")
         for card in top_cards:
             impact_label = card.expected_impact.upper() if card.expected_impact else "?"
@@ -107,7 +122,9 @@ def generate_rule_based_recommendations(action_cards: list[ActionCard]) -> str:
         "Priority 3": [],
     }
 
-    for card in sorted(action_cards, key=lambda c: c.priority_score, reverse=True):
+    # v6.6.9: order by quick_win_sort_key so the reader sees the
+    # cheapest-then-highest-impact action first within each bucket.
+    for card in sorted(action_cards, key=quick_win_sort_key):
         if card.expected_impact == "high":
             priority_groups["Priority 1"].append(card)
         elif card.expected_impact == "medium":
@@ -188,9 +205,9 @@ def generate_streaming_executive_summary(
         top_alert = max(alerts, key=lambda a: severity_rank.get(a.severity, 0))
         lines.append(f"{top_alert.message}\n")
 
-    # Top bottlenecks from action cards
+    # Top bottlenecks from action cards. v6.6.9: quick_win_sort_key.
     if action_cards:
-        top_cards = sorted(action_cards, key=lambda c: c.priority_score, reverse=True)[:2]
+        top_cards = sorted(action_cards, key=quick_win_sort_key)[:2]
         lines.append(f"**{_('Key Findings')}:**\n")
         for card in top_cards:
             impact_label = card.expected_impact.upper() if card.expected_impact else "?"
@@ -219,27 +236,24 @@ def generate_top5_recommendations_section(
     to receive its corresponding action card. The earlier 3-cap on
     preserved cards was also removed upstream.
 
-    When ``alerts`` is supplied (already severity-sorted by the caller),
-    each recommended action surfaces a ``→ アラート #N`` reference tag
-    so the reader can see which Top Alert each action solves. The
-    Top-N list is also re-ordered so that actions addressing CRITICAL
-    alerts come before those addressing HIGH/MEDIUM ones.
+    v6.6.9: the upstream ``cards.sort(key=quick_win_sort_key)`` already
+    orders by impact desc → effort asc → priority_score desc — so we
+    keep that ordering here and drop the prior alert-severity rerank.
+    The ``alerts`` argument is still consumed for cross-reference tags
+    (``→ Addresses: …``) but no longer reorders the list.
+
+    When ``alerts`` is supplied, each recommended action surfaces a
+    ``→ アラート #N`` reference tag so the reader can see which Top
+    Alert each action solves.
     """
     if not action_cards:
         return ""
 
     selected_action_cards = selected_action_cards or action_cards[:10]
-
-    # Re-sort Top-5 so CRITICAL-addressing actions surface first when
-    # alert context is available. Ties preserve existing order (impact/
-    # effort / diversity rerank already done upstream).
-    if alerts:
-        from .alert_crossref import alert_severity_rank_for_card
-
-        selected_action_cards = sorted(
-            selected_action_cards,
-            key=lambda c: alert_severity_rank_for_card(c, alerts),
-        )
+    # v6.6.9: enforce quick-win order (impact desc, effort asc,
+    # priority_score desc) at render time so callers passing an
+    # unsorted list still see the same ordering as the registry sort.
+    selected_action_cards = sorted(selected_action_cards, key=quick_win_sort_key)
 
     selected_ids = {id(card) for card in selected_action_cards}
     preserved = [card for card in action_cards if getattr(card, "is_preserved", False)]
@@ -288,15 +302,19 @@ def generate_top5_recommendations_section(
 
 
 def _format_alert_reference(card: ActionCard, alerts: list[Alert] | None) -> str:
-    """Format `  → アラート #2, #4` reference for a card. Empty if no alerts."""
+    """Format the cross-reference tag rendered next to each card.
+
+    Issue-tag references (``  → 対応課題: shuffle, spill``) survive the
+    Top Alerts section being collapsed into the executive-summary
+    subsection. The legacy positional ``  → アラート #2, #4`` form was
+    retired in v6.6.4 along with V6_COMPACT_TOP_ALERTS.
+    """
     if not alerts:
         return ""
-    from .alert_crossref import match_card_to_alert_numbers
 
-    nums = match_card_to_alert_numbers(card, alerts)
-    if nums:
-        rendered = ", ".join(f"#{n}" for n in nums)
-        # "Addresses alert" avoids collision with the existing "Alert"→"注意"
-        # translation which is used as a section-header label.
-        return f"  → {_('Addresses alert')} {rendered}"
+    from .alert_crossref import match_card_to_issue_tags
+
+    tags = match_card_to_issue_tags(card, alerts)
+    if tags:
+        return f"  → {_('Addresses')}: {', '.join(tags)}"
     return f"  → ({_('General recommendation')})"

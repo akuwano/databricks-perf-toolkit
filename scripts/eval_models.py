@@ -3,7 +3,7 @@
 
 Usage:
     cd databricks-apps
-    python ../scripts/eval_models.py ../json/customer/Concurrent2.json
+    python ../scripts/eval_models.py ../json/concurrent2.json
 
 Generates reports with Opus 4.6 and GPT 5.4, then has Opus/GPT/Gemini
 evaluate both reports and vote on which is better.

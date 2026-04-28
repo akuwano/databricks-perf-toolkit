@@ -19,7 +19,7 @@
 # CONFIGURATION
 # ==============================================================================
 dbutils.widgets.text("log_root",      "/Volumes/main/base/data/cluster_logs/cluster02", "Log Root Path")
-dbutils.widgets.text("cluster_id",    "your-cluster-id",                                "Cluster ID")
+dbutils.widgets.text("cluster_id",    "0227-030422-j1llcyz8",                           "Cluster ID")
 dbutils.widgets.text("catalog",       "main",                                            "Catalog")
 dbutils.widgets.text("schema",        "base2",                                           "Schema")
 dbutils.widgets.text("table_prefix",  "PERF_",                                          "Table Name Prefix")

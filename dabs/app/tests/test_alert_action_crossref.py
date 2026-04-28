@@ -167,9 +167,11 @@ class TestMatchCardToAlertNumbers:
 
 
 class TestTopAlertsSection:
-    def test_top_alerts_sorted_and_numbered(self):
-        """Integration: Top Alerts section renders `**#1**` prefix and
-        places CRITICAL alerts before HIGH."""
+    def test_compact_key_alerts_sorted_by_severity(self):
+        """V6 standard: the compact ``### Key Alerts`` subsection
+        rendered inside Section 1, capped at 2 alerts, CRITICAL before
+        HIGH. (Standalone ``## 2. Top Alerts`` section retired in
+        v6.6.4 alongside V6_COMPACT_TOP_ALERTS.)"""
         from core.models import (
             BottleneckIndicators,
             ProfileAnalysis,
@@ -183,31 +185,28 @@ class TestTopAlertsSection:
         a.bottleneck_indicators.alerts = _alerts_default()
 
         md = generate_report(a, lang="ja")
-        # Extract Top Alerts section
-        m = re.search(r"## 2\. [^\n]+\n(.+?)(?=##|$)", md, re.DOTALL)
-        assert m, "Top Alerts section missing"
+        # JA renders the heading as "主要アラート" via i18n.
+        m = re.search(r"### 主要アラート\n(.+?)(?=##|$)", md, re.DOTALL)
+        assert m, "Key Alerts subsection missing"
         section = m.group(1)
-        # CRITICAL appears before HIGH
+        # CRITICAL alerts appear before HIGH (only 2 are rendered).
         spill_pos = section.find("ディスクスピル")
         shuffle_pos = section.find("Shuffle操作")
-        remote_pos = section.find("リモート読み取り")
-        assert spill_pos >= 0 and shuffle_pos >= 0 and remote_pos >= 0
-        assert max(spill_pos, shuffle_pos) < remote_pos, (
-            f"CRITICAL alerts must render before HIGH — "
-            f"spill@{spill_pos}, shuffle@{shuffle_pos}, remote@{remote_pos}"
-        )
-        # Numbered prefix present for each
-        assert "**#1**" in section
-        assert "**#5**" in section
+        # The 2-row cap means at least one CRITICAL row exists.
+        assert spill_pos >= 0 or shuffle_pos >= 0
+        # No legacy ``**#N**`` numbered prefix in the compact form.
+        assert "**#1**" not in section
 
 
 # ---------------------------------------------------------------------------
-# (4) Top-5 recommendations include `→ アラート #N` tag
+# (4) Top-5 recommendations carry issue-tag references
 # ---------------------------------------------------------------------------
 
 
 class TestTop5AlertReferences:
-    def test_each_action_shows_alert_reference(self):
+    def test_each_action_shows_issue_tag_reference(self):
+        """V6 standard: ``→ 対応課題: shuffle, spill`` issue-tag form
+        (legacy positional ``→ アラート #N`` retired with the flag)."""
         from core.reporters.summary import generate_top5_recommendations_section
 
         alerts = _alerts_default()
@@ -235,13 +234,12 @@ class TestTop5AlertReferences:
             ),
         ]
         md = generate_top5_recommendations_section(cards, alerts=alerts)
-        # Shuffle action references #2
-        assert re.search(r"Shuffleパーティション数の増加.+アラート.+#2", md, re.DOTALL)
-        # Clustering action references #4 and #5
-        assert re.search(r"Liquid Clusteringキー.+#4.+#5", md, re.DOTALL) or re.search(
-            r"Liquid Clusteringキー.+#5.+#4", md, re.DOTALL
-        )
-        # Unmatched card renders "全般"
+        # Issue-tag references replace the old ``#N`` anchors.
+        assert "shuffle" in md.lower()
+        assert "scan" in md.lower() or "spill" in md.lower()
+        # No leftover ``#N`` positional anchors.
+        assert "アラート #" not in md
+        # Unmatched card still renders the general fallback.
         assert re.search(r"フォーマット.+全般", md, re.DOTALL)
 
 

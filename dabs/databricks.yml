@@ -47,6 +47,37 @@ variables:
     description: "Databricks App name"
     default: "dbsql-profiler-analyzer"
 
+  # V6 feature flags — **default-on kill switches** (Codex 2026-04-26).
+  # An empty default means "use the standard V6 behavior"; override
+  # to "false" only to triage a regression in production. See
+  # docs/v6/why-default-on.md and dabs/app/core/feature_flags.py.
+  # generate_runtime_config.py forwards any v6_* variable into
+  # runtime-config.json (empty values are stripped, so the flag falls
+  # back to its default-on state).
+  v6_canonical_schema:
+    description: "V6: LLM emits canonical Finding/Action JSON directly"
+    default: ""
+  v6_review_no_knowledge:
+    description: "V6: skip knowledge injection in Stage 2 review"
+    default: ""
+  v6_refine_micro_knowledge:
+    description: "V6: cap Stage 3 refine knowledge to 4 KB"
+    default: ""
+  v6_always_include_minimum:
+    description: "V6: ALWAYS_INCLUDE = [bottleneck_summary] only"
+    default: ""
+  v6_skip_condensed_knowledge:
+    description: "V6: skip the secondary condensed-knowledge LLM pass"
+    default: ""
+  v6_recommendation_no_force_fill:
+    description: "V6: relax 'fill all fields' pressure on recommendation block"
+    default: ""
+  v6_sql_skeleton_extended:
+    description: "V6: enable structure extraction for MERGE/CREATE VIEW/INSERT"
+    default: ""
+  # v6_compact_top_alerts retired in v6.6.4 — compact subsection is now
+  # the V6 standard, the legacy "## 2. Top Alerts" path was deleted.
+
 targets:
   dev:
     default: true

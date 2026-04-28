@@ -14,7 +14,7 @@ cp dabs/local-overrides.yml.sample dabs/local-overrides.yml
 # dev環境の catalog / schema / warehouse_id / app_name を自分用に書き換える
 
 # 依存インストール（社内 PyPI proxy 経由 — VPN必須）
-uv sync --default-index https://pypi-proxy.dev.databricks.com/simple
+uv sync --default-index https://pypi.org/simple
 
 # テストが通ることを確認
 cd dabs/app && uv run pytest
@@ -188,9 +188,9 @@ git tag v5.14.0 && git push origin main --tags
 ### 環境構成
 | 環境 | コマンド | アプリ名 |
 |------|---------|---------|
-| dev | `./scripts/deploy.sh dev` | `<your-app-name>-dev` |
-| staging | `./scripts/deploy.sh staging` | `<your-app-name>-staging` |
-| prod | `./scripts/deploy.sh prod` | `<your-app-name>` |
+| dev | `./scripts/deploy.sh dev` | dbsql-profiler-analyzer-dev |
+| staging | `./scripts/deploy.sh staging` | databricks-perf-kit-staging |
+| prod | `./scripts/deploy.sh prod` | databricks-perf-kit |
 
 ### deploy.shが自動で行うこと
 1. `runtime-config.json` 生成（`local-overrides.yml` から）
@@ -217,7 +217,7 @@ git tag v5.14.0 && git push origin main --tags
 
 ```bash
 # Databricks PyPI proxy経由でキャッシュを温める（VPN接続必須）
-uv sync --default-index https://pypi-proxy.dev.databricks.com/simple
+uv sync --default-index https://pypi.org/simple
 
 # 確認: --offline で動くことをチェック
 uv run --offline --no-group test --no-group lint --no-group ui-smoke python3 -c "print('ok')"
@@ -225,7 +225,7 @@ uv run --offline --no-group test --no-group lint --no-group ui-smoke python3 -c 
 
 > **Note**: 社内ネットワークでは `pypi.org` に直接到達できない。必ず Databricks PyPI proxy を使用する。
 > 利用可能なプロキシ:
-> - pypi.org → `https://pypi-proxy.dev.databricks.com/simple`
+> - pypi.org → `https://pypi.org/simple`
 > - download.pytorch.org → `https://pypi-pytorch-proxy.dev.databricks.com`
 > - pypi.nvidia.com → `https://pypi-nvidia-proxy.dev.databricks.com`
 
@@ -233,7 +233,7 @@ uv run --offline --no-group test --no-group lint --no-group ui-smoke python3 -c 
 ```bash
 cp dabs/local-overrides.yml.sample dabs/local-overrides.yml
 # local-overrides.yml を編集
-uv sync --default-index https://pypi-proxy.dev.databricks.com/simple
+uv sync --default-index https://pypi.org/simple
 ./scripts/deploy.sh dev
 ```
 

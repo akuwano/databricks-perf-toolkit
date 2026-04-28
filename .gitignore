@@ -6,6 +6,7 @@ json/
 report/
 report*.md
 !docs/report-rendering.md
+!docs/eval/*.md
 Tmp/
 
 # macOS

@@ -1,0 +1,30 @@
+case_id: good_with_minor_warning_q1
+profile_path: json/query-profile_01f0d7cb-8a18-1f3d-bd2f-f0b580fc6a90.json
+description: 全体としては良好だが、小さな改善余地あり (severity=low) のケース。低 severity を critical/high に誤格上げしないことを検証。
+domain: dbsql
+workload_type: scan_heavy
+expected_severity: low
+
+must_cover_issues:
+  - id: minor_warning
+    severity: low
+    keywords: [改善余地, minor, 軽微, low]
+    description: 軽微な改善余地を low severity で報告
+
+forbidden_claims:
+  - id: severity_inflation
+    description: low severity の事象を high/critical で報告するのは禁止
+  - id: spill_alert_no_evidence
+    description: spill 証拠がないのに spill alert は禁止
+
+must_have_actions: []  # 大きなアクションは不要
+
+expected_l3_min: 4
+expected_recall_min: 0.5  # minor warning は registry にまだ無いので強くない
+
+notes: |
+  W2.5 #8 組み合わせケース: good baseline + minor warning。
+  severity inflation (低 severity を critical 扱いする問題) を
+  golden で検出できる仕掛け。
+  Note: minor_warning は将来的に issue registry に追加するかは未定。
+  現状は negative example として severity_inflation を防ぐのが主目的。

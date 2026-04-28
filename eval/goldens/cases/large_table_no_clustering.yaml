@@ -1,0 +1,55 @@
+case_id: large_table_no_clustering_q1
+profile_path: json/query-profile_3942051a-03d3-4162-9f2c-50aa5d32d7ae.json
+description: 大規模テーブルにパーティションも LC もなく、フルスキャン化しているケース。
+domain: dbsql
+workload_type: scan_heavy
+expected_severity: high
+
+must_cover_issues:
+  - id: full_scan_large_table
+    severity: high
+    keywords: [フルスキャン, スキャン, データスキッピング]
+    description: 大規模テーブルでのフルスキャン
+
+  - id: missing_clustering
+    severity: high
+    keywords: [clustering, クラスタリング, パーティション]
+    description: クラスタリング/パーティションなし
+
+forbidden_claims:
+  - id: blanket_lc_without_columns
+    description: 具体的な列を identify せず「LC を検討」のみで終わるのは L4 actionability 不足
+  - id: federation_recommendation
+    description: federation ではない
+
+must_have_actions:
+  - target: identify_filter_columns
+    type: investigation
+    keyword: WHERE
+    description: WHERE 句頻出列の特定 (具体的列名込み)
+  - target: cluster_by_proposal
+    type: ddl
+    keyword: CLUSTER BY
+    description: 特定列での CLUSTER BY DDL を具体的に提示
+
+expected_l3_min: 4
+expected_recall_min: 0.85
+
+# W5 Day 6: SQL skeleton + action template + Q5 failure expectations
+expected_action_template:
+  - field: fix_sql_skeleton
+    description: ALTER TABLE ... CLUSTER BY (col, col) の構造が見える
+  - field: fix_sql_skeleton_method
+    description: short DDL なので fullsql 期待
+
+expected_failure_categories:
+  forbidden:
+    - missing_critical  # large table の clustering 不在は critical
+  allow_max:
+    over_recommendation: 1  # 列特定 + OPTIMIZE で 2 actions まで許容
+
+notes: |
+  「具体的な列名なしで LC 推奨」を L4 actionability で減点する case。
+  Q4 action template の「対象」要素を厳しくチェック。
+
+  W5 Day 6: skeleton method=fullsql + ALTER TABLE 構造を期待。

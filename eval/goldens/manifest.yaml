@@ -1,0 +1,229 @@
+# V6 Goldenset Manifest
+# See README.md for schema details.
+# Day 2: 5 seed cases. Day 3 will expand to 15-20.
+
+version: 1
+created: 2026-04-25
+description: V6 quality evaluation goldenset
+
+# Tag taxonomy (Q5 failure taxonomy の前段)
+tags:
+  - spill         # ディスクスピル / メモリ圧迫
+  - shuffle       # シャッフル過多 / 偏り
+  - photon        # Photon 化阻害 / fallback
+  - scan          # スキャン非効率 / プルーニング不足
+  - cache         # キャッシュ低ヒット / cold start
+  - skew          # データ偏り
+  - federation    # Lakehouse Federation
+  - streaming     # DLT / SDP ストリーミング
+  - small_query   # 短時間クエリ / overhead 支配
+  - etl           # MERGE / INSERT 中心
+
+# Workload type taxonomy
+workload_types:
+  - scan_heavy
+  - join_heavy
+  - etl
+  - streaming
+  - short_query
+  - federation
+
+cases:
+  # --- Day 2 seed (5件) ---
+  - case_id: spill_heavy_q1
+    file: cases/spill_heavy.yaml
+    tags: [spill, memory]
+    priority: critical
+    workload_type: join_heavy
+
+  - case_id: shuffle_dominant_q1
+    file: cases/shuffle_dominant.yaml
+    tags: [shuffle, skew]
+    priority: high
+    workload_type: join_heavy
+
+  - case_id: photon_blocker_q1
+    file: cases/photon_blocker.yaml
+    tags: [photon]
+    priority: high
+    workload_type: etl
+
+  - case_id: scan_low_pruning_q1
+    file: cases/scan_low_pruning.yaml
+    tags: [scan]
+    priority: high
+    workload_type: scan_heavy
+
+  - case_id: cache_cold_start_q1
+    file: cases/cache_cold_start.yaml
+    tags: [cache]
+    priority: medium
+    workload_type: scan_heavy
+
+  # --- Day 3 expansion (10件) ---
+  - case_id: good_perf_baseline_q1
+    file: cases/good_perf_baseline.yaml
+    tags: [negative_case, baseline]
+    priority: high  # negative case の取りこぼしは品質に直結
+    workload_type: scan_heavy
+
+  - case_id: federation_query_q1
+    file: cases/federation_query.yaml
+    tags: [federation]
+    priority: high
+    workload_type: federation
+
+  - case_id: streaming_dlt_q1
+    file: cases/streaming_dlt.yaml
+    tags: [streaming]
+    priority: high
+    workload_type: streaming
+
+  - case_id: short_query_overhead_q1
+    file: cases/short_query_overhead.yaml
+    tags: [small_query]
+    priority: medium
+    workload_type: short_query
+
+  - case_id: explicit_cast_join_q1
+    file: cases/explicit_cast_join.yaml
+    tags: [photon, scan]
+    priority: high
+    workload_type: join_heavy
+
+  - case_id: cte_multi_reference_q1
+    file: cases/cte_multi_reference.yaml
+    tags: [photon, scan]
+    priority: medium
+    workload_type: join_heavy
+
+  - case_id: serverless_specific_q1
+    file: cases/serverless_specific.yaml
+    tags: [scan]
+    priority: medium
+    workload_type: scan_heavy
+
+  - case_id: etl_merge_q1
+    file: cases/etl_merge.yaml
+    tags: [etl]
+    priority: medium
+    workload_type: etl
+
+  - case_id: aqe_skew_handled_q1
+    file: cases/aqe_skew_handled.yaml
+    tags: [skew, negative_case]
+    priority: medium
+    workload_type: join_heavy
+
+  - case_id: cross_join_explosion_q1
+    file: cases/cross_join_explosion.yaml
+    tags: [shuffle]
+    priority: critical  # SQL レベルの critical issue
+    workload_type: join_heavy
+
+  - case_id: result_from_cache_q1
+    file: cases/result_from_cache.yaml
+    tags: [cache, negative_case]
+    priority: medium
+    workload_type: short_query
+
+  - case_id: hash_resize_hotspot_q1
+    file: cases/hash_resize_hotspot.yaml
+    tags: [shuffle]
+    priority: medium
+    workload_type: join_heavy
+
+  - case_id: large_table_no_clustering_q1
+    file: cases/large_table_no_clustering.yaml
+    tags: [scan]
+    priority: high
+    workload_type: scan_heavy
+
+  # --- W2.5 #8 expansion: combination cases (4件) ---
+  - case_id: streaming_with_low_cache_q1
+    file: cases/streaming_with_low_cache.yaml
+    tags: [streaming, cache, negative_case]
+    priority: high
+    workload_type: streaming
+
+  - case_id: federation_with_low_pruning_q1
+    file: cases/federation_with_low_pruning.yaml
+    tags: [federation, scan, negative_case]
+    priority: high
+    workload_type: federation
+
+  - case_id: serverless_with_photon_blocker_q1
+    file: cases/serverless_with_photon_blocker.yaml
+    tags: [photon, scan]
+    priority: high
+    workload_type: scan_heavy
+
+  - case_id: good_with_minor_warning_q1
+    file: cases/good_with_minor_warning.yaml
+    tags: [negative_case, baseline]
+    priority: medium
+    workload_type: scan_heavy
+
+  # --- W3 #6 evidence grounding cases (3件) ---
+  - case_id: cite_profile_metric_q1
+    file: cases/evidence_grounding/cite_profile_metric.yaml
+    tags: [evidence_grounding, spill]
+    priority: high
+    workload_type: join_heavy
+
+  - case_id: no_unsupported_numeric_q1
+    file: cases/evidence_grounding/no_unsupported_numeric.yaml
+    tags: [evidence_grounding, numeric_anchor]
+    priority: high
+    workload_type: scan_heavy
+
+  - case_id: cite_known_knowledge_section_q1
+    file: cases/evidence_grounding/cite_known_knowledge_section.yaml
+    tags: [evidence_grounding, knowledge_id]
+    priority: high
+    workload_type: etl
+
+  # --- W6 Day 5 boundary cases (Codex W5 backlog) ---
+  - case_id: merge_into_skeleton_q1
+    file: cases/merge_into_skeleton.yaml
+    tags: [skeleton, merge, boundary]
+    priority: high
+    workload_type: etl
+
+  - case_id: long_sql_skeleton_q1
+    file: cases/long_sql_skeleton.yaml
+    tags: [skeleton, long_sql, boundary]
+    priority: high
+    workload_type: scan_heavy
+
+  # --- W3.5 #4 evidence grounding cases (4 件追加、Codex 推奨) ---
+  - case_id: synthetic_only_unsupported_q1
+    file: cases/evidence_grounding/synthetic_only_unsupported.yaml
+    tags: [evidence_grounding, finding_support]
+    priority: high
+    workload_type: scan_heavy
+
+  - case_id: unknown_knowledge_id_rejected_q1
+    file: cases/evidence_grounding/unknown_knowledge_id_rejected.yaml
+    tags: [evidence_grounding, knowledge_id]
+    priority: high
+    workload_type: join_heavy
+
+  - case_id: numeric_heavy_hallucination_q1
+    file: cases/evidence_grounding/numeric_heavy_hallucination.yaml
+    tags: [evidence_grounding, ungrounded_numeric]
+    priority: high
+    workload_type: scan_heavy
+
+  - case_id: q3_ideal_baseline_q1
+    file: cases/evidence_grounding/q3_ideal_baseline.yaml
+    tags: [evidence_grounding, baseline, positive]
+    priority: high
+    workload_type: scan_heavy
+
+  # --- V6.0 退行検知ケース (2026-04-25 V5/V6 比較で V6 劣化発見) ---
+  - case_id: cte_with_dominant_shuffle_key_q23
+    file: cases/cte_with_dominant_shuffle_key.yaml
+    tags: [shuffle, cte, scan, regression]
+    priority: critical  # V5→V6 で複数の鋭い推奨が脱落、再発防止が最優先
+    workload_type: join_heavy

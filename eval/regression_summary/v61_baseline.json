@@ -1,0 +1,16 @@
+{
+  "current_run": "v61_baseline",
+  "compared_against": "v6_w6_baseline",
+  "block_violations": [],
+  "warn_violations": [],
+  "info_violations": [],
+  "skeleton_distribution_drift": {
+    "fullsql": {
+      "current": 1.0,
+      "baseline": 1.0,
+      "delta": 0.0
+    }
+  },
+  "verdict": "clean",
+  "generated_at": "2026-04-25T13:09:52Z"
+}

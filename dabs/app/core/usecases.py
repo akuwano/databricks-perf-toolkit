@@ -115,6 +115,16 @@ class PipelineResult:
     llm_errors: list[str] = field(default_factory=list)
     # v4.6: Baseline comparison (auto-populated when persist + baseline found)
     baseline_comparison: ComparisonResult | None = None
+    # W3.5 #1: V6 canonical Report parsed directly from the LLM output when
+    # V6_CANONICAL_SCHEMA=on. None when the flag is off or extraction failed.
+    # Downstream consumers (eval scorers, future report renderer) should
+    # prefer this over the normalizer-built canonical when present.
+    canonical_report_llm_direct: dict | None = None
+    # v6.7.0 telemetry: per-case alias-hit counts captured while
+    # ``enrich_llm_canonical`` ran. ``None`` when the canonical path
+    # was inactive (V6 flag off or no LLM output). Shape:
+    # ``{"fix_type": int, "category": int, "issue_id": int, "total": int}``.
+    canonical_alias_hits: dict | None = None
 
 
 # ---------------------------------------------------------------------------
@@ -221,6 +231,46 @@ def run_analysis_pipeline(
     if best_llm_output and result.analysis.action_cards is not None:
         _merge_llm_action_plan(result.analysis, best_llm_output)
 
+    # W3.5 #1: V6 canonical Report extraction (only when flag on)
+    try:
+        from . import feature_flags as _ff  # noqa: WPS433
+        from .llm_prompts.parsing import extract_v6_canonical_block  # noqa: WPS433
+    except ImportError:
+        _ff = None
+    if _ff is not None and _ff.canonical_schema() and best_llm_output:
+        extracted = extract_v6_canonical_block(best_llm_output)
+        if extracted is not None:
+            # Enrich with operational metadata the LLM cannot invent
+            # (UUID / timestamp / authoritative query_id). Without
+            # this the canonical fails JSON Schema validation on the
+            # top-level required set even though the LLM produced
+            # valid findings/summary content.
+            from .v6_schema import enrich_llm_canonical  # noqa: WPS433
+            from .v6_schema.alias_telemetry import AliasHitCounts  # noqa: WPS433
+
+            alias_tracker = AliasHitCounts()
+            result.canonical_report_llm_direct = enrich_llm_canonical(
+                extracted,
+                result.analysis,
+                language=getattr(options, "language", "en") or "en",
+                alias_tracker=alias_tracker,
+            )
+            # v6.7.0 telemetry: stash alias-hit counts so downstream
+            # consumers (eval baselines, future Delta persistence) can
+            # report alias_hit_rate / hits_per_case_avg without re-
+            # parsing the canonical Report.
+            result.canonical_alias_hits = alias_tracker.to_dict()
+            logger.info(
+                "V6 canonical_schema=on: extracted canonical block "
+                "(findings=%d, alias_hits=%d)",
+                len(extracted.get("findings") or []),
+                alias_tracker.total,
+            )
+        else:
+            logger.info(
+                "V6 canonical_schema=on: no canonical block found in LLM output"
+            )
+
     _select_top_action_cards(result.analysis)
     if result.analysis.selected_action_cards and not options.skip_llm and llm_config.is_available:
         rerank = select_top_actions_with_llm(
@@ -305,6 +355,7 @@ def _merge_llm_action_plan(analysis: ProfileAnalysis, llm_text: str) -> None:
         root causes without needing to re-run with EXPLAIN attached.
     """
     from .action_classify import classify_root_cause_group, groups_overlap
+    from .fix_sql_filler import fill_missing_fix_sql
     from .llm_prompts import parse_action_plan_from_llm
     from .models import ActionCard
 
@@ -382,6 +433,14 @@ def _merge_llm_action_plan(analysis: ProfileAnalysis, llm_text: str) -> None:
             risk=item.get("risk", ""),
             risk_reason=item.get("risk_reason", ""),
             verification_steps=item.get("verification", []),
+        )
+        # Path B safety net (Codex 2026-04-26): if the LLM left fix_sql
+        # empty for a clearly SQL-shaped recommendation AND the binding
+        # to a target table is unambiguous from structured analyzer
+        # evidence, fill it with canonical syntax. Ambiguous cases are
+        # left empty by design.
+        card = fill_missing_fix_sql(
+            card, top_scanned_tables=analysis.top_scanned_tables or []
         )
         card.root_cause_group = llm_group
         card.priority_score = card.impact_score * 3 / card.effort_score

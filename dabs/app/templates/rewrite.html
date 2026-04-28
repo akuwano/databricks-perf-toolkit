@@ -1,0 +1,476 @@
+{% extends "base.html" %}
+
+{% block title %}{{ _('Query Rewrite') }} - Performance Toolkit{% endblock %}
+
+{% block extra_css %}
+<style>
+  .rw-page { max-width: 1200px; margin: 0 auto; padding: 0 1rem; }
+  .rw-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; align-items: stretch; }
+  @media (max-width: 900px) { .rw-grid { grid-template-columns: 1fr; } }
+  .rw-pane {
+    background: hsl(var(--card));
+    border: 1px solid hsl(var(--border));
+    border-radius: 6px;
+    overflow: hidden;
+    display: flex; flex-direction: column;
+  }
+  .rw-pane-header {
+    padding: 0.5rem 0.75rem;
+    background: hsl(var(--muted));
+    border-bottom: 1px solid hsl(var(--border));
+    font-size: 0.8rem; font-weight: 600;
+    display: flex; justify-content: space-between; align-items: center;
+  }
+  .rw-pane-body { flex: 1; min-height: 240px; }
+  .rw-sql {
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-size: 0.78rem; line-height: 1.45;
+    padding: 0.75rem; margin: 0;
+    white-space: pre-wrap; word-break: break-word;
+    background: hsl(var(--background));
+  }
+  .rw-toolbar { display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap; margin-bottom: 0.75rem; }
+  .rw-btn {
+    padding: 0.35rem 0.7rem; border-radius: 4px; cursor: pointer; font-size: 0.78rem; font-weight: 600;
+    border: 1px solid hsl(var(--border)); background: hsl(var(--background)); color: hsl(var(--foreground));
+  }
+  .rw-btn-primary { border-color: hsl(var(--primary)); background: hsl(var(--primary)/0.12); color: hsl(var(--primary)); }
+  .rw-btn[disabled] { opacity: 0.55; cursor: not-allowed; }
+  .rw-status { font-size: 0.78rem; color: hsl(var(--muted-foreground)); }
+  .rw-status.ok { color: hsl(var(--success, 142 71% 45%)); }
+  .rw-status.fail { color: hsl(var(--destructive)); }
+  .rw-history { margin-top: 1rem; }
+  .rw-history-item {
+    border: 1px solid hsl(var(--border)); border-radius: 4px; padding: 0.5rem 0.75rem; margin-bottom: 0.4rem;
+    background: hsl(var(--card));
+    display: grid; grid-template-columns: auto 1fr auto; gap: 0.5rem; align-items: center;
+    font-size: 0.78rem;
+  }
+  .rw-history-item.active { border-color: hsl(var(--primary)); background: hsl(var(--primary)/0.06); }
+  .rw-history-meta { color: hsl(var(--muted-foreground)); font-size: 0.7rem; }
+  .rw-feedback { width: 100%; padding: 0.5rem 0.65rem; border: 1px solid hsl(var(--border)); border-radius: 4px; font-size: 0.8rem; resize: vertical; min-height: 60px; background: hsl(var(--background)); color: hsl(var(--foreground)); }
+  .rw-spin { display: inline-block; width: 0.85em; height: 0.85em; border: 2px solid currentColor; border-right-color: transparent; border-radius: 50%; animation: rwspin 0.8s linear infinite; vertical-align: middle; }
+  @keyframes rwspin { to { transform: rotate(360deg); } }
+  .rw-vbadge { padding: 0.1rem 0.4rem; border-radius: 4px; font-size: 0.7rem; font-weight: 600; }
+  .rw-vbadge.ok { background: hsl(142 71% 45% / 0.12); color: hsl(142 71% 45%); }
+  .rw-vbadge.fail { background: hsl(var(--destructive)/0.12); color: hsl(var(--destructive)); }
+  .rw-vbadge.muted { background: hsl(var(--muted)); color: hsl(var(--muted-foreground)); }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="rw-page">
+  <div style="display:flex; justify-content:space-between; align-items:baseline; margin-bottom:1rem;">
+    <h4 style="margin:0;">
+      <i class="bi bi-pencil-square"></i>
+      {{ _('Query Rewrite') }}
+    </h4>
+    <a href="/result/{{ analysis_id }}" class="rw-btn">
+      <i class="bi bi-arrow-left"></i> {{ _('Back to analysis') }}
+    </a>
+  </div>
+
+  <div class="rw-toolbar">
+    <select id="rw-model" class="rw-btn" style="padding:0.3rem 0.5rem;"
+            title="{{ _('Default: databricks-claude-sonnet-4-6 (largest output budget in the catalogue)') }}">
+      <option value="databricks-claude-sonnet-4-6" selected>databricks-claude-sonnet-4-6</option>
+    </select>
+    <button id="rw-go" class="rw-btn rw-btn-primary" onclick="rwStart()">
+      <i class="bi bi-magic"></i> {{ _('Generate rewrite') }}
+    </button>
+    <button id="rw-validate" class="rw-btn" onclick="rwValidate()" disabled>
+      <i class="bi bi-check2-circle"></i> {{ _('Validate') }}
+    </button>
+    <button id="rw-copy" class="rw-btn" onclick="rwCopy()" disabled>
+      <i class="bi bi-clipboard"></i> {{ _('Copy rewrite') }}
+    </button>
+    <span id="rw-status" class="rw-status"></span>
+  </div>
+
+  <div class="rw-grid">
+    <div class="rw-pane">
+      <div class="rw-pane-header">
+        <span><i class="bi bi-file-earmark-code"></i> {{ _('Source SQL') }}</span>
+        <span class="rw-status">{{ source_sql|length }} {{ _('chars') }}</span>
+      </div>
+      <div class="rw-pane-body">
+        <pre class="rw-sql" id="rw-source">{{ source_sql }}</pre>
+      </div>
+    </div>
+    <div class="rw-pane">
+      <div class="rw-pane-header">
+        <span><i class="bi bi-stars"></i> {{ _('Rewrite') }}</span>
+        <span id="rw-validation" class="rw-vbadge muted">{{ _('not validated') }}</span>
+      </div>
+      <div class="rw-pane-body">
+        <pre class="rw-sql" id="rw-output">{{ _('No rewrite generated yet. Click "Generate rewrite" to start.') }}</pre>
+      </div>
+    </div>
+  </div>
+
+  <div style="margin-top:1rem;">
+    <label for="rw-feedback" style="font-size:0.8rem; font-weight:600; display:block; margin-bottom:0.3rem;">
+      <i class="bi bi-arrow-repeat"></i> {{ _('Refine with feedback') }}
+    </label>
+    <textarea id="rw-feedback" class="rw-feedback" placeholder="{{ _('e.g. Use BROADCAST hint instead of CTE; preserve MERGE INTO clause; ...') }}"></textarea>
+    <button id="rw-refine" class="rw-btn" onclick="rwStart(true)" disabled style="margin-top:0.4rem;">
+      <i class="bi bi-arrow-repeat"></i> {{ _('Apply feedback') }}
+    </button>
+  </div>
+
+  <div class="rw-history" id="rw-history" style="display:none;">
+    <div style="font-size:0.8rem; font-weight:600; margin-bottom:0.4rem;">
+      <i class="bi bi-clock-history"></i> {{ _('History (this session)') }}
+    </div>
+    <div id="rw-history-list"></div>
+  </div>
+
+  <div class="rw-history">
+    <div style="display:flex; justify-content:space-between; align-items:baseline; margin-bottom:0.4rem;">
+      <span style="font-size:0.8rem; font-weight:600;">
+        <i class="bi bi-database"></i> {{ _('Persisted history (all sessions)') }}
+      </span>
+      <button class="rw-btn" onclick="rwLoadPersistedHistory()" style="padding:0.2rem 0.5rem; font-size:0.7rem;">
+        <i class="bi bi-arrow-clockwise"></i> {{ _('Reload') }}
+      </button>
+    </div>
+    <div id="rw-persisted-list" class="rw-status">{{ _('Loading…') }}</div>
+  </div>
+</div>
+
+<script>
+  const RW_ANALYSIS_ID = "{{ analysis_id }}";
+  const RW_LANG = "{{ current_lang }}";
+  const RW_LABELS = {
+    running: "{{ _('Running…') }}",
+    failed: "{{ _('Failed') }}",
+    completed: "{{ _('Completed') }}",
+    validated_ok: "{{ _('Validated') }}",
+    validated_fail: "{{ _('Invalid') }}",
+    copied: "{{ _('Copied') }}",
+    copy_failed: "{{ _('Copy failed') }}",
+    revision: "{{ _('Revision') }}",
+    initial: "{{ _('Initial') }}",
+    feedback: "{{ _('Feedback') }}",
+    show: "{{ _('Show') }}",
+  };
+
+  let rwHistory = [];
+  let rwActiveIndex = -1;
+  // v6.7.9: track the active revision's output_format so Validate
+  // and Refine respect "diff" outputs (which are not parseable SQL
+  // and shouldn't be fed back to fix_rewrite_with_llm verbatim).
+  let rwActiveFormat = 'full';
+
+  function rwSetStatus(text, klass, withSpinner) {
+    // v6.7.9 fix: previous version used ``textContent`` for the
+    // running state, which printed the literal string
+    // ``<span class="rw-spin"></span> Running…`` instead of rendering
+    // the spinner. Keep textContent (XSS-safe) for the message and
+    // prepend a real spinner element only when ``withSpinner``.
+    const el = document.getElementById('rw-status');
+    el.innerHTML = '';
+    if (withSpinner) {
+      const sp = document.createElement('span');
+      sp.className = 'rw-spin';
+      el.appendChild(sp);
+      el.appendChild(document.createTextNode(' '));
+    }
+    const t = document.createElement('span');
+    t.textContent = text || '';
+    el.appendChild(t);
+    el.className = 'rw-status ' + (klass || '');
+  }
+
+  function rwSetValidation(state) {
+    const el = document.getElementById('rw-validation');
+    if (state === 'ok') {
+      el.textContent = RW_LABELS.validated_ok;
+      el.className = 'rw-vbadge ok';
+    } else if (state === 'fail') {
+      el.textContent = RW_LABELS.validated_fail;
+      el.className = 'rw-vbadge fail';
+    } else if (state === 'diff') {
+      // v6.7.9: diff is intentional, not a failure. Use a neutral
+      // badge so users don't read it as "broken".
+      el.textContent = "{{ _('diff output') }}";
+      el.className = 'rw-vbadge muted';
+    } else {
+      el.textContent = "{{ _('not validated') }}";
+      el.className = 'rw-vbadge muted';
+    }
+  }
+
+  function rwSetOutput(sql) {
+    document.getElementById('rw-output').textContent = sql;
+    const empty = !sql || sql.trim() === '';
+    const isDiff = rwActiveFormat === 'diff';
+    // v6.7.9: diff outputs are patches, not executable SQL.
+    // Disable Validate (sqlglot would fail on the diff comments)
+    // and Refine (fix_rewrite_with_llm doesn't know how to consume
+    // a diff as previous_rewrite — Codex Q5).
+    document.getElementById('rw-validate').disabled = empty || isDiff;
+    document.getElementById('rw-validate').title = isDiff
+      ? "{{ _('Diff output is not validated (apply the patch first, then validate the resulting SQL).') }}"
+      : "";
+    document.getElementById('rw-copy').disabled = empty;
+    document.getElementById('rw-refine').disabled = empty || isDiff;
+    document.getElementById('rw-refine').title = isDiff
+      ? "{{ _('Refine is disabled for diff outputs — apply the patch first.') }}"
+      : "";
+    rwSetValidation(isDiff ? 'diff' : null);
+  }
+
+  function rwRender() {
+    const wrap = document.getElementById('rw-history');
+    const list = document.getElementById('rw-history-list');
+    if (rwHistory.length === 0) {
+      wrap.style.display = 'none';
+      return;
+    }
+    wrap.style.display = 'block';
+    list.innerHTML = '';
+    rwHistory.forEach((rev, i) => {
+      const div = document.createElement('div');
+      div.className = 'rw-history-item' + (i === rwActiveIndex ? ' active' : '');
+      const kind = rev.feedback ? RW_LABELS.feedback : RW_LABELS.initial;
+      div.innerHTML = `
+        <span><strong>${RW_LABELS.revision} ${i + 1}</strong> · ${kind}</span>
+        <span class="rw-history-meta">${rev.model} · ${rev.length} ${"{{ _('chars') }}"}</span>
+        <button class="rw-btn" onclick="rwShowRevision(${i})">${RW_LABELS.show}</button>
+      `;
+      list.appendChild(div);
+    });
+  }
+
+  function rwShowRevision(i) {
+    rwActiveIndex = i;
+    rwActiveFormat = rwHistory[i].output_format || 'full';
+    rwSetOutput(rwHistory[i].rewrite);
+    rwRender();
+  }
+
+  function rwExtractSql(text) {
+    // v6.7.10 fix: previously this returned the FIRST fenced block,
+    // which was wrong when the LLM emitted both ``### Pre-execution``
+    // (one-time OPTIMIZE / ALTER) AND ``### Rewritten SQL`` blocks —
+    // the workspace pane would show the OPTIMIZE statement as the
+    // "rewrite". The Rewritten SQL section always comes after the
+    // (optional) Pre-execution section per the system prompt
+    // contract, so prefer:
+    //   1. the block under ``### Rewritten SQL`` / ``### リライト後 SQL``
+    //   2. otherwise the LAST fenced block (matches shared_result.html)
+    //   3. otherwise the raw text
+    if (!text) return text;
+    const headerRe = /###\s*(?:Rewritten\s+SQL|リライト後\s*SQL)\s*\n+\s*```(?:sql)?\s*([\s\S]*?)```/i;
+    const headed = text.match(headerRe);
+    if (headed) return headed[1].trim();
+    const allFences = [...text.matchAll(/```(?:sql)?\s*([\s\S]*?)```/gi)];
+    if (allFences.length) return allFences[allFences.length - 1][1].trim();
+    return text.trim();
+  }
+
+  async function rwStart(isRefine) {
+    const goBtn = document.getElementById('rw-go');
+    const refineBtn = document.getElementById('rw-refine');
+    goBtn.disabled = true; refineBtn.disabled = true;
+    rwSetStatus(RW_LABELS.running, '', true);
+    try {
+      const body = {
+        analysis_id: RW_ANALYSIS_ID,
+        lang: RW_LANG,
+        model: document.getElementById('rw-model').value || '',
+      };
+      if (isRefine && rwActiveIndex >= 0) {
+        body.feedback = document.getElementById('rw-feedback').value.trim();
+        body.previous_rewrite = rwHistory[rwActiveIndex].rewrite;
+        // Codex Q3 (v6.7.6): when the active revision came from a
+        // persisted row (or its persist write succeeded), forward the
+        // parent_id so the refine chain reconstructs across reloads.
+        const activeArtifactId = rwHistory[rwActiveIndex].artifact_id;
+        if (activeArtifactId) body.parent_id = activeArtifactId;
+      }
+      const r = await fetch('/api/v1/rewrite', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      });
+      const start = await r.json();
+      if (!r.ok) throw new Error(start.error || 'rewrite failed');
+      const taskId = start.task_id;
+      // Poll
+      while (true) {
+        await new Promise(res => setTimeout(res, 1500));
+        const pr = await fetch('/api/v1/rewrite/' + taskId);
+        const data = await pr.json();
+        if (data.status === 'running') continue;
+        if (data.status === 'failed') throw new Error(data.error || 'task failed');
+        // completed
+        const sql = rwExtractSql(data.rewrite);
+        const outputFormat = data.output_format || 'full';
+        rwHistory.push({
+          rewrite: sql,
+          model: data.model_used || '?',
+          feedback: !!body.feedback,
+          length: sql.length,
+          // Codex Q3 (v6.7.6): persisted artifact_id (when the write
+          // succeeded) lets a follow-up refine pass it as parent_id.
+          artifact_id: data.artifact_id || null,
+          // v6.7.9: track per-revision format so swapping back to
+          // a diff revision re-disables Validate / Refine.
+          output_format: outputFormat,
+        });
+        rwActiveIndex = rwHistory.length - 1;
+        rwActiveFormat = outputFormat;
+        rwRender();
+        rwSetOutput(sql);
+        let completedMsg = RW_LABELS.completed + ' (' + (data.model_used || '?') + ')';
+        if (data.token_constrained) {
+          completedMsg += ' — ' + "{{ _('output emitted as a diff patch (query exceeds the model output budget)') }}";
+        }
+        rwSetStatus(completedMsg, data.token_constrained ? '' : 'ok');
+        if (isRefine) document.getElementById('rw-feedback').value = '';
+        break;
+      }
+    } catch (e) {
+      rwSetStatus(RW_LABELS.failed + ': ' + e.message, 'fail');
+    } finally {
+      goBtn.disabled = false;
+      refineBtn.disabled = !document.getElementById('rw-output').textContent.trim();
+    }
+  }
+
+  async function rwValidate() {
+    const sql = document.getElementById('rw-output').textContent;
+    if (!sql.trim()) return;
+    rwSetValidation(null);
+    const btn = document.getElementById('rw-validate'); btn.disabled = true;
+    try {
+      const r = await fetch('/api/v1/rewrite/validate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ sql }),
+      });
+      const data = await r.json();
+      rwSetValidation(data.valid ? 'ok' : 'fail');
+      const method = data.method ? ' (' + data.method + ')' : '';
+      rwSetStatus(
+        (data.valid ? RW_LABELS.validated_ok : RW_LABELS.validated_fail) + method
+        + (data.error ? ' — ' + data.error.slice(0, 200) : ''),
+        data.valid ? 'ok' : 'fail',
+      );
+    } catch (e) {
+      rwSetStatus(e.message, 'fail');
+    } finally {
+      btn.disabled = false;
+    }
+  }
+
+  async function rwCopy() {
+    const sql = document.getElementById('rw-output').textContent;
+    try {
+      await navigator.clipboard.writeText(sql);
+      rwSetStatus(RW_LABELS.copied, 'ok');
+    } catch (e) {
+      rwSetStatus(RW_LABELS.copy_failed + ': ' + e.message, 'fail');
+    }
+  }
+
+  function rwEsc(s) {
+    if (s == null) return '';
+    return String(s).replace(/[&<>"']/g, c => ({
+      '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+    }[c]));
+  }
+
+  async function rwLoadPersistedHistory() {
+    const wrap = document.getElementById('rw-persisted-list');
+    wrap.textContent = "{{ _('Loading…') }}";
+    try {
+      const r = await fetch('/api/v1/rewrite/history?analysis_id=' + encodeURIComponent(RW_ANALYSIS_ID));
+      const data = await r.json();
+      if (data.persistence === 'disabled') {
+        wrap.textContent = "{{ _('Persistence disabled (no SQL Warehouse configured).') }}";
+        return;
+      }
+      if (data.persistence === 'error') {
+        wrap.textContent = "{{ _('Failed to load persisted history.') }}";
+        return;
+      }
+      const items = data.items || [];
+      if (items.length === 0) {
+        wrap.textContent = "{{ _('No persisted attempts yet.') }}";
+        return;
+      }
+      wrap.innerHTML = '';
+      items.forEach(it => {
+        const div = document.createElement('div');
+        div.className = 'rw-history-item';
+        const ts = it.created_at ? new Date(it.created_at).toLocaleString() : '';
+        const v = it.validation_passed === true ? '<span class="rw-vbadge ok">{{ _("validated") }}</span>'
+                : it.validation_passed === false ? '<span class="rw-vbadge fail">{{ _("invalid") }}</span>'
+                : '';
+        // v6.7.9: flag diff outputs so users know a Restore won't
+        // give them executable SQL.
+        const dfmt = it.output_format === 'diff'
+          ? ' <span class="rw-vbadge muted" title="{{ _('Diff patch — apply manually before validating or refining') }}">{{ _("diff") }}</span>'
+          : '';
+        const fb = it.feedback ? ' · ' + rwEsc(it.feedback).slice(0, 80) : '';
+        div.innerHTML = `
+          <span><strong>${rwEsc(it.model || '?')}</strong>${v}${dfmt}</span>
+          <span class="rw-history-meta">${ts}${fb}</span>
+          <button class="rw-btn" onclick='rwRestorePersisted(${JSON.stringify(it.rewritten_sql || "")}, ${JSON.stringify(it.artifact_id || "")}, ${JSON.stringify(it.output_format || "full")})'>{{ _('Restore') }}</button>
+        `;
+        wrap.appendChild(div);
+      });
+    } catch (e) {
+      wrap.textContent = "{{ _('Failed:') }} " + e.message;
+    }
+  }
+
+  function rwRestorePersisted(sql, artifactId, outputFormat) {
+    const fmt = outputFormat || 'full';
+    rwHistory.push({
+      rewrite: sql,
+      model: '{{ _("(restored)") }}',
+      feedback: false,
+      length: sql.length,
+      // Codex Q3 (v6.7.6): preserve the source artifact_id so a
+      // refine click on a restored revision builds the chain correctly.
+      artifact_id: artifactId || null,
+      // v6.7.9: a restored diff stays a diff — Validate/Refine must
+      // remain disabled until the user applies the patch and pastes
+      // the resulting full SQL back.
+      output_format: fmt,
+    });
+    rwActiveIndex = rwHistory.length - 1;
+    rwActiveFormat = fmt;
+    rwRender();
+    rwSetOutput(sql);
+    rwSetStatus("{{ _('Restored from persisted history') }}", 'ok');
+  }
+  rwLoadPersistedHistory();
+
+  async function rwLoadModels() {
+    try {
+      const r = await fetch('/api/v1/models');
+      if (!r.ok) return;
+      const data = await r.json();
+      const sel = document.getElementById('rw-model');
+      const list = data.models || data || [];
+      // Skip the default opus-4-7 option that the template already
+      // pre-populated as the selected default (avoids duplicates).
+      const existing = new Set(Array.from(sel.options).map(o => o.value));
+      list.forEach(m => {
+        const value = typeof m === 'string' ? m : (m.id || m.name);
+        if (existing.has(value)) return;
+        const opt = document.createElement('option');
+        opt.value = value;
+        opt.textContent = value;
+        sel.appendChild(opt);
+      });
+    } catch (e) { /* model list optional */ }
+  }
+  rwLoadModels();
+</script>
+{% endblock %}

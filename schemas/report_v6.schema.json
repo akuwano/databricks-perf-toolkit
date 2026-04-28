@@ -1,0 +1,353 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://databricks-perf-toolkit/schemas/report_v6.schema.json",
+  "title": "DBSQL Profiler V6 Canonical Report",
+  "description": "Canonical output schema for V6 quality-focused refactoring. See docs/v6/canonical_schema_inventory.md.",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "report_id",
+    "generated_at",
+    "query_id",
+    "context",
+    "summary",
+    "findings"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {
+      "type": "string",
+      "const": "v6.0",
+      "description": "Schema version. Bump when breaking change."
+    },
+    "report_id": {
+      "type": "string",
+      "minLength": 1,
+      "description": "UUID or stable hash for this report instance."
+    },
+    "generated_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "query_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "pipeline_version": {
+      "type": "string",
+      "description": "App version that produced this report (e.g. v5.19.4)"
+    },
+    "prompt_version": {
+      "type": "string",
+      "description": "LLM prompt version (existing analysis_context.prompt_version)"
+    },
+    "context": {
+      "type": "object",
+      "required": ["is_serverless", "is_streaming", "is_federation"],
+      "additionalProperties": true,
+      "properties": {
+        "warehouse_size": {"type": ["string", "null"]},
+        "warehouse_type": {"type": ["string", "null"]},
+        "is_serverless": {"type": "boolean"},
+        "is_streaming": {"type": "boolean"},
+        "is_federation": {"type": "boolean"},
+        "result_from_cache": {"type": "boolean"},
+        "duration_ms": {"type": ["integer", "null"], "minimum": 0},
+        "rows_produced": {"type": ["integer", "null"], "minimum": 0},
+        "language": {"type": "string", "enum": ["en", "ja"]}
+      }
+    },
+    "summary": {
+      "type": "object",
+      "required": ["headline", "verdict"],
+      "additionalProperties": false,
+      "properties": {
+        "headline": {
+          "type": "string",
+          "minLength": 1,
+          "description": "One-sentence overall assessment for the user."
+        },
+        "verdict": {
+          "type": "string",
+          "enum": ["healthy", "needs_attention", "critical", "skipped_cached", "informational"]
+        },
+        "key_metrics": {
+          "type": "array",
+          "items": {"$ref": "#/$defs/KeyMetric"},
+          "maxItems": 6,
+          "description": "Up to 6 primary metrics for a quick read."
+        }
+      }
+    },
+    "findings": {
+      "type": "array",
+      "items": {"$ref": "#/$defs/Finding"},
+      "description": "Significant issues discovered. Empty array means healthy."
+    },
+    "appendix_excluded_findings": {
+      "type": "array",
+      "items": {"$ref": "#/$defs/Finding"},
+      "description": "Findings suppressed by federation/serverless/cache rules. Surface in appendix only."
+    }
+  },
+  "$defs": {
+    "KeyMetric": {
+      "type": "object",
+      "required": ["name", "value_display"],
+      "additionalProperties": false,
+      "properties": {
+        "name": {"type": "string"},
+        "value_display": {"type": "string"},
+        "value_raw": {"type": ["number", "string", "null"]},
+        "direction": {"type": "string", "enum": ["good", "bad", "neutral"]}
+      }
+    },
+    "Severity": {
+      "type": "string",
+      "enum": ["critical", "high", "medium", "low", "info", "ok"]
+    },
+    "Confidence": {
+      "type": "string",
+      "enum": ["high", "medium", "low", "needs_verification"]
+    },
+    "Finding": {
+      "type": "object",
+      "required": ["issue_id", "category", "severity", "title", "evidence", "actions"],
+      "additionalProperties": false,
+      "properties": {
+        "issue_id": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "^[a-z][a-z0-9_]*$",
+          "description": "Stable id matching golden cases (e.g. spill_dominant). snake_case."
+        },
+        "category": {
+          "type": "string",
+          "enum": [
+            "memory", "shuffle", "skew", "photon", "scan", "cache",
+            "compilation", "driver", "federation", "streaming",
+            "stats", "cardinality", "clustering", "sql_pattern",
+            "io", "join", "compute", "other"
+          ]
+        },
+        "severity": {"$ref": "#/$defs/Severity"},
+        "confidence": {"$ref": "#/$defs/Confidence"},
+        "title": {"type": "string", "minLength": 1, "maxLength": 200},
+        "description": {"type": "string", "description": "Multi-line markdown allowed."},
+        "evidence": {
+          "type": "array",
+          "items": {"$ref": "#/$defs/Evidence"},
+          "minItems": 1,
+          "description": "At least one evidence entry. Empty findings are forbidden."
+        },
+        "root_cause_group": {
+          "type": "string",
+          "description": "Grouping key for dedup, matches existing ActionCard.root_cause_group."
+        },
+        "coverage_category": {
+          "type": "string",
+          "enum": ["COMPUTE", "DATA", "QUERY", "MEMORY", "PARALLELISM", ""]
+        },
+        "actions": {
+          "type": "array",
+          "items": {"$ref": "#/$defs/Action"},
+          "description": "Recommended fixes. Empty if finding is informational."
+        },
+        "alert_links": {
+          "type": "array",
+          "items": {"type": "string"},
+          "description": "Existing Alert IDs (category:metric_name) this finding maps to."
+        },
+        "suppressed": {
+          "type": "boolean",
+          "default": false,
+          "description": "True if this finding was suppressed by rules (federation/cache/etc.)"
+        },
+        "suppression_reason": {"type": "string"}
+      }
+    },
+    "Evidence": {
+      "type": "object",
+      "required": ["metric", "value_display"],
+      "additionalProperties": false,
+      "properties": {
+        "metric": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Canonical metric name (e.g. peak_memory_bytes, cache_hit_ratio)."
+        },
+        "value_raw": {
+          "type": ["number", "string", "null"],
+          "description": "Raw numeric or string value as captured."
+        },
+        "value_display": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Human-readable formatted value (e.g. '12 GB', '25%')."
+        },
+        "threshold": {
+          "type": "string",
+          "description": "Threshold expression (e.g. '>8 GB')."
+        },
+        "source": {
+          "type": "string",
+          "description": "Where the value came from: 'profile.queryMetrics' / 'node[12].operator_stats' / 'explain_v2' etc."
+        },
+        "grounded": {
+          "type": "boolean",
+          "default": true,
+          "description": "True if mechanically verified against profile JSON. False = LLM-extracted, may be hallucination. (Week 3 R6+Q3 implementation)"
+        }
+      }
+    },
+    "Action": {
+      "type": "object",
+      "required": ["action_id", "target", "fix_type", "what"],
+      "additionalProperties": false,
+      "properties": {
+        "action_id": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "^[a-z][a-z0-9_]*$"
+        },
+        "target": {
+          "type": "string",
+          "minLength": 1,
+          "description": "What is being changed: column/table/config key. Required for Q4 actionability."
+        },
+        "fix_type": {
+          "type": "string",
+          "enum": [
+            "configuration",
+            "ddl",
+            "rewrite",
+            "clustering",
+            "maintenance",
+            "investigation",
+            "operational",
+            "pattern"
+          ]
+        },
+        "what": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Action verb / change type (e.g. 'Increase from 200 to 400')."
+        },
+        "why": {
+          "type": "string",
+          "description": "Causal reason. Required for Q4 actionability >=5/6."
+        },
+        "fix_sql": {
+          "type": "string",
+          "description": "SQL/SET snippet ready to execute. Optional but strongly recommended."
+        },
+        "fix_sql_dialect": {
+          "type": "string",
+          "enum": ["databricks", "spark", "ansi"],
+          "default": "databricks"
+        },
+        "fix_sql_skeleton": {
+          "type": "string",
+          "description": "Structural summary of fix_sql produced by core/sql_skeleton.py. Used for prompt injection when fix_sql is too long. (W5)"
+        },
+        "fix_sql_skeleton_method": {
+          "type": "string",
+          "enum": ["fullsql", "bypass", "sqlglot", "head_tail", "truncate"],
+          "description": "Which extraction method produced fix_sql_skeleton. (W5)"
+        },
+        "fix_sql_chars_original": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Original fix_sql length in characters before skeletonization. (W5)"
+        },
+        "fix_sql_chars_in_prompt": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Characters of fix_sql_skeleton actually used in the LLM prompt. (W5)"
+        },
+        "expected_effect": {
+          "type": "string",
+          "description": "Quantitative or directional expected impact (e.g. '実行時間 30% 短縮')."
+        },
+        "expected_effect_quantitative": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "metric": {"type": "string"},
+            "delta_pct": {"type": "number"},
+            "delta_abs": {"type": "number"},
+            "confidence": {"$ref": "#/$defs/Confidence"}
+          }
+        },
+        "impact_confidence": {
+          "$ref": "#/$defs/Confidence",
+          "description": "How confident we are in the expected_effect. W2.5 #7."
+        },
+        "preconditions": {
+          "type": "array",
+          "items": {"type": "string", "minLength": 1},
+          "description": "Conditions that must be satisfied before applying (e.g. 'OPTIMIZE が実行できる空きクラスタが必要', 'DLT パイプラインを停止できる時間帯')."
+        },
+        "rollback": {
+          "type": "object",
+          "additionalProperties": false,
+          "description": "How to revert this action if it makes things worse.",
+          "properties": {
+            "type": {
+              "type": "string",
+              "enum": ["sql", "config", "manual", "irreversible", "auto"],
+              "description": "irreversible = OPTIMIZE/VACUUM のように元に戻せない、auto = AQE のように自動で巻き戻る、manual = 手順書参照。"
+            },
+            "rollback_sql": {"type": "string"},
+            "manual_steps": {"type": "string"}
+          }
+        },
+        "verification": {
+          "type": "array",
+          "items": {"$ref": "#/$defs/Verification"},
+          "description": "How to verify after applying the fix. Required for Q4 >=5/6."
+        },
+        "risk": {"$ref": "#/$defs/Severity"},
+        "risk_reason": {"type": "string"},
+        "effort": {"type": "string", "enum": ["low", "medium", "high"]},
+        "priority_rank": {"type": "integer", "minimum": 0, "maximum": 100},
+        "selected_because": {"type": "string"},
+        "is_preserved": {"type": "boolean", "default": false}
+      }
+    },
+    "Verification": {
+      "oneOf": [
+        {
+          "type": "object",
+          "required": ["type", "metric", "expected"],
+          "additionalProperties": false,
+          "properties": {
+            "type": {"const": "metric"},
+            "metric": {"type": "string", "minLength": 1},
+            "expected": {"type": "string", "minLength": 1}
+          }
+        },
+        {
+          "type": "object",
+          "required": ["type", "sql", "expected"],
+          "additionalProperties": false,
+          "properties": {
+            "type": {"const": "sql"},
+            "sql": {"type": "string", "minLength": 1},
+            "expected": {"type": "string", "minLength": 1}
+          }
+        },
+        {
+          "type": "object",
+          "required": ["type", "explain_pattern", "expected"],
+          "additionalProperties": false,
+          "properties": {
+            "type": {"const": "explain"},
+            "explain_pattern": {"type": "string", "minLength": 1},
+            "expected": {"type": "string", "minLength": 1}
+          }
+        }
+      ]
+    }
+  }
+}

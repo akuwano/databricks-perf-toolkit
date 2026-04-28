@@ -1,7 +1,7 @@
 # LLM Model Evaluation Results
 
 **Date:** 2026-03-20
-**Profile:** `json/customer/Concurrent2.json` (TPC-H SF100, scan locality issue)
+**Profile:** `json/concurrent2.json` (TPC-H SF100, scan locality issue)
 **Judges:** Opus 4.6, GPT 5.4, Gemini 3.1 Pro (5 criteria × 5 points = 25 max)
 
 ## Evaluation Criteria
@@ -110,5 +110,5 @@ This provides:
 cd databricks-apps
 
 # Edit CANDIDATE_CONFIGS in scripts/eval_models.py to set desired configs
-python ../scripts/eval_models.py ../json/customer/Concurrent2.json > results.json
+python ../scripts/eval_models.py ../json/concurrent2.json > results.json
 ```

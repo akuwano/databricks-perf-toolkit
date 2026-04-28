@@ -1,0 +1,45 @@
+case_id: merge_into_skeleton_q1
+profile_path: json/query-profile_01f0d7cb-8a18-1f3d-bd2f-f0b580fc6a90.json
+description: "MERGE INTO ステートメントが skeleton bypass 経路で head_tail に落ちることを golden で固定 (W6 Day 5 boundary case)。"
+domain: dbsql
+workload_type: etl
+expected_severity: medium
+
+must_cover_issues:
+  - id: merge_join_efficiency
+    severity: medium
+    keywords: [merge, マージ, join]
+
+forbidden_claims:
+  - id: select_only_advice
+    description: "MERGE なのに SELECT 系のみで完結する提案は禁止"
+
+must_have_actions:
+  - target: merge_predicate
+    type: rewrite
+    keyword: predicate
+
+# W6 Day 5 boundary expectations
+expected_skeleton:
+  method: bypass  # MERGE は skeleton 化せず、head_tail or full SQL
+  bypass_reason: "unsupported_statement_type:merge"
+
+expected_action_template:
+  - field: fix_sql_skeleton_method
+    description: "bypass で記録され、parse_failure としてはカウントされない"
+
+expected_failure_categories:
+  forbidden:
+    - missing_critical
+    - parse_failure  # bypass は parse_failure ではない
+  allow_max:
+    over_recommendation: 0
+
+expected_l3_min: 4
+expected_recall_min: 0.80
+
+notes: |
+  W6 boundary case (Codex W5 backlog #1): MERGE INTO の bypass 経路を検証。
+  sql_skeleton.py は MERGE を bypass = head_tail/full SQL で扱う。
+  Week 7 以降で MERGE 構造抽出を追加実装する場合、この case が
+  「parse_failure 0」を維持するかが回帰検知の指標になる。

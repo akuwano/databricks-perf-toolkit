@@ -195,6 +195,48 @@ def debug_config():
     return jsonify({"settings": settings, "config_paths": get_config_paths()})
 
 
+@bp.route("/api/v1/debug/feature-flags")
+def debug_feature_flags():
+    """Return effective V6 feature flags + their resolution source.
+
+    Resolution order (high → low priority):
+      1. env var          (e.g. V6_CANONICAL_SCHEMA=1)
+      2. runtime-config.json key (lowercase, e.g. v6_canonical_schema)
+      3. default False
+    """
+    import os
+    from core import feature_flags
+    from core.config_store import get_config_paths, get_setting
+
+    # Force a fresh resolution (in case runtime-config was edited live)
+    feature_flags.reset_cache()
+
+    flags = {}
+    for flag in feature_flags.ALL_FLAGS:
+        env_value = os.environ.get(flag)
+        rt_value = get_setting(flag.lower(), None)
+        if env_value is not None:
+            source = "env"
+            raw = env_value
+        elif rt_value is not None and rt_value != "":
+            source = "runtime-config"
+            raw = rt_value
+        else:
+            source = "default"
+            raw = ""
+        flags[flag] = {
+            "enabled": feature_flags._is_enabled(flag),
+            "source": source,
+            "raw_value": raw,
+        }
+
+    return jsonify({
+        "feature_flags": flags,
+        "snapshot": feature_flags.snapshot(),
+        "config_paths": get_config_paths(),
+    })
+
+
 @bp.route("/api/v1/spark-perf/settings", methods=["GET"])
 def get_spark_perf_settings():
     """Get Spark Perf settings."""

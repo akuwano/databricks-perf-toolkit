@@ -6,7 +6,7 @@ Exit code 0 = all checks passed, 1 = failures detected.
 
 Usage:
     python scripts/smoke_test.py <app_url>
-    python scripts/smoke_test.py https://your-app-name.aws.databricksapps.com
+    python scripts/smoke_test.py https://databricks-perf-kit-staging-xxx.aws.databricksapps.com
 
 Requires:
     - requests (pip install requests)

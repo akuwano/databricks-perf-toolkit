@@ -198,6 +198,27 @@ CATEGORY_TO_KNOWLEDGE_SECTIONS = CATEGORY_TO_SECTION_IDS
 
 ALWAYS_INCLUDE_SECTION_IDS = ["bottleneck_summary", "spark_params", "appendix"]
 
+# V6 minimal set — Codex指摘 #3 で spark_params / appendix を削除。
+# `feature_flags.always_include_minimum() == True` のとき下を使う。
+_ALWAYS_INCLUDE_SECTION_IDS_V6_MINIMUM = ["bottleneck_summary"]
+
+
+def get_always_include_section_ids() -> list[str]:
+    """Return the active ALWAYS_INCLUDE list, honoring V6 feature flag.
+
+    Modules should call this helper instead of referring to
+    ALWAYS_INCLUDE_SECTION_IDS directly so the V6 minimal set takes
+    effect everywhere it matters (Codex 指摘 #3 + W3 地雷 "ALWAYS_INCLUDE
+    が隠れ注入になる").
+    """
+    try:
+        from core import feature_flags  # noqa: WPS433
+    except ImportError:
+        return list(ALWAYS_INCLUDE_SECTION_IDS)
+    if feature_flags.always_include_minimum():
+        return list(_ALWAYS_INCLUDE_SECTION_IDS_V6_MINIMUM)
+    return list(ALWAYS_INCLUDE_SECTION_IDS)
+
 # Maps Spark Perf bottleneck types to spark_*.md section_ids
 SPARK_CATEGORY_TO_SECTION_IDS: dict[str, list[str]] = {
     "DATA_SKEW": ["spark_data_skew", "spark_data_layout", "spark_shuffle_params"],
@@ -312,7 +333,7 @@ def _score_sections_by_alerts(
     scores: dict[str, int] = {}
 
     # Always-include sections get highest priority
-    for sid in ALWAYS_INCLUDE_SECTION_IDS:
+    for sid in get_always_include_section_ids():
         if sid in sections:
             scores[sid] = 100
 
@@ -348,8 +369,8 @@ def filter_knowledge_by_alerts(
     # Include all scored sections (filtered by alert relevance)
     relevant_ids = set(scores.keys())
 
-    # Also add ALWAYS_INCLUDE
-    for sid in ALWAYS_INCLUDE_SECTION_IDS:
+    # Also add ALWAYS_INCLUDE (V6 honors feature_flags.always_include_minimum)
+    for sid in get_always_include_section_ids():
         relevant_ids.add(sid)
 
     return _join_sections(sections, relevant_ids)
@@ -420,7 +441,7 @@ def filter_knowledge_for_analysis(
 
     # Include all scored sections
     relevant_ids = set(scores.keys())
-    for sid in ALWAYS_INCLUDE_SECTION_IDS:
+    for sid in get_always_include_section_ids():
         relevant_ids.add(sid)
 
     result = _join_sections(sections, relevant_ids)
@@ -464,10 +485,11 @@ def _trim_by_priority(
     to preserve key information in condensed form.
     """
     # Sort sections by priority score (ascending = lowest priority first to drop)
+    _always = set(get_always_include_section_ids())
     scored_items = [
         (sid, sections[sid], scores.get(sid, 0))
         for sid in sections
-        if sid in scores or sid in set(ALWAYS_INCLUDE_SECTION_IDS)
+        if sid in scores or sid in _always
     ]
     scored_items.sort(key=lambda x: x[2], reverse=True)
 
@@ -495,8 +517,20 @@ def _trim_by_priority(
             dropped_names,
         )
 
-        # Attempt LLM summarization of dropped sections
-        if llm_client and llm_model:
+        # Attempt LLM summarization of dropped sections.
+        # V6: skip the secondary summarization pass entirely when
+        # `feature_flags.skip_condensed_knowledge()` is on (Codex指摘 #4).
+        try:
+            from core import feature_flags as _ff  # noqa: WPS433
+        except ImportError:
+            _ff = None
+        if _ff is not None and _ff.skip_condensed_knowledge():
+            logger.info(
+                "V6: skipping condensed knowledge regen (skip_condensed_knowledge=on); "
+                "%d sections dropped without summary",
+                len(to_summarize),
+            )
+        elif llm_client and llm_model:
             summary = _summarize_sections_with_llm(to_summarize, llm_client, llm_model)
             if summary:
                 summary_entry_len = len(summary) + divider_len

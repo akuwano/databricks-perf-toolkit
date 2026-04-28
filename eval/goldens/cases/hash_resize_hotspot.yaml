@@ -1,0 +1,38 @@
+case_id: hash_resize_hotspot_q1
+profile_path: json/query-profile_01f0f98e-e00d-1cc8-a85b-639e4c33835c.json
+description: HashAggregate / HashJoin の hash table resize がホットスポット化しているケース。
+domain: dbsql
+workload_type: join_heavy
+expected_severity: medium
+
+must_cover_issues:
+  - id: hash_resize_dominant
+    severity: medium
+    keywords: [hash resize, ハッシュテーブル, リサイズ]
+    description: hash table resize が時間支配的
+
+  - id: cardinality_estimate_off
+    severity: medium
+    keywords: [推定, estimate, cardinality]
+    description: cardinality 推定が外れている可能性
+
+forbidden_claims:
+  - id: shuffle_when_hash_resize
+    description: hash resize が原因なのに shuffle 提案を最優先するのは順序が逆
+
+must_have_actions:
+  - target: stats_refresh
+    type: maintenance
+    keyword: ANALYZE
+    description: ANALYZE TABLE で統計更新を促す
+  - target: cardinality_hint
+    type: rewrite
+    keyword: hint
+    description: 統計反映後にプランが改善するか確認
+
+expected_l3_min: 4
+expected_recall_min: 0.80
+
+notes: |
+  v4.42 で追加された hash_resize 集約・severity 段階化を回帰防止。
+  「先に統計鮮度」「次に hint」の優先順位を golden で固定。

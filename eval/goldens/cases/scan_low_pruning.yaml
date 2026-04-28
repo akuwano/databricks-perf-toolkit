@@ -1,0 +1,41 @@
+case_id: scan_low_pruning_q1
+profile_path: json/xlarge_qp (1).json
+description: スキャン時のファイルプルーニング率が低く、不要な大量バイトを読み込んでいる。
+domain: dbsql
+workload_type: scan_heavy
+expected_severity: high
+
+must_cover_issues:
+  - id: low_file_pruning
+    severity: high
+    keywords: [pruning, files_pruned, データスキッピング]
+    description: ファイル/パーティションプルーニングが効いていない
+
+  - id: large_scan_volume
+    severity: medium
+    keywords: [scan, bytes_read, 読み込み]
+    description: 読み込みバイトが大きい
+
+forbidden_claims:
+  - id: federation_recommendation
+    description: federation ではないので federation 提案禁止
+  - id: blanket_lc_recommendation
+    description: フィルタ列を特定せず無条件に LC 推奨は禁止
+
+must_have_actions:
+  - target: clustering_key
+    type: clustering
+    keyword: CLUSTER BY
+    description: WHERE 句で頻出する列での Liquid Clustering 提案 (具体的な列名込み)
+  - target: optimize
+    type: maintenance
+    keyword: OPTIMIZE
+    description: OPTIMIZE 実行の検討 (ファイル統計の更新含む)
+
+expected_l3_min: 4
+expected_recall_min: 0.85
+
+notes: |
+  xlarge_qp は数 TB スキャンで pruning 率 < 30%。
+  特定の WHERE 列 (date / region 等) を identify した上で LC 提案する必要がある。
+  抽象的な「クラスタリングを検討」は L4 actionability で減点対象。

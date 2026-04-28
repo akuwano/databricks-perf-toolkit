@@ -1,0 +1,31 @@
+case_id: streaming_with_low_cache_q1
+profile_path: json/sdp_streamiing
+description: ストリーミングクエリで cache hit ratio が低い。ストリーミング常態の cold cache を「問題」として alert しないことを検証する組み合わせ negative case。
+domain: dbsql
+workload_type: streaming
+expected_severity: low
+
+must_cover_issues:
+  - id: streaming_detected
+    severity: low
+    keywords: [streaming, ストリーミング]
+    description: ストリーミングと正しく認識
+
+forbidden_claims:
+  - id: low_cache_hit
+    description: ストリーミングは cold cache が常態なので cache hit alert は禁止
+  - id: cache_warm_up_recommendation
+    description: cache warm-up 提案はストリーミングでは無意味
+
+must_have_actions:
+  - target: trigger_interval
+    type: configuration
+    keyword: trigger
+    description: trigger interval の調整 (cache よりも本質的)
+
+expected_l3_min: 3
+expected_recall_min: 1.0
+
+notes: |
+  W2.5 #8 組み合わせケース: streaming + low cache。
+  ストリーミング suppression が cache 系 alert を確実に抑制することを golden で固定。

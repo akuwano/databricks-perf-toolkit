@@ -1,0 +1,35 @@
+case_id: unknown_knowledge_id_rejected_q1
+profile_path: json/large_qp (1).json
+description: "Evidence.source が `knowledge:<sid>` で <sid> が core/knowledge/*.md に存在しない場合、Q3 valid_knowledge_section_ratio で減点されること (W3.5 #4 Codex 推奨)。"
+domain: dbsql
+workload_type: join_heavy
+expected_severity: high
+
+must_cover_issues:
+  - id: shuffle_dominant
+    severity: high
+    keywords: [shuffle, シャッフル]
+
+forbidden_evidence_claim:
+  - description: "knowledge:<sid> で <sid> が実在しない値 (knowledge:made_up_section, knowledge:nonexistent 等) は禁止"
+    pattern: "knowledge:made_up|knowledge:nonexistent|knowledge:fake_"
+    forbidden_source_pattern: true
+
+forbidden_claims:
+  - id: bogus_knowledge_id
+    description: "知識引用は core/knowledge/*.md の <!-- section_id: ... --> マーカーに存在する ID のみ"
+
+must_have_actions: []
+
+expected_l3_min: 4
+expected_recall_min: 0.80
+expected_q3_min: 0.70
+
+# W3.5 #4 specific
+expected_valid_knowledge_id_min: 1.0  # 全 knowledge ref が valid であること
+
+notes: |
+  W3.5 #4: unknown knowledge_id 検出 case。
+  Week 4 で LLM canonical-direct 出力を有効にしたとき、LLM が捏造した
+  section_id (knowledge:made_up_thing 等) を Q3 が確実に減点して
+  alarm を上げる仕組みを golden で固定する。

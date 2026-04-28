@@ -1,0 +1,42 @@
+case_id: etl_merge_q1
+profile_path: json/query-profile_01f0d7cb-8a18-1f3d-bd2f-f0b580fc6a90.json
+description: MERGE INTO による ETL ジョブ。書き込み側の最適化と source-target join の効率が論点。
+domain: dbsql
+workload_type: etl
+expected_severity: medium
+
+must_cover_issues:
+  - id: merge_join_efficiency
+    severity: medium
+    keywords: [MERGE, マージ, join]
+    description: MERGE の source/target join 効率
+
+  - id: write_side_optimization
+    severity: medium
+    keywords: [書き込み, write, optimizeWrite, autoCompact]
+    description: 書き込み側の最適化 (file size 等)
+
+forbidden_claims:
+  - id: select_only_advice
+    description: MERGE なのに SELECT 系 (clustering 等) のみで完結する提案は禁止
+
+must_have_actions:
+  - target: merge_predicate
+    type: rewrite
+    keyword: predicate
+    description: MERGE の matched / not matched 述語の最適化
+  - target: write_config
+    type: configuration
+    keyword: optimizeWrite
+    description: spark.databricks.delta.optimizeWrite.enabled = true の検討
+  - target: target_clustering
+    type: clustering
+    keyword: CLUSTER BY
+    description: ターゲットテーブルの clustering 検討 (匹配列)
+
+expected_l3_min: 4
+expected_recall_min: 0.80
+
+notes: |
+  ETL ワークロードでは scan 中心のクエリと診断軸を分ける必要がある。
+  「期待効果」に書き込み速度改善 / file count 削減を含めることが望ましい。

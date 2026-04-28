@@ -473,6 +473,16 @@ class BottleneckIndicators:
     # direct evidence of a JOIN-key data-type mismatch. Critical for rewrites
     # because it forbids the "just add a WHERE" fix and points to schema.
     implicit_cast_on_join_key: bool = False
+    # 2026-04-26 V6 alert coverage expansion (Codex (e) follow-up):
+    # large aggregate node (peak_memory >= threshold) whose aggregate
+    # expressions contain arithmetic (* / + / -). Wide DECIMAL inputs
+    # widen to DECIMAL(38,18) under arithmetic, inflating per-row CPU
+    # and hash-table memory. The card recommends DESCRIBE TABLE +
+    # type review (DECIMAL → INT/BIGINT when integer-only).
+    decimal_heavy_aggregate: bool = False
+    # ``[(node_id, expression_excerpt)]`` for the top examples — used
+    # by the card to populate evidence without re-walking node_metrics.
+    decimal_heavy_aggregate_examples: list[tuple[str, str]] = field(default_factory=list)
     # CTE references with reference_count >= 2 that were NOT materialized as a
     # ReusedExchange. Each one means Spark is re-computing the CTE body.
     cte_reuse_miss_count: int = 0

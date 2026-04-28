@@ -1,0 +1,25 @@
+case_id: good_perf_baseline_q1
+profile_path: json/physical_table_good_perf_query_profile.json
+description: 良好なパフォーマンスのクエリ。問題ないので過剰な改善提案を出さないことを検証する negative case。
+domain: dbsql
+workload_type: scan_heavy
+expected_severity: low
+
+must_cover_issues: []  # 重大 issue なし
+
+forbidden_claims:
+  - id: false_alarm_recommendation
+    description: 問題ないクエリに対して critical / high の改善提案を出すのは禁止
+  - id: blanket_lc_recommendation
+    description: 既に最適化されたテーブルに無条件で LC 推奨は禁止
+  - id: federation_recommendation
+    description: federation ではないので federation 提案禁止
+
+must_have_actions: []  # 推奨は最小限であるべき
+
+expected_l3_min: 4    # 「問題なし」と正しく判断できるか
+expected_recall_min: 1.0  # must_cover_issues=[] なので 1.0 (見逃し0)
+
+notes: |
+  良好な事例。ActionCard が 0-2 個 (低 severity のみ) であることが望ましい。
+  「クラスタリング検討」「OPTIMIZE 検討」等の汎用提案で埋めるのは品質低下と判定。

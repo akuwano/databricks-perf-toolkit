@@ -1,0 +1,37 @@
+# Globally forbidden claims — applied to EVERY case unless the case
+# explicitly opts out via `disable_global_forbidden: [id...]`.
+#
+# The criterion for inclusion is "truly global": the claim is never a
+# correct recommendation in *any* DBSQL profiler context, regardless of
+# query kind, compute mode (Serverless / Pro / Classic), or workload.
+#
+# See: docs/v6/operations.md, eval/goldens/cases/*.yaml
+#
+# Matching: hallucination scorer normalizes the id by lowercasing and
+# replacing underscores with spaces, then checks if that string occurs
+# in the report text. So pick ids whose lowered form is a robust
+# substring of the actual hallucinated text.
+
+global_forbidden_claims:
+  # ---- Hierarchical Clustering syntax errors ----
+  - id: delta.feature.hierarchicalClustering
+    description: |
+      Legacy / non-existent TBLPROPERTIES name. Canonical is
+      'delta.liquid.hierarchicalClusteringColumns' — fixed in v5.16.18 and
+      pinned by tests/test_hier_clustering_syntax.py. Any LLM-emitted
+      report containing this property is a hallucination.
+
+  - id: WITH (HIERARCHICAL CLUSTERING
+    description: |
+      Legacy CLUSTER BY ... WITH (HIERARCHICAL CLUSTERING (...)) syntax,
+      deprecated in v5.16.18. Replaced by canonical
+      ALTER TABLE ... CLUSTER BY (col, ...) +
+      SET TBLPROPERTIES ('delta.liquid.hierarchicalClusteringColumns' = '...').
+
+  # ---- CTE materialization fallacy ----
+  - id: temp view
+    description: |
+      CREATE TEMP VIEW does NOT guarantee single materialization — it is a
+      catalog alias that re-runs on each reference. v5.16 fix: recommend
+      CTAS / Delta persist or rewrite the CTE so the body runs once. See
+      knowledge/dbsql_sql_patterns.md.

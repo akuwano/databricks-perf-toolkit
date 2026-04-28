@@ -14,7 +14,7 @@ Pipeline expectations:
 
 The real-world regression profile lives at
 ``json/query-profile_01f13e1f-0d0c-1f8d-b5c1-5ef745e96241.json``
-(BigQuery federation, `pococha_bq_prod` catalog). The tests load it
+(BigQuery federation, `bq_prod` catalog). The tests load it
 directly so future format changes surface here.
 """
 
@@ -76,7 +76,7 @@ class TestNodeLevelFederationDetection:
                     "nodes": [
                         {
                             "id": "7",
-                            "name": "Row Data Source Scan pococha_bq_prod.source.tbl",
+                            "name": "Row Data Source Scan bq_prod.example.tbl",
                             "tag": "ROW_DATA_SOURCE_SCAN_EXEC",
                             "hidden": False,
                             "keyMetrics": {},
@@ -118,15 +118,15 @@ class TestPopulateFederationSignals:
     def test_aggregates_tables_and_flag(self):
         qm = QueryMetrics()
         nodes = [
-            _fed_scan_node("pococha_bq_prod.source.db_reincarnation_device_histories"),
+            _fed_scan_node("bq_prod.example.users"),
         ]
         populate_federation_signals(qm, nodes)
         assert qm.is_federation_query is True
-        assert qm.federation_tables == ["pococha_bq_prod.source.db_reincarnation_device_histories"]
+        assert qm.federation_tables == ["bq_prod.example.users"]
 
     def test_source_type_bigquery_heuristic(self):
         qm = QueryMetrics()
-        nodes = [_fed_scan_node("pococha_bq_prod.source.db_foo")]
+        nodes = [_fed_scan_node("bq_prod.example.foo")]
         populate_federation_signals(qm, nodes)
         assert qm.federation_source_type == "bigquery"
 
@@ -148,7 +148,7 @@ class TestPopulateFederationSignals:
     def test_mixed_catalogs_do_not_override_source(self):
         qm = QueryMetrics()
         nodes = [
-            _fed_scan_node("pococha_bq_prod.src.a"),
+            _fed_scan_node("bq_prod.example.a"),
             _fed_scan_node("sf_analytics.public.b"),
         ]
         populate_federation_signals(qm, nodes)
@@ -159,7 +159,7 @@ class TestPopulateFederationSignals:
 
 class TestSourceTypeHeuristic:
     def test_bigquery_catalog(self):
-        assert _guess_federation_source_type("pococha_bq_prod.src.t") == "bigquery"
+        assert _guess_federation_source_type("bq_prod.example.t") == "bigquery"
 
     def test_snowflake_catalog(self):
         assert _guess_federation_source_type("sf_analytics.public.orders") == "snowflake"
@@ -193,7 +193,7 @@ def _fed_ctx() -> Context:
         task_total_time_ms=60_000,
         is_federation_query=True,
         federation_source_type="bigquery",
-        federation_tables=["pococha_bq_prod.source.tbl"],
+        federation_tables=["bq_prod.example.tbl"],
     )
     return Context(
         indicators=BottleneckIndicators(

@@ -111,6 +111,12 @@ def analyze_with_llm(
             ],
             max_tokens=16384,
             temperature=0.2,
+            stage="analyze",
+            extra_telemetry={
+                "system_chars": len(system_prompt),
+                "user_chars": len(user_prompt),
+                "is_federation": is_federation,
+            },
         )
     except LLMTimeoutError as e:
         logger.error("LLM analysis timed out: %s", e)
@@ -216,6 +222,11 @@ def rewrite_with_llm(
             ],
             max_tokens=max_tokens,
             temperature=0.1,
+            stage="rewrite",
+            extra_telemetry={
+                "token_constrained": token_constrained,
+                "knowledge_chars": len(relevant_knowledge or ""),
+            },
         )
     except LLMTimeoutError as e:
         logger.error("LLM rewrite timed out: %s", e)
@@ -264,6 +275,7 @@ def fix_rewrite_with_llm(
             ],
             max_tokens=max_tokens,
             temperature=0.1,
+            stage="rewrite_fix",
         )
     except LLMTimeoutError as e:
         logger.error("LLM rewrite fix timed out: %s", e)
@@ -294,13 +306,23 @@ def review_with_llm(
 
     from .llm_client import KNOWLEDGE_MAX_CHARS
 
-    relevant_knowledge = filter_knowledge_for_analysis(
-        tuning_knowledge,
-        analysis.bottleneck_indicators.alerts,
-        max_chars=KNOWLEDGE_MAX_CHARS,
-        llm_client=client,
-        llm_model=review_model,
-    )
+    # V6 (Codex指摘 #1): Stage 2 review に knowledge を入れない。
+    # review は format / evidence consistency のみで判定し、誤 reject を減らす。
+    try:
+        from . import feature_flags as _ff  # noqa: WPS433
+    except ImportError:
+        _ff = None
+    if _ff is not None and _ff.review_no_knowledge():
+        logger.info("V6 review_no_knowledge=on: skipping knowledge injection in review")
+        relevant_knowledge = ""
+    else:
+        relevant_knowledge = filter_knowledge_for_analysis(
+            tuning_knowledge,
+            analysis.bottleneck_indicators.alerts,
+            max_chars=KNOWLEDGE_MAX_CHARS,
+            llm_client=client,
+            llm_model=review_model,
+        )
 
     system_prompt = create_review_system_prompt(
         relevant_knowledge, lang, is_serverless=is_serverless, is_streaming=is_streaming
@@ -317,6 +339,12 @@ def review_with_llm(
             ],
             max_tokens=4096,
             temperature=0.2,
+            stage="review",
+            extra_telemetry={
+                "knowledge_chars": len(relevant_knowledge or ""),
+                "system_chars": len(system_prompt),
+                "user_chars": len(user_prompt),
+            },
         )
     except LLMError as e:
         logger.error("LLM review failed: %s", e)
@@ -346,10 +374,21 @@ def refine_with_llm(
 
     from .llm_client import KNOWLEDGE_MAX_CHARS
 
+    # V6 (Codex指摘 #2): Stage 3 refine の knowledge は最大 4 KB に縮小、
+    # 全文投入をやめる。flag off では従来挙動。
+    try:
+        from . import feature_flags as _ff  # noqa: WPS433
+    except ImportError:
+        _ff = None
+    if _ff is not None and _ff.refine_micro_knowledge():
+        max_chars = 4096
+        logger.info("V6 refine_micro_knowledge=on: knowledge budget capped to %d chars", max_chars)
+    else:
+        max_chars = KNOWLEDGE_MAX_CHARS
     relevant_knowledge = filter_knowledge_for_analysis(
         tuning_knowledge,
         analysis.bottleneck_indicators.alerts,
-        max_chars=KNOWLEDGE_MAX_CHARS,
+        max_chars=max_chars,
         llm_client=client,
         llm_model=refine_model,
     )
@@ -376,6 +415,13 @@ def refine_with_llm(
             ],
             max_tokens=16384,
             temperature=0.2,
+            stage="refine",
+            extra_telemetry={
+                "knowledge_chars": len(relevant_knowledge or ""),
+                "knowledge_max_chars": max_chars,
+                "system_chars": len(system_prompt),
+                "user_chars": len(user_prompt),
+            },
         )
     except LLMError as e:
         logger.error("LLM refinement failed: %s", e)
@@ -422,6 +468,11 @@ def review_report_with_llm(
             ],
             max_tokens=4096,
             temperature=0.2,
+            stage="report_review",
+            extra_telemetry={
+                "knowledge_chars": len(relevant_knowledge or ""),
+                "report_chars": len(report_markdown or ""),
+            },
         )
     except LLMError as e:
         logger.error("LLM report review failed: %s", e)
@@ -468,6 +519,12 @@ def refine_report_with_llm(
             ],
             max_tokens=16384,
             temperature=0.2,
+            stage="report_refine",
+            extra_telemetry={
+                "knowledge_chars": len(relevant_knowledge or ""),
+                "report_chars": len(report_markdown or ""),
+                "review_chars": len(report_review_markdown or ""),
+            },
         )
     except LLMError as e:
         logger.error("LLM report refinement failed: %s", e)
@@ -522,6 +579,11 @@ def recommend_clustering_with_llm(
             ],
             max_tokens=1000,
             temperature=0.1,
+            stage="clustering",
+            extra_telemetry={
+                "target_table": target_table,
+                "candidate_columns": len(candidate_columns or []),
+            },
         )
 
         # Parse JSON from response
@@ -579,6 +641,8 @@ def select_top_actions_with_llm(
             ],
             max_tokens=1200,
             temperature=0,
+            stage="rerank",
+            extra_telemetry={"action_card_count": len(action_cards or [])},
         )
         return parse_rerank_output(response)
     except LLMError as e:

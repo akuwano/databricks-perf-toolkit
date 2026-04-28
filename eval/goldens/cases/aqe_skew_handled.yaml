@@ -1,0 +1,27 @@
+case_id: aqe_skew_handled_q1
+profile_path: json/query-profile_01f0db40-adf9-1f36-9265-df14bfa45ad4.json
+description: AQE が skew を検出して handled 済みのケース。skew アラートを過剰に出さないことを検証する negative case。
+domain: dbsql
+workload_type: join_heavy
+expected_severity: low
+
+must_cover_issues:
+  - id: aqe_handled_skew
+    severity: low
+    keywords: [AQE, skew, handled, 解消]
+    description: AQE skew 解消が機能していると正しく報告
+
+forbidden_claims:
+  - id: skew_alert_when_handled
+    description: AQE が解消済みなのに「skew が問題」と alert するのは禁止
+  - id: manual_repartition_when_aqe_works
+    description: AQE で十分なのに手動 repartition 推奨は不要
+
+must_have_actions: []  # 重大対応不要
+
+expected_l3_min: 4
+expected_recall_min: 1.0
+
+notes: |
+  v4.42 の skew 検出 3段階化 + リトライ抑制の回帰防止。
+  AQE absorbed event を正しく解釈できるか試す negative case。

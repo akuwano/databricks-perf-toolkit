@@ -36,7 +36,19 @@ targets:
       warehouse_id: "your-warehouse-id"
       log_root: "/Volumes/main/base/data/cluster_logs/your-cluster"
       cluster_id: "your-cluster-id"
-      app_name: "your-app-name-dev"
+      app_name: "dbsql-profiler-analyzer-dev"
+      # V6 feature flags are now default-on kill switches (Codex
+      # 2026-04-26). You should NOT need to set anything here for
+      # normal operation. To triage a regression, uncomment ONE flag
+      # and set it to "false" — see docs/v6/why-default-on.md.
+      # v6_canonical_schema: "false"
+      # v6_review_no_knowledge: "false"
+      # v6_refine_micro_knowledge: "false"
+      # v6_always_include_minimum: "false"
+      # v6_skip_condensed_knowledge: "false"
+      # v6_recommendation_no_force_fill: "false"
+      # v6_sql_skeleton_extended: "false"
+      # (v6_compact_top_alerts was retired in v6.6.4 — no longer a flag.)
 
   # staging:
   #   workspace:
@@ -50,7 +62,7 @@ targets:
   #     warehouse_id: "your-warehouse-id"
   #     log_root: "/Volumes/staging_catalog/base/data/cluster_logs/your-cluster"
   #     cluster_id: "your-cluster-id"
-  #     app_name: "your-app-name-staging"
+  #     app_name: "dbsql-profiler-analyzer-staging"
 
   # prod:
   #   workspace:
@@ -64,4 +76,4 @@ targets:
   #     warehouse_id: "your-prod-warehouse-id"
   #     log_root: "/Volumes/prod_catalog/base/data/cluster_logs/prod-cluster"
   #     cluster_id: "your-prod-cluster-id"
-  #     app_name: "your-app-name"
+  #     app_name: "dbsql-profiler-analyzer"

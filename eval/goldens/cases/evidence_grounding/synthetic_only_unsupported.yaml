@@ -1,0 +1,38 @@
+case_id: synthetic_only_unsupported_q1
+profile_path: json/medium_qp (1).json
+description: "Finding が synthetic evidence のみで構成される場合、finding_support_ratio で 0 にカウントされなければならない (W3.5 #4 Codex 推奨 case)。"
+domain: dbsql
+workload_type: scan_heavy
+expected_severity: low
+
+must_cover_issues:
+  - id: low_cache_hit
+    severity: medium
+    keywords: [cache, キャッシュ]
+
+forbidden_evidence_claim:
+  - description: "synthetic evidence だけで finding を構成して報告するのは禁止"
+    pattern: "synthetic"
+    forbidden_source: synthetic_only
+
+forbidden_claims:
+  - id: synthetic_evidence_finding
+    description: "synthetic source のみで構成された finding は finding_support_ratio で grounded support なしとカウントされる"
+
+must_have_actions: []
+
+expected_l3_min: 3
+expected_recall_min: 0.75
+expected_q3_min: 0.50  # synthetic だけで埋まると低めになるはず
+
+# W3.5 #4 specific Q3 expectations
+expected_finding_support_max: 0.50  # synthetic-only Finding が混じれば 0.5 以下
+expected_metric_grounded_min: 0.30
+
+notes: |
+  W3.5 #4: synthetic-only Finding 検出 case。
+  rule-based pipeline は時々 problem 文だけで finding を作り、evidence
+  が一切無いケースを生成する。これは Q3 finding_support_ratio 上で
+  False (count されない) になり、複合スコアが下がるはず。
+  Week 4 で LLM canonical-direct 出力を有効にしたとき、synthetic-only
+  emit が減ることを期待している。

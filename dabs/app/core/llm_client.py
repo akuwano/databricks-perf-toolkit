@@ -179,6 +179,98 @@ def create_openai_client(databricks_host: str, databricks_token: str) -> "OpenAI
 
 
 # ---------------------------------------------------------------------------
+# Telemetry — structured 1-line log per LLM call (v6.6.x instrumentation)
+# ---------------------------------------------------------------------------
+
+# V6 flag bitmask spliced into the LLM_CALL log line. Width tracks
+# the live V6_* set in feature_flags.py — slot 8 was V6_COMPACT_TOP_ALERTS
+# (retired v6.6.4). Stable order so log search ('1010111' etc.) keeps
+# meaning across releases. New flags append; retired flags shrink the
+# width and leave a CHANGELOG breadcrumb above.
+_TELEMETRY_FLAG_BITS: tuple[str, ...] = (
+    "V6_CANONICAL_SCHEMA",
+    "V6_REVIEW_NO_KNOWLEDGE",
+    "V6_REFINE_MICRO_KNOWLEDGE",
+    "V6_ALWAYS_INCLUDE_MINIMUM",
+    "V6_SKIP_CONDENSED_KNOWLEDGE",
+    "V6_RECOMMENDATION_NO_FORCE_FILL",
+    "V6_SQL_SKELETON_EXTENDED",
+)
+
+
+def _flag_bitmask() -> str:
+    """Return the V6 flag state as a stable bitmask string ('10110100' etc).
+
+    Order matches ``_TELEMETRY_FLAG_BITS``. Used in log lines so a
+    grep / Splunk / log-search query can filter V6-all-on vs partial vs
+    legacy without parsing JSON. Lazy-imports feature_flags to avoid a
+    hard dependency in unit tests that patch llm_client directly.
+    """
+    try:
+        from . import feature_flags  # noqa: WPS433
+
+        return "".join(
+            "1" if feature_flags._is_enabled(name) else "0"
+            for name in _TELEMETRY_FLAG_BITS
+        )
+    except Exception:  # nosec
+        return "?" * len(_TELEMETRY_FLAG_BITS)
+
+
+def _emit_llm_call_telemetry(
+    *,
+    stage: str,
+    model: str,
+    prompt_chars: int,
+    latency_ms: int,
+    finish_reason: str,
+    usage: object | None,
+    attempt: int,
+    max_tokens: int,
+    extra: dict | None = None,
+) -> None:
+    """Emit one structured ``LLM_CALL`` log line per successful response.
+
+    Format: ``LLM_CALL k=v k=v ...`` (logfmt-ish). Fields:
+        stage, model, attempt, finish_reason, latency_ms, prompt_chars,
+        prompt_tokens, completion_tokens, total_tokens, max_tokens,
+        flags=<8-bit bitmask in _TELEMETRY_FLAG_BITS order>,
+        plus any caller-supplied keys via ``extra``.
+
+    Values are kept to scalars or short strings so a single line stays
+    grep / parse-friendly. Lists in ``extra`` are joined with '|'.
+    """
+    parts: list[str] = ["LLM_CALL"]
+    parts.append(f"stage={stage or '-'}")
+    parts.append(f"model={model}")
+    parts.append(f"attempt={attempt}")
+    parts.append(f"finish_reason={finish_reason or '-'}")
+    parts.append(f"latency_ms={latency_ms}")
+    parts.append(f"prompt_chars={prompt_chars}")
+    if usage is not None:
+        parts.append(f"prompt_tokens={getattr(usage, 'prompt_tokens', '-')}")
+        parts.append(f"completion_tokens={getattr(usage, 'completion_tokens', '-')}")
+        parts.append(f"total_tokens={getattr(usage, 'total_tokens', '-')}")
+    else:
+        parts.append("prompt_tokens=- completion_tokens=- total_tokens=-")
+    parts.append(f"max_tokens={max_tokens}")
+    parts.append(f"flags={_flag_bitmask()}")
+
+    if extra:
+        for k in sorted(extra.keys()):
+            v = extra[k]
+            if v is None:
+                continue
+            if isinstance(v, (list, tuple)):
+                v = "|".join(str(x) for x in v)
+            # Strip any whitespace so the logfmt invariant holds
+            v_str = str(v).replace(" ", "_").replace("\n", " ")
+            parts.append(f"{k}={v_str}")
+
+    logger.info(" ".join(parts))
+
+
+# ---------------------------------------------------------------------------
 # Retry-aware LLM call
 # ---------------------------------------------------------------------------
 
@@ -189,6 +281,9 @@ def call_llm_with_retry(
     messages: list[dict],
     max_tokens: int,
     temperature: float = 0.2,
+    *,
+    stage: str = "",
+    extra_telemetry: dict | None = None,
 ) -> str:
     """Call LLM with retry logic for transient errors.
 
@@ -198,6 +293,17 @@ def call_llm_with_retry(
         messages: Chat messages
         max_tokens: Maximum tokens in response
         temperature: Sampling temperature
+        stage: Optional pipeline stage name ("analyze" / "review" / "refine"
+            / "rewrite" / "clustering" / "rerank" / "condensed" / ...).
+            Recorded in the structured ``LLM_CALL`` log line so V5 vs V6
+            (or flag-by-flag) cost / latency comparisons can be done by
+            grepping logs without per-call DB writes.
+        extra_telemetry: Optional dict of additional fields to surface
+            in the same log line. Common keys: ``knowledge_chars``,
+            ``knowledge_sections`` (list[str]), ``sql_chars``,
+            ``sql_skeleton_chars``, ``analysis_id``, ``query_id``.
+            Values must be JSON-serializable scalars (or list of str
+            for ``knowledge_sections``).
 
     Returns:
         LLM response content
@@ -216,7 +322,8 @@ def call_llm_with_retry(
     estimated_tokens = total_chars // 4  # rough estimate: 1 token ≈ 4 chars
     timeout = compute_timeout(total_chars, max_tokens)
     logger.info(
-        "LLM request: model=%s, prompt_chars=%s, est_tokens=~%s, max_tokens=%s, timeout=%ss",
+        "LLM request: stage=%s model=%s prompt_chars=%s est_tokens=~%s max_tokens=%s timeout=%ss",
+        stage or "-",
         model,
         f"{total_chars:,}",
         f"{estimated_tokens:,}",
@@ -241,20 +348,25 @@ def call_llm_with_retry(
             response = client.chat.completions.create(**create_kwargs)
             elapsed = time.monotonic() - start_time
             usage = response.usage
-            if usage:
-                logger.info(
-                    "LLM response: %.1fs, prompt_tokens=%s, completion_tokens=%s, total_tokens=%s",
-                    elapsed,
-                    f"{usage.prompt_tokens:,}",
-                    f"{usage.completion_tokens:,}",
-                    f"{usage.total_tokens:,}",
-                )
-            else:
-                logger.info("LLM response: %.1fs (no usage info)", elapsed)
-
             choice = response.choices[0]
             finish_reason = choice.finish_reason
             content = choice.message.content or ""
+
+            # Structured 1-line telemetry — designed to be grep-friendly
+            # so V5/V6 (or flag-combination) cost comparisons can be done
+            # from log aggregators without instrumenting DB writes yet.
+            # Format: ``LLM_CALL key=value key=value ...`` (logfmt-ish).
+            _emit_llm_call_telemetry(
+                stage=stage,
+                model=model,
+                prompt_chars=total_chars,
+                latency_ms=int(elapsed * 1000),
+                finish_reason=finish_reason or "",
+                usage=usage,
+                attempt=attempt,
+                max_tokens=max_tokens,
+                extra=extra_telemetry,
+            )
 
             if finish_reason == "length":
                 logger.warning(

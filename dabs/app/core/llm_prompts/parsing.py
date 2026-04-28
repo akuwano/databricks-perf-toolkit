@@ -7,6 +7,41 @@ import re
 logger = logging.getLogger(__name__)
 
 
+# W3.5 #1: V6 canonical Report JSON extractor.
+# The LLM, when V6_CANONICAL_SCHEMA=on, is instructed to emit a fenced
+# block with language tag `json:canonical_v6`. This regex extracts the
+# JSON content non-greedily so multiple blocks (rare) work.
+_V6_CANONICAL_BLOCK_RE = re.compile(
+    r"```json:canonical_v6\s*\n(.*?)\n```",
+    re.DOTALL,
+)
+
+
+def extract_v6_canonical_block(llm_output: str) -> dict | None:
+    """Extract the V6 canonical Report JSON block from LLM output.
+
+    Returns:
+        Parsed dict matching schemas/report_v6.schema.json (best-effort —
+        caller should still validate with eval/scorers/r4_schema), or None
+        when no block is present / parse fails.
+    """
+    if not llm_output:
+        return None
+    match = _V6_CANONICAL_BLOCK_RE.search(llm_output)
+    if not match:
+        return None
+    payload = match.group(1).strip()
+    try:
+        parsed = json.loads(payload)
+    except json.JSONDecodeError as e:
+        logger.warning("V6 canonical block JSON parse failed: %s", e)
+        return None
+    if not isinstance(parsed, dict):
+        logger.warning("V6 canonical block must be an object, got %s", type(parsed).__name__)
+        return None
+    return parsed
+
+
 def parse_review_json(review_output: str) -> dict | None:
     """Parse JSON review output from LLM."""
     if not review_output:

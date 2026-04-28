@@ -1,0 +1,34 @@
+case_id: q3_ideal_baseline_q1
+profile_path: json/physical_table_good_perf_query_profile.json
+description: "良好なクエリで finding がない or 全 finding が grounded evidence のみ — Q3 composite が 1.0 に近い理想 baseline (W3.5 #4 Codex 推奨 positive case)。"
+domain: dbsql
+workload_type: scan_heavy
+expected_severity: low
+
+must_cover_issues: []
+
+forbidden_evidence_claim: []
+
+forbidden_claims:
+  - id: hallucinated_issue
+    description: "問題のないクエリに対して根拠不足の finding を emit するのは禁止"
+
+must_have_actions: []
+
+expected_l3_min: 4
+expected_recall_min: 1.0  # must_cover が空なので 1.0 強制
+expected_q3_min: 0.85  # 理想形 — finding 0 or grounded のみ
+
+# W3.5 #4 specific (positive baseline)
+expected_finding_support_min: 0.80  # 出る場合は全部 grounded
+expected_metric_grounded_min: 0.80
+expected_ungrounded_numeric_max: 0.10
+expected_valid_source_min: 1.0
+expected_valid_knowledge_id_min: 1.0
+
+notes: |
+  W3.5 #4: positive baseline case。
+  「問題ないクエリに対して、合成 evidence で問題を捏造しない」
+  「数値予測を出さない」「source taxonomy を守る」を一括で確認。
+  Week 4 で LLM canonical-direct + recommendation_no_force_fill が
+  on になれば、この case の Q3 composite が ≥ 0.85 で安定するはず。

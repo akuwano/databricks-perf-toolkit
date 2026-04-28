@@ -176,22 +176,38 @@ class TestEstimateQueryCost:
         result = estimate_query_cost(qm, wh)
         assert result.reference_costs == []
 
+    def test_with_warehouse_info_still_populates_recommendation(self):
+        """Iter 4 wiring: even when the warehouse is known, the normative
+        sizing recommendation is produced. This is what enables the
+        "you're using Large but Medium would do" comparison."""
+        wh = _make_warehouse(cluster_size="Large", enable_serverless=True)
+        qm = _make_query(
+            execution_time_ms=60_000,
+            typename="LakehouseSqlQuery",
+            task_total_time_ms=60_000 * 30,  # parallelism = 30 → fits in Small/Medium
+        )
+        result = estimate_query_cost(qm, wh)
+        assert result.recommendation is not None
+        assert result.recommendation.recommended.dbu_per_hour > 0
+
 
 # ---------------------------------------------------------------------------
-# estimate_query_cost — fallback (size inferred from parallelism)
+# estimate_query_cost — fallback (minimum viable size inferred from parallelism)
 # ---------------------------------------------------------------------------
 
 
 class TestEstimateQueryCostFallback:
-    """When warehouse_info is unavailable we infer the likely cluster size
-    from observed parallelism and price the query at that size.
+    """When warehouse_info is unavailable we infer the **minimum viable
+    size** from observed parallelism and price the query at that size.
+    This is a lower bound (i.e. "the workload would have fit on at
+    least this size"), not a normative right-sizing recommendation.
 
     Inference uses ``1 DBU ≈ 3 vCPU`` (empirical Serverless anchor):
     implied_dbu_h = parallelism / 3, then snap to nearest T-shirt size.
-    Confidence:
-      - high    : parallelism >= 80 (likely saturated — estimate tracks billing)
+    Confidence (interpreted as "how tight the lower bound is"):
+      - high    : parallelism >= 80 (likely saturated — bound is tight)
       - medium  : 20 <= parallelism < 80
-      - low     : parallelism < 20 (minimum-required-size estimate only)
+      - low     : parallelism < 20 (minimum-viable-size lower bound only)
     """
 
     def test_serverless_infers_size_and_prices_accordingly(self):
@@ -287,7 +303,7 @@ class TestEstimateQueryCostFallback:
         assert result is not None
         assert result.reference_costs == []
 
-    def test_note_mentions_inferred_size_and_confidence(self):
+    def test_note_mentions_minimum_viable_size_and_confidence(self):
         qm = _make_query(
             execution_time_ms=60_000,
             typename="LakehouseSqlQuery",
@@ -295,11 +311,11 @@ class TestEstimateQueryCostFallback:
         )
         result = estimate_query_cost(qm, None)
         lower = result.note.lower()
-        assert "inferred" in lower
+        assert "minimum viable" in lower
         assert "parallelism" in lower
         assert "confidence" in lower
 
-    def test_low_parallelism_note_flags_minimum_required(self):
+    def test_low_parallelism_note_flags_minimum_viable(self):
         qm = _make_query(
             execution_time_ms=60_000,
             typename="LakehouseSqlQuery",
@@ -307,7 +323,7 @@ class TestEstimateQueryCostFallback:
         )
         result = estimate_query_cost(qm, None)
         lower = result.note.lower()
-        assert "minimum-required" in lower
+        assert "minimum-viable" in lower
         assert "over-provisioned" in lower
 
     def test_no_typename_returns_none(self):
@@ -315,10 +331,23 @@ class TestEstimateQueryCostFallback:
         result = estimate_query_cost(qm, None)
         assert result is None
 
+    def test_fallback_populates_recommendation(self):
+        """Iter 4 wiring: CostEstimate must carry the normative
+        sizing recommendation alongside the lower-bound estimate."""
+        qm = _make_query(
+            execution_time_ms=60_000,
+            typename="LakehouseSqlQuery",
+            task_total_time_ms=60_000 * 60,
+        )
+        result = estimate_query_cost(qm, None)
+        assert result.recommendation is not None
+        # The recommendation defaults SLA to observed execution time.
+        assert result.recommendation.sla_target_ms == 60_000
+
     def test_abi_san_2xl_regression_is_within_20_percent_of_actual_billing(self):
         """Regression for the user-reported `$93.97 (4XL仮定)` bug on the
-        saturated 2XL profile (parallelism ≈ 452). The size-inferred
-        estimate must land within ±20% of actual 2XL billing."""
+        saturated 2XL profile (parallelism ≈ 452). The minimum-viable
+        size estimate must land within ±20% of actual 2XL billing."""
         qm = _make_query(
             execution_time_ms=915_319,
             typename="LakehouseSqlQuery",

@@ -207,6 +207,63 @@ def match_card_to_alert_numbers(card: ActionCard, alerts: list[Alert]) -> list[i
 # ---------------------------------------------------------------------------
 
 
+# ---------------------------------------------------------------------------
+# Issue-tag matcher (v6.6.0): replaces "アラート #N" position references
+# with stable issue tags like "shuffle / spill / data_skew" so the
+# standalone Top Alerts section can disappear without breaking the
+# Recommended Actions cross-reference.
+# ---------------------------------------------------------------------------
+
+# Stable, human-readable tag for each root_cause_group. Order does not
+# matter — set membership is what we use.
+_GROUP_TO_TAG: dict[str, str] = {
+    "spill_memory_pressure": "spill",
+    "shuffle_overhead": "shuffle",
+    "data_skew": "data_skew",
+    "photon_compatibility": "photon",
+    "cache_utilization": "cache",
+    "scan_efficiency": "scan",
+    "join_strategy": "join",
+    "statistics_freshness": "stats",
+    "cluster_sizing": "cluster",
+    "sql_pattern": "sql_pattern",
+}
+
+
+def match_card_to_issue_tags(card: ActionCard, alerts: list[Alert]) -> list[str]:
+    """Return the set of issue tags an ActionCard addresses.
+
+    Tags come from ``_GROUP_TO_TAG`` so a card whose root_cause_group is
+    ``shuffle_overhead`` and which also matches the WHERE-filter
+    secondary rule for ``spill`` returns ``["shuffle", "spill"]``.
+    The result is ordered to match the rendered alert order so the
+    summary tag list reads naturally.
+
+    Empty list = "no specific alert link" — caller renders ``(全般)``.
+    """
+    card_grps = _card_groups(card)
+    if not card_grps:
+        return []
+
+    text = f"{card.problem} {card.fix}".lower()
+    has_where_filter = any(k in text for k in ("where", "フィルタ", "filter", "期間"))
+
+    matched_groups: list[str] = []  # preserve alert-order
+    seen: set[str] = set()
+    for alert in alerts:
+        alert_grps = _alert_to_groups(alert)
+        for g in card_grps & alert_grps:
+            if g not in seen:
+                seen.add(g)
+                matched_groups.append(g)
+        if has_where_filter and "scan_efficiency" in card_grps and "spill_memory_pressure" in alert_grps:
+            if "spill_memory_pressure" not in seen:
+                seen.add("spill_memory_pressure")
+                matched_groups.append("spill_memory_pressure")
+
+    return [_GROUP_TO_TAG[g] for g in matched_groups if g in _GROUP_TO_TAG]
+
+
 def alert_severity_rank_for_card(card: ActionCard, alerts: list[Alert]) -> int:
     """Return the rank of the highest-severity alert this card addresses.
 

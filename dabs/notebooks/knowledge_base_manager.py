@@ -35,7 +35,7 @@ KNOWLEDGE_CATEGORY = dbutils.widgets.get("knowledge_category").strip()
 MODEL_ENDPOINT = dbutils.widgets.get("model_endpoint")
 
 # ナレッジベースの保存先
-KB_NOTEBOOK_PATH = "/Users/your-user@example.com/spark-perf-job/optimization_knowledge_base"
+KB_NOTEBOOK_PATH = "/Users/<your-email>/spark-perf-job/optimization_knowledge_base"
 
 print(f"Input Type     : {INPUT_TYPE}")
 print(f"Input Value    : {INPUT_VALUE or '(text cell below)'}")
@@ -101,7 +101,7 @@ elif INPUT_TYPE == "google_docs_url":
         if is_slides:
             r = requests.get(
                 f"https://slides.googleapis.com/v1/presentations/{doc_id}",
-                headers={"Authorization": f"Bearer {gtoken}", "x-goog-user-project": "your-gcp-project"}
+                headers={"Authorization": f"Bearer {gtoken}", "x-goog-user-project": "gcp-sandbox-field-eng"}
             )
             assert r.status_code == 200, f"Slides API error: {r.status_code}"
             pres = r.json()
@@ -128,7 +128,7 @@ elif INPUT_TYPE == "google_docs_url":
         else:
             r = requests.get(
                 f"https://docs.googleapis.com/v1/documents/{doc_id}",
-                headers={"Authorization": f"Bearer {gtoken}", "x-goog-user-project": "your-gcp-project"}
+                headers={"Authorization": f"Bearer {gtoken}", "x-goog-user-project": "gcp-sandbox-field-eng"}
             )
             assert r.status_code == 200, f"Docs API error: {r.status_code}"
             doc = r.json()

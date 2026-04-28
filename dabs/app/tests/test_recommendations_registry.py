@@ -39,7 +39,8 @@ class TestRegistryStructure:
     def test_registered_card_ids(self):
         """Phase 1 (17) + compilation_overhead + driver_overhead +
         federation_query (v5.18.0) + cluster_underutilization +
-        compilation_absolute_heavy = 22."""
+        compilation_absolute_heavy + decimal_heavy_aggregate
+        (V6 alert coverage expansion 2026-04-26) = 23."""
         expected = {
             "disk_spill",
             "federation_query",
@@ -55,6 +56,7 @@ class TestRegistryStructure:
             "non_photon_join",
             "hier_clustering",
             "hash_resize",
+            "decimal_heavy_aggregate",
             "aqe_absorbed",
             "cte_multi_ref",
             "investigate_dist",
@@ -339,3 +341,84 @@ class TestLegacyIntegration:
         # rescheduled_scan uses a different title
         scan_cards = [p for p in problems if "rescheduled" in p.lower()]
         assert len(scan_cards) == 1
+
+
+# ---------------------------------------------------------------------------
+# v6.6.9: quick_win_sort_key — order by simpler-and-more-effective first
+# ---------------------------------------------------------------------------
+
+
+class TestQuickWinSort:
+    """The reader's first action should be the cheapest viable fix at
+    the highest available impact tier. Sort key:
+        (impact desc, effort asc, priority_score desc).
+    """
+
+    def _card(self, *, impact: str, effort: str, score: float):
+        from core.models import ActionCard
+
+        return ActionCard(
+            problem=f"i={impact} e={effort} s={score}",
+            evidence=[],
+            likely_cause="",
+            fix="",
+            expected_impact=impact,
+            effort=effort,
+            priority_score=score,
+        )
+
+    def test_high_low_beats_high_high(self):
+        from core.analyzers.recommendations import quick_win_sort_key
+
+        cheap = self._card(impact="high", effort="low", score=10.0)
+        expensive = self._card(impact="high", effort="high", score=10.0)
+        ordered = sorted([expensive, cheap], key=quick_win_sort_key)
+        assert ordered[0] is cheap
+
+    def test_high_impact_beats_medium_even_when_easier(self):
+        """A LOW-effort MEDIUM-impact card must NOT outrank a
+        HIGH-effort HIGH-impact card — impact is the primary key."""
+        from core.analyzers.recommendations import quick_win_sort_key
+
+        big_payoff = self._card(impact="high", effort="high", score=5.0)
+        easy_medium = self._card(impact="medium", effort="low", score=5.0)
+        ordered = sorted([easy_medium, big_payoff], key=quick_win_sort_key)
+        assert ordered[0] is big_payoff
+
+    def test_priority_score_breaks_ties(self):
+        from core.analyzers.recommendations import quick_win_sort_key
+
+        a = self._card(impact="high", effort="low", score=3.0)
+        b = self._card(impact="high", effort="low", score=8.0)
+        ordered = sorted([a, b], key=quick_win_sort_key)
+        assert ordered[0] is b  # higher priority_score wins the tiebreak
+
+    def test_unknown_impact_or_effort_lands_last_in_bucket(self):
+        from core.analyzers.recommendations import quick_win_sort_key
+
+        known = self._card(impact="high", effort="high", score=1.0)
+        missing = self._card(impact="", effort="", score=99.0)
+        ordered = sorted([missing, known], key=quick_win_sort_key)
+        assert ordered[0] is known
+
+    def test_full_six_card_ordering(self):
+        from core.analyzers.recommendations import quick_win_sort_key
+
+        cards = [
+            self._card(impact="low", effort="low", score=1.0),       # 5
+            self._card(impact="medium", effort="high", score=1.0),   # 4
+            self._card(impact="high", effort="high", score=1.0),     # 2
+            self._card(impact="high", effort="low", score=1.0),      # 0 — cheapest big win
+            self._card(impact="medium", effort="low", score=1.0),    # 3
+            self._card(impact="high", effort="medium", score=1.0),   # 1
+        ]
+        ordered = sorted(cards, key=quick_win_sort_key)
+        impacts_efforts = [(c.expected_impact, c.effort) for c in ordered]
+        assert impacts_efforts == [
+            ("high", "low"),
+            ("high", "medium"),
+            ("high", "high"),
+            ("medium", "low"),
+            ("medium", "high"),
+            ("low", "low"),
+        ]

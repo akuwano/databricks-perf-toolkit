@@ -108,7 +108,6 @@ from .reporters import (
     generate_photon_blockers_section,
     generate_query_overview,
     generate_report,
-    generate_report_legacy,
     generate_rule_based_recommendations,
     generate_rule_based_summary,
     generate_spill_analysis_section,

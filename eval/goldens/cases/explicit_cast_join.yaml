@@ -1,0 +1,38 @@
+case_id: explicit_cast_join_q1
+profile_path: json/query-profile_01f014d6-5c8f-13ac-a70b-2c723b1b6a5f.json
+description: Join key で型不一致による暗黙 CAST が発生し、Photon 化を阻害しているケース。
+domain: dbsql
+workload_type: join_heavy
+expected_severity: high
+
+must_cover_issues:
+  - id: implicit_cast_on_join_key
+    severity: high
+    keywords: [CAST, 暗黙, join key, 型不一致]
+    description: join key で暗黙 CAST 発生
+
+  - id: photon_blocker_via_cast
+    severity: high
+    keywords: [photon, blocker, fallback]
+    description: CAST が Photon 化を阻害
+
+forbidden_claims:
+  - id: shuffle_root_cause
+    description: 根本原因は CAST なのに shuffle を最優先するのは順序が逆
+
+must_have_actions:
+  - target: column_type_align
+    type: ddl
+    keyword: ALTER COLUMN
+    description: 両テーブルで型を揃える ALTER TABLE 提案
+  - target: explicit_cast_in_query
+    type: rewrite
+    keyword: CAST
+    description: クエリ側で明示 CAST して型一致させる代替
+
+expected_l3_min: 4
+expected_recall_min: 0.85
+
+notes: |
+  v4.45 で追加された「Aggregate expressions から decimal CAST 推定」の回帰防止。
+  EXPLAIN Insights の implicit CAST 抽出が効くケース。

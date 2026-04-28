@@ -487,7 +487,7 @@ When the profiler's Shuffle Details section shows a shuffle with **GiB-scale wri
 
 **Decision criteria:**
 1. Columns that contribute to **pruning** (WHERE filters) take precedence — LC's primary purpose is I/O reduction.
-2. If the shuffle key's cardinality is **extremely low (<10 distinct values)**, do NOT use it as a sole key. Use Hierarchical Clustering (`delta.feature.hierarchicalClustering`) to place the low-cardinality key at the lower level, or combine with another higher-cardinality key.
+2. If the shuffle key's cardinality is **extremely low (<10 distinct values)**, do NOT use it as a sole key. Use Hierarchical Clustering (`SET TBLPROPERTIES ('delta.liquid.hierarchicalClusteringColumns' = '<low_card_col>')` — see §1.1.1) to place the low-cardinality key at the lower level, or combine with another higher-cardinality key.
 3. If the shuffle is small (<1 GiB written, memory-efficient), skip it — a REPARTITION hint is sufficient.
 
 **Acceptable example:**
@@ -1560,7 +1560,7 @@ For frequently-run dashboards / jobs:
 ```sql
 -- Materialize into Delta once, query Delta many times
 CREATE OR REPLACE TABLE main.analytics.sales_daily AS
-SELECT ... FROM pococha_bq_prod.source.db_reincarnation_device_histories
+SELECT ... FROM bq_prod.example.users
 WHERE created_at >= TIMESTAMP(CURRENT_DATE() - INTERVAL 30 DAYS);
 ```
 

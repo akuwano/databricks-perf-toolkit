@@ -104,6 +104,85 @@ def _collect_join_key_casts(
     return sites
 
 
+# Threshold: aggregate node peak memory above this triggers DECIMAL review.
+# 100 GB picks up the Q23-class hotspots (1.3 TB peak agg) without firing
+# on routine medium aggs (~10 GB). Tunable.
+_DECIMAL_AGG_PEAK_MEMORY_THRESHOLD_BYTES = 100 * (1024**3)
+_DECIMAL_AGG_ARITHMETIC_PATTERN = _re.compile(r"[*+\-/]")
+
+
+def _collect_decimal_heavy_aggregate_examples(
+    node_metrics: list[NodeMetrics],
+) -> list[tuple[str, str]]:
+    """Return ``[(node_id, expr_excerpt)]`` for nodes that combine
+    (a) large aggregate peak memory and (b) arithmetic in at least one
+    aggregate expression.
+
+    Empty list when no node qualifies — caller treats that as "not
+    detected" and skips the alert.
+    """
+    found: list[tuple[str, str]] = []
+    for nm in node_metrics:
+        if (nm.peak_memory_bytes or 0) < _DECIMAL_AGG_PEAK_MEMORY_THRESHOLD_BYTES:
+            continue
+        if not nm.aggregate_expressions:
+            continue
+        for expr in nm.aggregate_expressions:
+            if not expr:
+                continue
+            if _DECIMAL_AGG_ARITHMETIC_PATTERN.search(expr):
+                # Truncate long expressions to keep alert/card text terse
+                excerpt = expr.strip()
+                if len(excerpt) > 120:
+                    excerpt = excerpt[:117] + "..."
+                found.append((nm.node_id or "?", excerpt))
+                break  # one example per node is enough
+    return found
+
+
+def _apply_decimal_heavy_aggregate_alert(
+    indicators: BottleneckIndicators,
+    node_metrics: list[NodeMetrics],
+) -> None:
+    """Emit a MEDIUM alert when a heavy aggregate runs arithmetic on
+    columns that may be wide DECIMAL.
+
+    Rationale: ``SUM(quantity * price)`` and friends widen DECIMAL(38, x)
+    to DECIMAL(38, 18) implicitly, inflating per-row CPU and hash-table
+    memory. The fix is data-driven (DESCRIBE TABLE → narrow type or
+    INT/BIGINT) so the card stays in "investigation" mode rather than
+    proposing a specific ALTER. V5 caught this for Q23 via LLM; V6
+    canonical-schema compression dropped it. Promoting to a rule-based
+    indicator gives V6 a stable hook so the canonical Report carries
+    the recommendation regardless of LLM compression decisions.
+    """
+    examples = _collect_decimal_heavy_aggregate_examples(node_metrics)
+    if not examples:
+        return
+    indicators.decimal_heavy_aggregate = True
+    indicators.decimal_heavy_aggregate_examples = examples[:3]
+    sample = examples[0][1]
+    _add_alert(
+        indicators,
+        severity=Severity.MEDIUM,
+        category="aggregation",
+        message=_(
+            "Heavy aggregate with arithmetic on numeric columns — verify DECIMAL "
+            "precision (sample: Node #{nid}: `{expr}`)"
+        ).format(nid=examples[0][0], expr=sample),
+        metric_name="decimal_heavy_aggregate",
+        current_value=str(len(examples)),
+        threshold=_("integer-typed or narrow DECIMAL"),
+        recommendation=_(
+            "Use DESCRIBE TABLE to confirm precision/scale of the columns in the "
+            "aggregate. If they are DECIMAL(38, 0) but only store integer values, "
+            "migrating to INT/BIGINT removes the implicit widening. If wider "
+            "precision is required, narrow it (e.g., DECIMAL(18, 2)) instead of "
+            "the default 38 to shrink hash-table memory."
+        ),
+    )
+
+
 def _apply_join_key_cast_alert(
     indicators: BottleneckIndicators,
     node_metrics: list[NodeMetrics],
@@ -516,6 +595,12 @@ def calculate_bottleneck_indicators(
     # explain_analysis.py will later observe indicators.implicit_cast_on_join_key
     # and skip re-firing the same alert.
     _apply_join_key_cast_alert(indicators, node_metrics)
+
+    # 2026-04-26: Heavy aggregate + arithmetic → DECIMAL review prompt.
+    # Promotes the V5-only LLM-driven DECIMAL recommendation to a rule
+    # so V6 canonical_schema compression cannot drop it. Card lives at
+    # priority rank 48 in the registry.
+    _apply_decimal_heavy_aggregate_alert(indicators, node_metrics)
 
     # Cache hit ratio
     # Note: Per tuning guide section 6, cache hit ratio should be evaluated as a trend

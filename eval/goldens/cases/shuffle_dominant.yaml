@@ -1,0 +1,39 @@
+case_id: shuffle_dominant_q1
+profile_path: json/large_qp (1).json
+description: シャッフルが実行時間の大部分を占めるクエリ。skew の可能性あり、複数 join での再分散が支配的。
+domain: dbsql
+workload_type: join_heavy
+expected_severity: high
+
+must_cover_issues:
+  - id: shuffle_dominant
+    severity: high
+    keywords: [shuffle, シャッフル, redistribution]
+    description: シャッフル支配的
+
+  - id: data_skew
+    severity: medium
+    keywords: [skew, 偏り, partition]
+    description: パーティション偏りの可能性
+
+forbidden_claims:
+  - id: federation_recommendation
+    description: federation ではないので federation 提案禁止
+
+must_have_actions:
+  - target: shuffle_key
+    type: clustering
+    keyword: CLUSTER BY
+    description: Liquid Clustering によるシャッフルキー一致の検討
+  - target: aqe_skew
+    type: configuration
+    keyword: spark.sql.adaptive.skewJoin
+    description: AQE skew join の有効化確認
+
+expected_l3_min: 4
+expected_recall_min: 0.80
+
+notes: |
+  large_qp (1).json は複数 join + GROUP BY で shuffle 30GB+。
+  AQE は有効、skew detection が partial に検出。
+  recommend: 主要 join key で LC、shuffle.partitions 調整。
