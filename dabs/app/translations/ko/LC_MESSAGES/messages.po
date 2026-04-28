@@ -1,0 +1,6244 @@
+# Korean translations for PROJECT.
+# Copyright (C) 2026 ORGANIZATION
+# This file is distributed under the same license as the PROJECT project.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2026.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: PROJECT VERSION\n"
+"Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
+"POT-Creation-Date: 2026-04-28 16:06+0900\n"
+"PO-Revision-Date: 2026-04-28 16:06+0900\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: ko <LL@li.org>\n"
+"Language: ko\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+"Generated-By: Babel 2.18.0\n"
+
+#: core/i18n.py:222
+msgid "Queued..."
+msgstr ""
+
+#: core/i18n.py:223
+msgid "Analyzing metrics..."
+msgstr ""
+
+#: core/i18n.py:224
+msgid "Analyzing EXPLAIN..."
+msgstr ""
+
+#: core/i18n.py:225
+msgid "Stage 1/3: Initial LLM analysis..."
+msgstr ""
+
+#: core/i18n.py:226
+msgid "Stage 2/3: LLM review..."
+msgstr ""
+
+#: core/i18n.py:227
+msgid "Stage 3/3: LLM refinement..."
+msgstr ""
+
+#: core/i18n.py:228 templates/compare.html:379
+msgid "Generating report..."
+msgstr ""
+
+#: core/i18n.py:229
+msgid "Reviewing report with LLM..."
+msgstr ""
+
+#: core/i18n.py:230
+msgid "Refining report with LLM..."
+msgstr ""
+
+#: core/i18n.py:231
+msgid "Complete!"
+msgstr ""
+
+#: core/analyzers/bottleneck.py:45
+#, python-brace-format
+msgid ""
+"Function applied to column in filter condition ({func}) — prevents Data "
+"Skipping and predicate pushdown"
+msgstr ""
+
+#: core/analyzers/bottleneck.py:49
+msgid "sargable range/literal predicates"
+msgstr "sargable 범위/리터럴 술어"
+
+#: core/analyzers/bottleneck.py:51
+msgid ""
+"Rewrite as range condition: WHERE col >= \"2024-01-01\" instead of WHERE "
+"YEAR(col) = 2024"
+msgstr ""
+
+#: core/analyzers/bottleneck.py:67
+#: core/analyzers/recommendations_registry.py:1023
+#, python-brace-format
+msgid "CTE \"{name}\" is referenced {n} times — Spark may re-execute it each time"
+msgstr ""
+
+#: core/analyzers/bottleneck.py:71
+msgid "≥2 references beyond WITH"
+msgstr ""
+
+#: core/analyzers/bottleneck.py:73
+msgid ""
+"Do NOT rely on CREATE TEMP VIEW — it is a catalog alias and does NOT "
+"guarantee single materialization. Persist the shared result with CTAS / "
+"Delta, or rewrite the query so the CTE body runs once. Confirm reuse via "
+"ReusedExchange in EXPLAIN."
+msgstr ""
+
+#: core/analyzers/bottleneck.py:170
+#, python-brace-format
+msgid ""
+"Heavy aggregate with arithmetic on numeric columns — verify DECIMAL "
+"precision (sample: Node #{nid}: `{expr}`)"
+msgstr ""
+"숫자 컬럼에 대한 산술 연산이 포함된 무거운 집계 — DECIMAL 정밀도를 확인하세요 (예: Node #{nid}: `{expr}`)"
+
+#: core/analyzers/bottleneck.py:175
+msgid "integer-typed or narrow DECIMAL"
+msgstr "INT 형 또는 좁은 DECIMAL"
+
+#: core/analyzers/bottleneck.py:177
+msgid ""
+"Use DESCRIBE TABLE to confirm precision/scale of the columns in the "
+"aggregate. If they are DECIMAL(38, 0) but only store integer values, "
+"migrating to INT/BIGINT removes the implicit widening. If wider precision is"
+" required, narrow it (e.g., DECIMAL(18, 2)) instead of the default 38 to "
+"shrink hash-table memory."
+msgstr ""
+"DESCRIBE TABLE로 집계 대상 컬럼의 precision/scale을 확인하세요. DECIMAL(38, 0)이지만 정수 값만 "
+"저장하는 경우, INT/BIGINT로 마이그레이션하면 암시적 확장이 제거됩니다. 더 넓은 정밀도가 필요한 경우 기본값 38이 아니라 "
+"DECIMAL(18, 2) 등으로 좁혀 해시 테이블 메모리를 줄이세요."
+
+#: core/analyzers/bottleneck.py:216 core/analyzers/explain_analysis.py:659
+#, python-brace-format
+msgid ""
+"Implicit CAST detected on JOIN key(s): {examples}{extra}. This usually means"
+" the join columns have mismatched data types at the source, which blocks "
+"predicate pushdown and can inflate hash-table memory (especially with "
+"DECIMAL)."
+msgstr ""
+"JOIN 키에서 암시적 CAST 감지: {examples}{extra}. 일반적으로 소스의 조인 컬럼 데이터 타입이 일치하지 않음을 "
+"의미하며, 술어 푸시다운을 차단하고 해시 테이블 메모리(특히 DECIMAL)를 팽창시킬 수 있습니다."
+
+#: core/analyzers/bottleneck.py:225 core/analyzers/explain_analysis.py:668
+msgid ""
+"Align JOIN key data types at the source tables (for example, use the same "
+"INTEGER / BIGINT on both sides instead of mixing DECIMAL with INTEGER). If a"
+" type change is not possible, cast once on the smaller side only and verify "
+"the join still pushes down."
+msgstr ""
+"소스 테이블의 JOIN 키 타입을 일치시키세요 (예: DECIMAL과 INTEGER를 혼합하지 않고 양쪽에서 동일한 INTEGER / "
+"BIGINT 사용). 타입 변경이 불가능한 경우 작은 쪽에서만 한 번 CAST하고 JOIN이 푸시다운되는지 검증하세요."
+
+#: core/analyzers/bottleneck.py:343
+#, python-brace-format
+msgid ""
+"Compilation/file pruning dominates execution ({pct:.0%} of total, "
+"{secs:.1f}s)"
+msgstr "컴파일/파일 프루닝이 실행 시간의 대부분을 차지합니다 (전체의 {pct:.0%}, {secs:.1f}s)"
+
+#: core/analyzers/bottleneck.py:349
+msgid ""
+"OPTIMIZE to compact small files; VACUUM to shorten Delta log; enable "
+"Predictive Optimization; re-run to rule out cold-cache"
+msgstr ""
+"OPTIMIZE로 작은 파일 압축, VACUUM으로 Delta 로그 단축, Predictive Optimization 활성화, 콜드 캐시"
+" 배제를 위해 재실행"
+
+#: core/analyzers/bottleneck.py:426
+#, python-brace-format
+msgid ""
+"Driver overhead dominates execution (queue={q:.1f}s, sched/compute-"
+"wait={s:.1f}s, total={t:.1f}s = {pct:.0%})"
+msgstr ""
+"드라이버 오버헤드가 실행 시간의 대부분을 차지합니다 (queue={q:.1f}s, sched/compute-wait={s:.1f}s, "
+"총={t:.1f}s = {pct:.0%})"
+
+#: core/analyzers/bottleneck.py:438
+msgid ""
+"Queue-heavy: use Serverless warm pools / extend auto-stop / raise max "
+"clusters. Scheduling-heavy: reduce concurrent queries and review cluster "
+"size."
+msgstr ""
+"Queue 중심: Serverless 웜 풀 사용, auto-stop 연장, max clusters 증가. Scheduling 중심: "
+"동시 실행 쿼리 감소 및 클러스터 크기 검토."
+
+#: core/analyzers/bottleneck.py:510
+msgid "external CPU contention"
+msgstr ""
+
+#: core/analyzers/bottleneck.py:511
+msgid "driver overhead"
+msgstr "드라이버 오버헤드"
+
+#: core/analyzers/bottleneck.py:512
+msgid "serial plan topology"
+msgstr "직렬 플랜 토폴로지"
+
+#: core/analyzers/bottleneck.py:519
+#, python-brace-format
+msgid ""
+"Cluster underutilized (effective parallelism {par:.1f}x, exec {secs:.0f}s) —"
+" {v}"
+msgstr "클러스터 미활용 (실효 병렬도 {par:.1f}x, 실행 {secs:.0f}s) — {v}"
+
+#: core/analyzers/bottleneck.py:525
+msgid ""
+"external_contention: isolate this query on another warehouse or stagger "
+"concurrent loads. driver_overhead: simplify the plan (fewer subqueries / "
+"broadcasts) or upgrade driver capacity. serial_plan: use REPARTITION hints "
+"or pre-aggregate to widen stages."
+msgstr ""
+
+#: core/analyzers/bottleneck.py:559
+#, python-brace-format
+msgid ""
+"Compilation absolute time is high ({secs:.1f}s) — although ratio is small, "
+"this often indicates small-files or long Delta log on the scanned table(s)."
+msgstr ""
+"컴파일 절대 시간이 높습니다 ({secs:.1f}s) — 비율은 작지만 스캔 대상 테이블의 작은 파일 다수 또는 긴 Delta 로그가 "
+"원인인 경우가 많습니다."
+
+#: core/analyzers/bottleneck.py:572
+msgid ""
+"Schedule OPTIMIZE + VACUUM maintenance on the target table(s); enable "
+"Predictive Optimization for UC-managed tables."
+msgstr ""
+"대상 테이블에 OPTIMIZE + VACUUM 정기 유지 관리를 예약하세요. UC 관리 테이블에서는 Predictive "
+"Optimization을 활성화하세요."
+
+#: core/analyzers/bottleneck.py:619
+#, python-brace-format
+msgid "Cache hit ratio is moderate ({ratio})"
+msgstr "캐시 히트율이 보통입니다 ({ratio})"
+
+#: core/analyzers/bottleneck.py:633
+#, python-brace-format
+msgid ""
+"Cache hit ratio is low ({ratio}) - likely cold run, validate on re-execution"
+msgstr ""
+
+#: core/analyzers/bottleneck.py:638
+msgid "Re-run query to verify cache effect before scaling up"
+msgstr "스케일 업 전에 쿼리를 재실행하여 캐시 효과를 확인하세요"
+
+#: core/analyzers/bottleneck.py:653
+#, python-brace-format
+msgid "Remote read ratio is very high ({ratio})"
+msgstr "원격 읽기 비율이 매우 높습니다 ({ratio})"
+
+#: core/analyzers/bottleneck.py:657
+msgid "Consider enabling disk cache or scaling up cluster"
+msgstr "디스크 캐시 활성화 또는 클러스터 스케일 업을 고려하세요"
+
+#: core/analyzers/bottleneck.py:666
+#, python-brace-format
+msgid "Remote read ratio is high ({ratio})"
+msgstr "원격 읽기 비율이 높습니다 ({ratio})"
+
+#: core/analyzers/bottleneck.py:687
+#, python-brace-format
+msgid "Photon utilization has room for improvement ({ratio})"
+msgstr "Photon 사용률에 개선 여지가 있습니다 ({ratio})"
+
+#: core/analyzers/bottleneck.py:701
+#, python-brace-format
+msgid "Photon utilization is low ({ratio})"
+msgstr "Photon 사용률이 낮습니다 ({ratio})"
+
+#: core/analyzers/bottleneck.py:706
+msgid ""
+"Consider setting spark.sql.join.preferSortMergeJoin=false if Sort-Merge "
+"joins are used. Expected improvement: 2-4x faster with Photon-enabled joins"
+msgstr ""
+
+#: core/analyzers/bottleneck.py:747
+#, python-brace-format
+msgid "Significant disk spill is occurring ({size})"
+msgstr ""
+
+#: core/analyzers/bottleneck.py:752
+msgid ""
+"Memory configuration and partition strategy need review. Consider expanding "
+"cluster size (increasing worker nodes). Expected improvement: 2-5x faster "
+"after eliminating spill"
+msgstr ""
+"메모리 구성과 파티션 전략 검토가 필요합니다. 클러스터 크기 확장(워커 노드 증가)을 고려하세요. 예상 개선: 스필 해소 후 2-5x "
+"가속화"
+
+#: core/analyzers/bottleneck.py:763
+#, python-brace-format
+msgid "Disk spill is occurring ({size})"
+msgstr ""
+
+#: core/analyzers/bottleneck.py:767 core/analyzers/shuffle_analysis.py:174
+msgid "Please verify spark.sql.adaptive.skewJoin.enabled=true"
+msgstr ""
+
+#: core/analyzers/bottleneck.py:775
+#, python-brace-format
+msgid "Minor disk spill is occurring ({size})"
+msgstr ""
+
+#: core/analyzers/bottleneck.py:795
+#, python-brace-format
+msgid "File pruning efficiency is low ({ratio})"
+msgstr ""
+
+#: core/analyzers/bottleneck.py:799
+msgid "Please check Liquid Clustering configuration"
+msgstr ""
+
+#: core/analyzers/bottleneck.py:818
+#, python-brace-format
+msgid "Bytes pruning efficiency is low ({ratio})"
+msgstr ""
+
+#: core/analyzers/bottleneck.py:847
+#, python-brace-format
+msgid ""
+"Rescheduled scan ratio is high ({ratio}) - scan locality degradation "
+"detected"
+msgstr ""
+
+#: core/analyzers/bottleneck.py:853
+msgid ""
+"Check per-node cache hit ratio vs non-local task count to identify cause "
+"(cold node from scale-out, CPU contention from concurrent queries, or file "
+"layout issues)"
+msgstr ""
+
+#: core/analyzers/bottleneck.py:858
+msgid ""
+"Serverless warehouse manages node placement automatically. High rescheduled "
+"scan ratio may indicate cold start or scale-out. Re-run the query to verify "
+"if this persists"
+msgstr ""
+
+#: core/analyzers/bottleneck.py:870
+#, python-brace-format
+msgid ""
+"Rescheduled scan ratio is elevated ({ratio}) - monitor for performance "
+"impact"
+msgstr ""
+
+#: core/analyzers/bottleneck.py:911
+#, python-brace-format
+msgid "Cloud storage retry rate is high ({ratio})"
+msgstr ""
+
+#: core/analyzers/bottleneck.py:916
+msgid "Cloud storage access may be a bottleneck - check for throttling"
+msgstr ""
+
+#: core/analyzers/bottleneck.py:925
+#, python-brace-format
+msgid "Cloud storage retry rate is elevated ({ratio})"
+msgstr ""
+
+#: core/analyzers/bottleneck.py:940
+#, python-brace-format
+msgid "Sort-Merge join is used in {count} places (not supported by Photon)"
+msgstr ""
+
+#: core/analyzers/bottleneck.py:947
+msgid ""
+"Consider setting spark.sql.join.preferSortMergeJoin=false and "
+"spark.databricks.adaptive.joinFallback=true. Expected improvement: Enable "
+"Photon acceleration for joins"
+msgstr ""
+
+#: core/analyzers/bottleneck.py:969
+msgid ""
+"Query result was served from result cache — execution metrics are not "
+"meaningful"
+msgstr "쿼리 결과가 결과 캐시에서 제공됨 — 실행 메트릭은 의미가 없습니다"
+
+#: core/analyzers/bottleneck.py:984
+#, python-brace-format
+msgid "Serverless provisioning queue wait: {secs:.1f}s"
+msgstr ""
+
+#: core/analyzers/bottleneck.py:989
+msgid ""
+"Consider Serverless warm pools or pre-warming to reduce cold start latency"
+msgstr ""
+
+#: core/analyzers/bottleneck.py:998
+#, python-brace-format
+msgid "Serverless overload queue wait: {secs:.1f}s"
+msgstr ""
+
+#: core/analyzers/bottleneck.py:1002
+msgid "Reduce concurrent query load or increase warehouse scaling limits"
+msgstr ""
+
+#: core/analyzers/bottleneck.py:1021
+#, python-brace-format
+msgid ""
+"Result fetch time is {secs:.1f}s ({pct:.0%} of total) — large result set"
+msgstr "결과 가져오기 시간 {secs:.1f}s (전체의 {pct:.0%}) — 큰 결과 세트"
+
+#: core/analyzers/bottleneck.py:1030
+msgid ""
+"Add LIMIT, use CREATE TABLE AS SELECT, or push aggregation closer to source"
+msgstr "LIMIT 추가, CREATE TABLE AS SELECT 사용, 또는 집계를 소스 가까이 이동"
+
+#: core/analyzers/bottleneck.py:1048
+#, python-brace-format
+msgid ""
+"Slow compilation ({total:.1f}s) — dominant phase: {phase} ({phase_sec:.1f}s)"
+msgstr "컴파일 느림 ({total:.1f}s) — 지배적 단계: {phase} ({phase_sec:.1f}s)"
+
+#: core/analyzers/bottleneck.py:1058
+msgid ""
+"Simplify query structure (reduce CTEs/subqueries/UNION branches) or run "
+"ANALYZE TABLE to update statistics"
+msgstr "쿼리 구조를 단순화 (CTE/서브쿼리/UNION 분기 감소) 또는 ANALYZE TABLE로 통계를 업데이트하세요"
+
+#: core/analyzers/bottleneck.py:1071
+#, python-brace-format
+msgid "High metadata resolution time: {secs:.1f}s"
+msgstr ""
+
+#: core/analyzers/bottleneck.py:1076
+msgid "Check for slow external metastore or large number of table partitions"
+msgstr ""
+
+#: core/analyzers/bottleneck.py:1231
+#, python-brace-format
+msgid "OOM fallback detected in {count} operators: {nodes}"
+msgstr ""
+
+#: core/analyzers/bottleneck.py:1238
+msgid ""
+"Increase cluster memory or reduce data per partition to avoid OOM fallback"
+msgstr ""
+
+#: core/analyzers/bottleneck.py:1269
+#, python-brace-format
+msgid ""
+"Storage server queue time is high ({time}ms) - storage may be overloaded"
+msgstr ""
+
+#: core/analyzers/bottleneck.py:1284
+#, python-brace-format
+msgid ""
+"Data decompression time is high ({time}ms) - consider different compression"
+msgstr ""
+
+#: core/analyzers/bottleneck.py:1295
+#, python-brace-format
+msgid "I/O fetch wait time is high ({time}ms)"
+msgstr ""
+
+#: core/analyzers/bottleneck.py:1311
+#, python-brace-format
+msgid ""
+"High number of spill partitions ({count}) - significant memory pressure"
+msgstr ""
+
+#: core/analyzers/bottleneck.py:1328
+#, python-brace-format
+msgid ""
+"Shuffle writes are {ratio:.0%} of total read bytes ({size:.1f}GB) - consider"
+" reducing shuffle with bucketing or broadcast joins"
+msgstr ""
+
+#: core/analyzers/bottleneck.py:1335
+msgid ""
+"Use broadcast joins for small tables, bucketing for repeated joins, or "
+"repartition to reduce shuffle volume"
+msgstr ""
+
+#: core/analyzers/explain_analysis.py:37
+#: core/analyzers/explain_analysis.py:168
+#, python-brace-format
+msgid "Run ANALYZE TABLE {table} COMPUTE STATISTICS FOR ALL COLUMNS"
+msgstr ""
+
+#: core/analyzers/explain_analysis.py:44
+#: core/analyzers/explain_analysis.py:175
+#, python-brace-format
+msgid "Tables missing optimizer statistics: {tables}"
+msgstr ""
+
+#: core/analyzers/explain_analysis.py:52
+#: core/analyzers/explain_analysis.py:183
+#, python-brace-format
+msgid "Run ANALYZE TABLE for: {tables}"
+msgstr ""
+
+#: core/analyzers/explain_analysis.py:60
+#: core/analyzers/explain_analysis.py:191
+#, python-brace-format
+msgid "Tables with partial optimizer statistics: {tables}"
+msgstr ""
+
+#: core/analyzers/explain_analysis.py:83
+#, python-brace-format
+msgid "Exchange operations with high partition count (>{count})"
+msgstr ""
+
+#: core/analyzers/explain_analysis.py:102
+#, python-brace-format
+msgid ""
+"Table `{table}` has {count} columns scanned - consider SELECT specific "
+"columns"
+msgstr ""
+
+#: core/analyzers/explain_analysis.py:218
+#, python-brace-format
+msgid "Partition filter not used for table `{table}`"
+msgstr ""
+
+#: core/analyzers/explain_analysis.py:224
+#, python-brace-format
+msgid "Check partitioning strategy for table `{table}`"
+msgstr ""
+
+#: core/analyzers/explain_analysis.py:247
+msgid "Shuffle exchanges are occurring despite broadcast joins"
+msgstr ""
+
+#: core/analyzers/explain_analysis.py:252
+msgid ""
+"Consider increasing spark.sql.autoBroadcastJoinThreshold to 200MB or more"
+msgstr ""
+
+#: core/analyzers/explain_analysis.py:262
+msgid ""
+"Set spark.sql.join.preferSortMergeJoin=false or use /*+ SHUFFLE_HASH(table) "
+"*/ hint"
+msgstr ""
+
+#: core/analyzers/explain_analysis.py:269
+#, python-brace-format
+msgid "Sort Merge Join detected in {count} places (not supported by Photon)"
+msgstr ""
+
+#: core/analyzers/explain_analysis.py:291
+msgid ""
+"Multiple aggregation stages but Partial/Final optimization not detected"
+msgstr ""
+
+#: core/analyzers/explain_analysis.py:307
+#, python-brace-format
+msgid "Many Exchange operations ({count}) occurring with disk spill"
+msgstr ""
+
+#: core/analyzers/explain_analysis.py:314
+msgid ""
+"Consider adjusting shuffle partition count: increase "
+"spark.sql.shuffle.partitions"
+msgstr ""
+
+#: core/analyzers/explain_analysis.py:326
+#: core/analyzers/explain_analysis.py:376
+msgid "EXPLAIN indicates query is not fully supported by Photon"
+msgstr ""
+
+#: core/analyzers/explain_analysis.py:360
+#: core/analyzers/explain_analysis.py:389
+msgid "EXPLAIN shows full Photon support but actual Photon utilization is low"
+msgstr ""
+
+#: core/analyzers/explain_analysis.py:364
+#: core/analyzers/explain_analysis.py:395
+msgid "Verify that the query is running on a Photon-enabled cluster"
+msgstr ""
+
+#: core/analyzers/explain_analysis.py:429
+#, python-brace-format
+msgid "Write operator `{op}` falls back to non-Photon execution"
+msgstr ""
+
+#: core/analyzers/explain_analysis.py:435
+msgid ""
+"Write fallback is expected for some write operations; low impact for read-"
+"heavy queries"
+msgstr ""
+
+#: core/analyzers/explain_analysis.py:463
+#, python-brace-format
+msgid ""
+"Type cast operations detected in join/filter context ({jf} in join/filter, "
+"{total} total)"
+msgstr ""
+
+#: core/analyzers/explain_analysis.py:469
+msgid ""
+"Align column data types at the source to avoid implicit casts that may block"
+" predicate pushdown"
+msgstr ""
+
+#: core/analyzers/explain_analysis.py:477
+#, python-brace-format
+msgid "High number of type cast operations detected ({total} total)"
+msgstr ""
+
+#: core/analyzers/explain_analysis.py:484
+msgid ""
+"Review data types at source tables to reduce unnecessary type conversions"
+msgstr ""
+
+#: core/analyzers/explain_analysis.py:511
+#, python-brace-format
+msgid ""
+"Table uses {n}-column partitioning ({cols}); consider Liquid Clustering for "
+"more flexible data layout"
+msgstr ""
+
+#: core/analyzers/explain_analysis.py:520
+msgid ""
+"Liquid Clustering adapts to query patterns automatically and may improve "
+"pruning efficiency"
+msgstr ""
+
+#: core/analyzers/explain_analysis.py:594 core/analyzers/hash_analysis.py:232
+msgid ""
+"Hash resize = Photon doubled and rebuilt its in-memory hash table because "
+"row-count estimates were wrong; many resizes signal a data/structural issue "
+"(not just slowness)."
+msgstr ""
+
+#: core/analyzers/explain_analysis.py:602
+#, python-brace-format
+msgid ""
+"Hash table resized {count} times — statistics are up-to-date (full), "
+"suggesting unexpected data distribution or cardinality. {primer}{hint}"
+msgstr ""
+
+#: core/analyzers/explain_analysis.py:610
+msgid ""
+"Statistics are confirmed up-to-date, so ANALYZE TABLE will not help. First, "
+"verify the result set size matches expectations — a cardinality explosion "
+"often points to a missing JOIN predicate, wrong JOIN key, or missing WHERE "
+"filter. If data is correct, investigate join key skew (enable AQE skew join "
+"handling, pre-aggregate the build side, or switch to broadcast join if the "
+"smaller side fits in memory)"
+msgstr ""
+
+#: core/analyzers/explain_analysis.py:688
+#, python-brace-format
+msgid ""
+"{n} CTE(s) referenced multiple times but not reused via ReusedExchange "
+"({ids}) — Spark is re-computing the CTE body for each reference."
+msgstr ""
+
+#: core/analyzers/explain_analysis.py:696
+msgid ""
+"Do NOT use a TEMP VIEW to prevent CTE re-computation — it does not "
+"materialize. Persist the shared result with CTAS / Delta table, or rewrite "
+"the query so the CTE body runs once and is joined back (often via a grouped "
+"aggregation). Confirm reuse via ReusedExchange in EXPLAIN under AQE."
+msgstr ""
+
+#: core/analyzers/explain_analysis.py:716
+#, python-brace-format
+msgid ""
+"Non-Photon operator(s) detected in physical plan: {names}. These fall back "
+"to JVM execution and often correlate with CPU-bound slowdowns and higher "
+"spill risk."
+msgstr ""
+
+#: core/analyzers/explain_analysis.py:724
+msgid ""
+"Inspect the Photon Explanation section for the unsupported expression / "
+"function and rewrite it (e.g., replace PIVOT with CASE WHEN + GROUP BY, "
+"replace Python/Scala UDFs with built-in SQL, simplify window frames)."
+msgstr ""
+
+#: core/analyzers/explain_analysis.py:745
+#, python-brace-format
+msgid ""
+"Partition pruning is empty for {n} scan(s) while row filters exist "
+"({tables}). The table is either not partitioned on the filter columns, or "
+"the filter is applied after the scan."
+msgstr ""
+
+#: core/analyzers/explain_analysis.py:753
+msgid ""
+"Confirm the table partitioning strategy. If partitioning does not match "
+"query filters, migrate to Liquid Clustering on the filter columns instead."
+msgstr ""
+
+#: core/analyzers/explain_analysis.py:771
+msgid ""
+"Aggregate executes without a partial/final split — pre-aggregation before "
+"shuffle is not being used."
+msgstr ""
+
+#: core/analyzers/explain_analysis.py:779
+msgid ""
+"If the aggregate runs over a large row count, consider enabling AQE partial-"
+"aggregation or pre-aggregating in a CTE before the shuffle."
+msgstr ""
+
+#: core/analyzers/explain_analysis.py:1374
+#, python-brace-format
+msgid "Unsupported operation: {func}"
+msgstr ""
+
+#: core/analyzers/explain_analysis.py:1376
+msgid "Check Databricks documentation for Photon-compatible alternatives"
+msgstr ""
+
+#: core/analyzers/explain_analysis.py:1466
+msgid "Replace with built-in function if possible"
+msgstr ""
+
+#: core/analyzers/explain_analysis.py:1467
+msgid "Consider query rewrite"
+msgstr ""
+
+#: core/analyzers/explain_analysis.py:1468
+msgid "Check data types compatibility"
+msgstr ""
+
+#: core/analyzers/explain_analysis.py:1469
+msgid "Use Photon-compatible aggregate functions"
+msgstr ""
+
+#: core/analyzers/explain_analysis.py:1572
+#, python-brace-format
+msgid " Hierarchical Clustering is also configured ({hier})."
+msgstr ""
+
+#: core/analyzers/explain_analysis.py:1584
+#, python-brace-format
+msgid ""
+"Liquid Clustering ClusterOnWrite overhead: target `{t}` has {n} clustering "
+"column(s) ({cols}) and the pre-write re-shuffle (Node #{nid}) spills {mpp:,}"
+" MB/partition across {writ:.1f} GB written.{hier}"
+msgstr ""
+
+#: core/analyzers/explain_analysis.py:1600
+msgid ""
+"Options (listed by typical effectiveness): (1) Drop CLUSTER BY before the "
+"one-shot load, run OPTIMIZE FULL afterwards to re-cluster; (2) Disable eager"
+" clustering via `ALTER TABLE ... SET TBLPROPERTIES "
+"('delta.liquid.forceDisableEagerClustering' = 'True')` and run OPTIMIZE FULL"
+" afterwards — keeps LC metadata and skips write-time re-shuffle; (3) Reduce "
+"the number of clustering keys if read-side pruning still holds; (4) Disable "
+"Hierarchical Clustering if enabled and not strictly needed; (5) Scale up the"
+" warehouse temporarily for this INSERT; (6) Split the load into smaller "
+"batches so each shuffle fits in memory."
+msgstr ""
+
+#: core/analyzers/hash_analysis.py:90
+#, python-brace-format
+msgid ""
+"Duplicate GROUP BY on [{keys}] across {n} separate aggregation nodes "
+"({total_resize:,} resizes total) — the same aggregate is recomputed"
+msgstr ""
+
+#: core/analyzers/hash_analysis.py:97
+msgid ""
+"The query likely recomputes the same aggregation multiple times. Consolidate"
+" into a single CTE and reference it where needed; verify the optimizer "
+"materializes it (look for ReusedExchange in EXPLAIN). For UNION branches "
+"with parallel GROUP BY, consider computing the aggregate once upstream"
+msgstr ""
+
+#: core/analyzers/hash_analysis.py:167
+msgid "join/grouping keys"
+msgstr ""
+
+#: core/analyzers/hash_analysis.py:170
+msgid ""
+"Investigate key distribution for skew on the hot columns above. For JOIN "
+"skew: enable AQE skew join handling or broadcast the smaller side. For GROUP"
+" BY skew: verify no unintended cardinality (e.g. cross-joined rows) and "
+"consider pre-aggregating upstream"
+msgstr ""
+
+#: core/analyzers/hash_analysis.py:176
+msgid ""
+"Check key distribution for skew. Enable AQE skew handling and pre-aggregate "
+"where possible"
+msgstr ""
+
+#: core/analyzers/hash_analysis.py:181
+msgid "grouping keys"
+msgstr ""
+
+#: core/analyzers/hash_analysis.py:184
+msgid ""
+"The hot grouping column(s) have extreme cardinality. First, verify the data "
+"itself — unexpected row explosion (e.g. missing filter, incorrect JOIN "
+"producing duplicates) is a common cause. If data is correct, enable AQE and "
+"pre-aggregate upstream to reduce group cardinality"
+msgstr ""
+
+#: core/analyzers/hash_analysis.py:190
+msgid ""
+"Check grouping column(s) for unexpected cardinality. Pre-aggregate or add "
+"filters upstream"
+msgstr ""
+
+#: core/analyzers/hash_analysis.py:195
+msgid "join keys"
+msgstr ""
+
+#: core/analyzers/hash_analysis.py:198
+msgid ""
+"Investigate join key distribution for skew. Consider pre-aggregating the "
+"build side, enabling AQE skew join handling, or changing to broadcast join "
+"if the smaller side fits in memory"
+msgstr ""
+
+#: core/analyzers/hash_analysis.py:203
+msgid ""
+"Check join key distribution for skew. Consider enabling AQE skew join "
+"handling or broadcast join if the smaller side fits in memory"
+msgstr ""
+
+#: core/analyzers/hash_analysis.py:207
+msgid ""
+"Investigate key distribution. Enable AQE skew handling and consider pre-"
+"aggregation"
+msgstr ""
+
+#: core/analyzers/hash_analysis.py:209
+msgid "hash keys"
+msgstr ""
+
+#: core/analyzers/hash_analysis.py:266
+#, python-brace-format
+msgid ""
+"Hash table resized {count} times with {probes} avg probes/row — likely data "
+"skew in {where}. {primer}{keys_hint}"
+msgstr ""
+
+#: core/analyzers/hash_analysis.py:286
+#, python-brace-format
+msgid ""
+"Hash table resized {count} times with {probes} avg probes/row — suspected "
+"data skew in {where}. {primer}{keys_hint}"
+msgstr ""
+
+#: core/analyzers/hash_analysis.py:309
+#, python-brace-format
+msgid ""
+"Hash table resized {count} times with {probes} avg probes/row, but AQE self-"
+"repartitioned (×{ratio:.0f}) and no shuffle spilled ({gb:.1f} GB total) — "
+"this is a data-volume / physical-layout issue, NOT key skew. "
+"{primer}{keys_hint}"
+msgstr ""
+
+#: core/analyzers/hash_analysis.py:325
+msgid ""
+"AQE handled the volume at runtime; the sustainable fix is to improve the "
+"physical layout on the hot columns. Consider: (1) Liquid Clustering on the "
+"hot grouping/join column(s) to reduce shuffle; (2) pre-aggregating upstream "
+"to cut row count; (3) reviewing data types — DECIMAL(38,0) where INTEGER "
+"would suffice bloats hash/compare/memory per row at this scale. Run DESCRIBE"
+" <table> and compare column types vs actual values"
+msgstr ""
+
+#: core/analyzers/hash_analysis.py:341
+#, python-brace-format
+msgid ""
+"Hash table resized {count} times — build side exceeded initial estimate "
+"(possible causes: data skew, stale statistics, or memory pressure). {primer}"
+msgstr ""
+
+#: core/analyzers/hash_analysis.py:347
+msgid ""
+"Check join key distribution for skew first. If statistics are stale, run "
+"ANALYZE TABLE. Consider broadcast join if the smaller side is under 200MB"
+msgstr ""
+
+#: core/analyzers/hash_analysis.py:360
+#, python-brace-format
+msgid ""
+"Avg hash probes per row is high ({value}) — indicates join key skew or hash "
+"collision"
+msgstr ""
+
+#: core/analyzers/hash_analysis.py:366
+msgid ""
+"Check for data skew in join keys; consider salting skewed keys or pre-"
+"filtering"
+msgstr ""
+
+#: core/analyzers/recommendations.py:546
+msgid "Column Pruning"
+msgstr ""
+
+#: core/analyzers/recommendations.py:548
+msgid ""
+"SELECT * reads all columns from disk. Specifying only needed columns reduces"
+" I/O significantly."
+msgstr "SELECT *는 모든 컬럼을 디스크에서 읽습니다. 필요한 컬럼만 지정하면 I/O가 크게 감소합니다."
+
+#: core/analyzers/recommendations.py:563
+msgid "BROADCAST Join Hint"
+msgstr ""
+
+#: core/analyzers/recommendations.py:565
+msgid ""
+"When joining with a small table (<200MB), BROADCAST hint eliminates shuffle "
+"by sending the small table to all executors."
+msgstr ""
+"작은 테이블(<200MB)과 JOIN 시, BROADCAST 힌트로 작은 테이블을 모든 executor에 전송하여 shuffle을 "
+"제거합니다."
+
+#: core/analyzers/recommendations.py:585
+msgid "CTE Pre-aggregation for Skewed Keys"
+msgstr ""
+
+#: core/analyzers/recommendations.py:587
+msgid ""
+"When a join key has highly skewed values (few values have many rows), pre-"
+"aggregating in a CTE reduces data volume before JOIN and mitigates skew "
+"impact."
+msgstr ""
+"JOIN 키 값이 매우 편향된 경우(소수 값이 많은 행을 가짐), CTE에서 사전 집계하여 JOIN 전 데이터 볼륨을 줄이고 스큐 영향을"
+" 완화하세요."
+
+#: core/analyzers/recommendations.py:610
+msgid "Pre-filter Data Before Heavy Operations"
+msgstr ""
+
+#: core/analyzers/recommendations.py:612
+msgid ""
+"Spill occurs when data exceeds memory. Pre-filtering reduces data volume "
+"before expensive operations like joins and aggregations."
+msgstr ""
+"데이터가 메모리를 초과할 때 스필이 발생합니다. 사전 필터링은 JOIN과 집계 같은 무거운 연산 전에 데이터 볼륨을 줄입니다."
+
+#: core/analyzers/recommendations.py:640
+msgid "Add Partition Filter"
+msgstr ""
+
+#: core/analyzers/recommendations.py:642
+msgid ""
+"Queries without partition filters scan all files. Adding a filter on the "
+"partition column dramatically reduces I/O."
+msgstr "파티션 필터 없는 쿼리는 모든 파일을 스캔합니다. 파티션 컬럼에 필터를 추가하면 I/O가 크게 감소합니다."
+
+#: core/analyzers/recommendations.py:657
+msgid "Apply Liquid Clustering"
+msgstr ""
+
+#: core/analyzers/recommendations.py:659
+msgid ""
+"Liquid Clustering co-locates related data, improving file pruning. Use "
+"Z-Order only if Liquid Clustering is unavailable."
+msgstr ""
+
+#: core/analyzers/recommendations_registry.py:270
+#, python-brace-format
+msgid "Spill to disk: {size}"
+msgstr "디스크 스필: {size}"
+
+#: core/analyzers/recommendations_registry.py:274
+#, python-brace-format
+msgid "Top spill operator: Node #{nid} ({name}) — {share:.1f}% of spill"
+msgstr "최대 스필 오퍼레이터: Node #{nid} ({name}) — 스필의 {share:.1f}%"
+
+#: core/analyzers/recommendations_registry.py:284
+msgid "I/O delay due to disk spill"
+msgstr "디스크 스필로 인한 I/O 지연"
+
+#: core/analyzers/recommendations_registry.py:287
+msgid ""
+"Operator memory is insufficient for the working set. Spill writes "
+"intermediate data to disk and re-reads it, typically causing 2-5x slowdown "
+"on affected tasks."
+msgstr ""
+"오퍼레이터 메모리가 워킹 세트에 부족합니다. 스필은 중간 데이터를 디스크에 쓰고 다시 읽어 영향받는 작업에서 일반적으로 2-5x 속도 "
+"저하를 일으킵니다."
+
+#: core/analyzers/recommendations_registry.py:292
+msgid ""
+"Reduce memory pressure: increase broadcast threshold to avoid shuffling "
+"large joins, enable AQE skew handling, or scale up the warehouse. Verify via"
+" the Spill operator graph that the target node stops spilling after the "
+"change."
+msgstr ""
+"메모리 압박 완화: broadcast threshold를 높여 대규모 JOIN의 shuffle을 회피, AQE 스큐 처리 활성화, 또는 "
+"웨어하우스 스케일 업. Spill 오퍼레이터 그래프에서 대상 노드의 스필이 멈추었는지 검증하세요."
+
+#: core/analyzers/recommendations_registry.py:298
+msgid "Increase broadcast threshold (avoids large shuffles)"
+msgstr "broadcast threshold 증가 (대규모 shuffle 회피)"
+
+#: core/analyzers/recommendations_registry.py:300
+#: core/analyzers/recommendations_registry.py:377
+msgid "Enable AQE skew handling"
+msgstr "AQE 스큐 처리 활성화"
+
+#: core/analyzers/recommendations_registry.py:307
+msgid "Setting changes are reversible; validate on dev first"
+msgstr "설정 변경은 되돌릴 수 있습니다; 먼저 dev에서 검증하세요"
+
+#: core/analyzers/recommendations_registry.py:310
+#: core/analyzers/recommendations_registry.py:987
+#: core/analyzers/recommendations_registry.py:988
+#: core/analyzers/recommendations_registry.py:1792
+#: core/analyzers/recommendations_registry.py:1793
+#: core/analyzers/recommendations_registry.py:1873
+#: core/analyzers/recommendations_registry.py:1874
+#: core/analyzers/recommendations_registry.py:2105
+#: core/analyzers/recommendations_registry.py:2158
+msgid "Reduced"
+msgstr "감소됨"
+
+#: core/analyzers/recommendations_registry.py:335
+#, python-brace-format
+msgid "Shuffle accounts for {pct:.1f}% of total task time"
+msgstr ""
+
+#: core/analyzers/recommendations_registry.py:340
+#, python-brace-format
+msgid "Largest shuffle: Node #{nid} ({mpp:.0f} MB/partition)"
+msgstr "최대 shuffle: Node #{nid} ({mpp:.0f} MB/파티션)"
+
+#: core/analyzers/recommendations_registry.py:351
+msgid "Pre-aggregate or filter in CTE to reduce shuffle data volume"
+msgstr "CTE에서 사전 집계 또는 필터로 shuffle 데이터 볼륨 감소"
+
+#: core/analyzers/recommendations_registry.py:354
+msgid "Add early filter to reduce data volume"
+msgstr "데이터 볼륨 감소를 위해 조기 필터 추가"
+
+#: core/analyzers/recommendations_registry.py:360
+msgid "Or use REPARTITION hint to optimize shuffle"
+msgstr "또는 REPARTITION 힌트로 shuffle 최적화"
+
+#: core/analyzers/recommendations_registry.py:364
+msgid ""
+"Avoid unnecessary DISTINCT — use UNION ALL instead of UNION if duplicates "
+"are acceptable"
+msgstr ""
+
+#: core/analyzers/recommendations_registry.py:366
+msgid ""
+"Use CTE pre-filtering, BROADCAST hint, or REPARTITION to reduce shuffle"
+msgstr "CTE 사전 필터링, BROADCAST 힌트, REPARTITION으로 shuffle 감소"
+
+#: core/analyzers/recommendations_registry.py:369
+msgid "Increase broadcast threshold"
+msgstr ""
+
+#: core/analyzers/recommendations_registry.py:372
+msgid "Or use BROADCAST hint for small tables"
+msgstr ""
+
+#: core/analyzers/recommendations_registry.py:381
+msgid ""
+"Expand broadcast threshold for small-side joins, or use REPARTITION hint to "
+"match the dominant partitioning key. Verify via shuffle metrics that total "
+"shuffle bytes written decreases."
+msgstr ""
+
+#: core/analyzers/recommendations_registry.py:387
+msgid "Shuffle operations are dominant"
+msgstr "Shuffle 작업이 지배적입니다"
+
+#: core/analyzers/recommendations_registry.py:389
+msgid "Joins between large tables or insufficient broadcast threshold"
+msgstr ""
+
+#: core/analyzers/recommendations_registry.py:396
+msgid "BROADCAST hint is safe for small tables; verify table size first"
+msgstr ""
+
+#: core/analyzers/recommendations_registry.py:399
+#: core/analyzers/recommendations_registry.py:1980
+#: core/analyzers/recommendations_registry.py:1981
+msgid "Significant reduction"
+msgstr ""
+
+#: core/analyzers/recommendations_registry.py:429
+#, python-brace-format
+msgid "Cache hit ratio: {ratio}"
+msgstr ""
+
+#: core/analyzers/recommendations_registry.py:431
+#, python-brace-format
+msgid "Read data size: {size}"
+msgstr ""
+
+#: core/analyzers/recommendations_registry.py:439
+msgid "Low cache hit ratio"
+msgstr "낮은 캐시 히트율"
+
+#: core/analyzers/recommendations_registry.py:441
+msgid "First execution, insufficient cache size, or cluster restart"
+msgstr ""
+
+#: core/analyzers/recommendations_registry.py:442
+msgid "Verify cache effect by re-running same query, or scale up"
+msgstr ""
+
+#: core/analyzers/recommendations_registry.py:447
+msgid "Cache behavior depends on cluster state; re-run to confirm"
+msgstr ""
+
+#: core/analyzers/recommendations_registry.py:450
+msgid "> 30% on re-run"
+msgstr ""
+
+#: core/analyzers/recommendations_registry.py:474
+#: core/analyzers/recommendations_registry.py:544
+#, python-brace-format
+msgid "Photon utilization: {ratio}"
+msgstr ""
+
+#: core/analyzers/recommendations_registry.py:475
+#, python-brace-format
+msgid "Unsupported operation: {reason}"
+msgstr ""
+
+#: core/analyzers/recommendations_registry.py:481
+#, python-brace-format
+msgid "Expression: {expr}"
+msgstr ""
+
+#: core/analyzers/recommendations_registry.py:483
+#, python-brace-format
+msgid "Detail: {detail}"
+msgstr ""
+
+#: core/analyzers/recommendations_registry.py:488
+#, python-brace-format
+msgid "Photon-unsupported operation: {reason}"
+msgstr ""
+
+#: core/analyzers/recommendations_registry.py:490
+msgid "This operation is not supported by Photon"
+msgstr ""
+
+#: core/analyzers/recommendations_registry.py:491
+msgid "Consider query rewrite for Photon compatibility"
+msgstr ""
+
+#: core/analyzers/recommendations_registry.py:497
+msgid "Rewriting SQL may change query semantics; verify results"
+msgstr ""
+
+#: core/analyzers/recommendations_registry.py:546
+#, python-brace-format
+msgid "Sort-Merge joins: {count} places"
+msgstr ""
+
+#: core/analyzers/recommendations_registry.py:554
+msgid "Run EXPLAIN EXTENDED to identify specific Photon blockers"
+msgstr "EXPLAIN EXTENDED를 실행하여 구체적인 Photon 차단 요인을 식별하세요"
+
+#: core/analyzers/recommendations_registry.py:557
+msgid "Use SHUFFLE_HASH hint to avoid Sort-Merge Join"
+msgstr "SHUFFLE_HASH 힌트로 Sort-Merge Join을 회피하세요"
+
+#: core/analyzers/recommendations_registry.py:562
+msgid "Or pre-filter in CTE to make table small enough for BROADCAST"
+msgstr "또는 CTE에서 사전 필터링하여 BROADCAST 가능한 크기로 테이블을 축소하세요"
+
+#: core/analyzers/recommendations_registry.py:565
+msgid "Reduce data volume"
+msgstr "데이터 볼륨 감소"
+
+#: core/analyzers/recommendations_registry.py:571
+msgid ""
+"Run EXPLAIN EXTENDED to identify Photon blockers, use query hints to change "
+"join type"
+msgstr "EXPLAIN EXTENDED로 Photon 차단 요인을 식별하고 쿼리 힌트로 join 타입을 변경하세요"
+
+#: core/analyzers/recommendations_registry.py:575
+msgid "Run EXPLAIN EXTENDED to find specific Photon blockers"
+msgstr "EXPLAIN EXTENDED로 구체적인 Photon 차단 요인을 찾으세요"
+
+#: core/analyzers/recommendations_registry.py:580
+msgid ""
+"Run EXPLAIN EXTENDED to identify Photon blockers, or apply the settings "
+"below to prefer SHUFFLE_HASH over SMJ."
+msgstr ""
+"EXPLAIN EXTENDED로 Photon 차단 요인을 식별하거나, 아래 설정을 적용하여 SMJ보다 SHUFFLE_HASH를 선호하도록"
+" 하세요."
+
+#: core/analyzers/recommendations_registry.py:585
+msgid "Low Photon utilization"
+msgstr ""
+
+#: core/analyzers/recommendations_registry.py:587
+msgid "Using Sort-Merge joins or Photon-unsupported functions"
+msgstr ""
+
+#: core/analyzers/recommendations_registry.py:594
+msgid "Setting changes are low-risk and reversible"
+msgstr ""
+
+#: core/analyzers/recommendations_registry.py:618
+#, python-brace-format
+msgid "Rescheduled scan ratio: {ratio:.1f}%"
+msgstr ""
+
+#: core/analyzers/recommendations_registry.py:619
+#, python-brace-format
+msgid "Local tasks: {loc} / Non-local (rescheduled): {nl}"
+msgstr ""
+
+#: core/analyzers/recommendations_registry.py:625
+msgid "High rescheduled scan ratio indicates scan locality degradation"
+msgstr ""
+
+#: core/analyzers/recommendations_registry.py:628
+msgid ""
+"Tasks repeatedly scheduled away from cached data blocks — usually cold "
+"cluster start, scale-out event, or autoscaler churn."
+msgstr ""
+
+#: core/analyzers/recommendations_registry.py:632
+msgid ""
+"Often infra-origin and self-resolves after warmup. If persistent, check "
+"autoscaler settings and cluster assignment stability. Look for correlation "
+"with cluster resize events."
+msgstr ""
+
+#: core/analyzers/recommendations_registry.py:641
+msgid ""
+"Infra-level signal; SQL-side changes rarely remediate directly. Monitor "
+"across multiple runs before acting."
+msgstr ""
+
+#: core/analyzers/recommendations_registry.py:665
+#, python-brace-format
+msgid "Skewed partition count: {count}"
+msgstr ""
+
+#: core/analyzers/recommendations_registry.py:670
+#, python-brace-format
+msgid "Skewed key: {keys}"
+msgstr ""
+
+#: core/analyzers/recommendations_registry.py:678
+#: core/analyzers/recommendations_registry.py:1423
+msgid "Pre-aggregate in CTE to reduce data volume before JOIN"
+msgstr "CTE에서 사전 집계하여 JOIN 전에 데이터 볼륨을 줄이세요"
+
+#: core/analyzers/recommendations_registry.py:687
+msgid "Alternative: Use REPARTITION hint to redistribute data"
+msgstr "대안: REPARTITION 힌트로 데이터 재분배"
+
+#: core/analyzers/recommendations_registry.py:692
+msgid "Pre-aggregate in CTE or use REPARTITION hint for key distribution"
+msgstr ""
+
+#: core/analyzers/recommendations_registry.py:695
+msgid "Enable AQE skew join handling"
+msgstr ""
+
+#: core/analyzers/recommendations_registry.py:699
+msgid "Enable AQE skew join for key distribution"
+msgstr ""
+
+#: core/analyzers/recommendations_registry.py:702
+msgid "Processing imbalance due to data skew"
+msgstr ""
+
+#: core/analyzers/recommendations_registry.py:704
+msgid "Imbalance in join or aggregation key value distribution"
+msgstr ""
+
+#: core/analyzers/recommendations_registry.py:711
+msgid "Skewed partitions cause task stragglers and potential OOM on executors"
+msgstr ""
+
+#: core/analyzers/recommendations_registry.py:714
+msgid "Even distribution across tasks"
+msgstr ""
+
+#: core/analyzers/recommendations_registry.py:761
+msgid ""
+"Review data types for hot columns (DECIMAL(38,0) where INTEGER fits is "
+"expensive at this scale)"
+msgstr ""
+
+#: core/analyzers/recommendations_registry.py:764
+msgid ""
+"Example: if the value is actually integer (no fractional digits), migrate to"
+" BIGINT"
+msgstr ""
+
+#: core/analyzers/recommendations_registry.py:768
+msgid ""
+"Cluster on the hot column(s) so the grouping/join does not require a full "
+"shuffle"
+msgstr ""
+
+#: core/analyzers/recommendations_registry.py:773
+#, python-brace-format
+msgid "Shuffle bytes written: {gb:.1f} GB"
+msgstr "Shuffle 쓰기 바이트: {gb:.1f} GB"
+
+#: core/analyzers/recommendations_registry.py:774
+#, python-brace-format
+msgid "AQE self-repartitioned with growth ratio ×{ratio:.0f}"
+msgstr ""
+
+#: core/analyzers/recommendations_registry.py:775
+msgid "Shuffle spill: 0 (AQE handled the volume at runtime)"
+msgstr ""
+
+#: core/analyzers/recommendations_registry.py:779
+msgid ""
+"Large shuffle absorbed by AQE — improve physical layout + review data types"
+msgstr ""
+
+#: core/analyzers/recommendations_registry.py:782
+#, python-brace-format
+msgid ""
+"AQE self-triggered a ×{ratio:.0f} repartition at runtime because the initial"
+" partition count was too coarse for the data volume, and no shuffle spilled."
+" That rules out key skew (AQE handles skew separately) and rules out memory "
+"pressure. The sustainable causes are: (a) the table is not clustered on the "
+"hot column — every run has to re-shuffle {gb:.1f} GB; (b) data types may be "
+"oversized — DECIMAL(38,0) keys are ~2x-5x more expensive than BIGINT at this"
+" volume (hash, compare, row memory). Even without schema access the toolkit "
+"asks you to DESCRIBE and review, because at > 10 GB shuffle the impact is "
+"always meaningful"
+msgstr ""
+
+#: core/analyzers/recommendations_registry.py:794
+msgid ""
+"1) Apply Liquid Clustering on the hot column(s) to eliminate the full "
+"shuffle; 2) DESCRIBE the table and review each hot column's type — common "
+"wastes are DECIMAL(38,0) where INTEGER fits, STRING for numeric/date values,"
+" oversized VARCHAR; 3) pre-aggregate upstream if the query runs repeatedly"
+msgstr ""
+
+#: core/analyzers/recommendations_registry.py:804
+msgid ""
+"Shuffle bytes written drop substantially; AQE self-repartition count returns"
+" to 0 (or drops significantly); hash_table_resize_count decreases"
+msgstr ""
+
+#: core/analyzers/recommendations_registry.py:809
+msgid ""
+"Liquid Clustering is non-destructive (ALTER + OPTIMIZE FULL rewrites files "
+"in place). Data-type migration must be tested on a copy first"
+msgstr ""
+
+#: core/analyzers/recommendations_registry.py:842
+msgid ""
+"Statistics are up-to-date — consider alternative causes for hash resize"
+msgstr ""
+
+#: core/analyzers/recommendations_registry.py:844
+#: core/analyzers/recommendations_registry.py:1126
+#: core/analyzers/recommendations_registry.py:1387
+#, python-brace-format
+msgid "Hash table resize count: {count}"
+msgstr ""
+
+#: core/analyzers/recommendations_registry.py:845
+msgid "EXPLAIN confirms optimizer statistics are full (all tables)"
+msgstr ""
+
+#: core/analyzers/recommendations_registry.py:848
+msgid ""
+"Hash table resize is high despite fresh optimizer statistics. Re-running "
+"ANALYZE TABLE will not help because the statistics are already fresh. The "
+"alternative root causes, in typical order of likelihood: (1) data-level row "
+"explosion from a missing filter or wrong JOIN predicate producing "
+"duplicates, (2) duplicate aggregation nodes recomputing the same GROUP BY, "
+"(3) key-value skew / heavy hitters / NULL concentration, (4) JOIN key type "
+"mismatch forcing implicit CAST, (5) hash collision from DECIMAL keys with "
+"very high precision, (6) memory pressure (spill + fallback)"
+msgstr ""
+
+#: core/analyzers/recommendations_registry.py:859
+msgid ""
+"Do NOT re-run ANALYZE TABLE. Investigate in this order: (1) verify the "
+"result row count matches expectations (row explosion check); (2) look for "
+"duplicate GROUP BY across UNION branches / un-materialized CTEs; (3) run the"
+" diagnostic SQL from the 'Investigate data distribution' card to confirm "
+"skew/NULL; (4) check JOIN key types for mismatch; (5) if none apply, enable "
+"AQE skew join handling or broadcast the smaller side"
+msgstr ""
+
+#: core/analyzers/recommendations_registry.py:870
+msgid "Root cause identified before applying a fix"
+msgstr ""
+
+#: core/analyzers/recommendations_registry.py:872
+msgid "Diagnostic only; no changes applied"
+msgstr ""
+
+#: core/analyzers/recommendations_registry.py:941
+#, python-brace-format
+msgid "Shuffle impact: {pct:.1f}% of total task time"
+msgstr ""
+
+#: core/analyzers/recommendations_registry.py:943
+#, python-brace-format
+msgid ""
+"Top shuffle Node #{nid}: {written:.1f} GB written, peak {peak:.1f} GB ({mpp}"
+" MB/part)"
+msgstr ""
+"최대 shuffle Node #{nid}: 쓰기 {written:.1f} GB, 피크 {peak:.1f} GB ({mpp} MB/파티션)"
+
+#: core/analyzers/recommendations_registry.py:945
+#, python-brace-format
+msgid "Shuffle partitioning key(s): {cols}"
+msgstr ""
+
+#: core/analyzers/recommendations_registry.py:949
+msgid "Add the dominant shuffle key(s) to Liquid Clustering"
+msgstr ""
+
+#: core/analyzers/recommendations_registry.py:951
+msgid "FULL is required to re-cluster existing data"
+msgstr ""
+
+#: core/analyzers/recommendations_registry.py:953
+msgid ""
+"If a key has very low cardinality (<10 distinct values), use Hierarchical "
+"Clustering:"
+msgstr ""
+
+#: core/analyzers/recommendations_registry.py:954
+msgid ""
+"First add a high-cardinality column to CLUSTER BY, then designate the low-"
+"card column as hierarchical"
+msgstr ""
+
+#: core/analyzers/recommendations_registry.py:959
+msgid "DBR 17.1+ required"
+msgstr ""
+
+#: core/analyzers/recommendations_registry.py:963
+msgid "Shuffle-dominant: consider adding shuffle key to Liquid Clustering"
+msgstr ""
+
+#: core/analyzers/recommendations_registry.py:966
+msgid ""
+"The dominant shuffle partitioning key is a column of a scanned table but is "
+"not currently clustered on. Clustering on the shuffle key co-locates same-"
+"value rows, shrinking shuffle volume for repeat queries with the same GROUP "
+"BY / JOIN shape."
+msgstr ""
+
+#: core/analyzers/recommendations_registry.py:972
+msgid ""
+"Add the dominant shuffle key(s) to the target table's Liquid Clustering. If "
+"cardinality is very low (<10 distinct values), combine with a higher-"
+"cardinality key or use Hierarchical Clustering."
+msgstr ""
+
+#: core/analyzers/recommendations_registry.py:979
+msgid "shuffle_impact_ratio reduced; shuffle bytes written shrinks"
+msgstr ""
+
+#: core/analyzers/recommendations_registry.py:982
+msgid ""
+"Clustering changes require OPTIMIZE FULL; verify on dev first. If the "
+"shuffle key is not also filtered/joined, the improvement is bounded to "
+"shuffle reduction — no pruning benefit."
+msgstr ""
+
+#: core/analyzers/recommendations_registry.py:1025
+#, python-brace-format
+msgid "CTE identifier occurrences in SQL: {n}"
+msgstr ""
+
+#: core/analyzers/recommendations_registry.py:1027
+msgid ""
+"Each extra reference can force repeated evaluation unless the optimizer "
+"caches inlines or AQE inserts a ReusedExchange node"
+msgstr ""
+
+#: core/analyzers/recommendations_registry.py:1031
+msgid ""
+"Do NOT rely on CREATE TEMP VIEW for this — a TEMP VIEW is only a catalog "
+"alias and does not guarantee materialization. Eliminate the duplicate work "
+"by either (a) persisting the shared result with CTAS / Delta table, or (b) "
+"rewriting the query so the CTE body runs once and is joined back (e.g. pre-"
+"aggregate, then join). Confirm the optimizer reused it via a ReusedExchange "
+"node in EXPLAIN."
+msgstr ""
+
+#: core/analyzers/recommendations_registry.py:1044
+msgid "CTAS / Delta table needs cleanup; a query rewrite is reversible"
+msgstr ""
+
+#: core/analyzers/recommendations_registry.py:1047
+msgid "Reduced re-scans"
+msgstr ""
+
+#: core/analyzers/recommendations_registry.py:1048
+msgid "ReusedExchange present"
+msgstr ""
+
+#: core/analyzers/recommendations_registry.py:1108
+msgid "Cardinality check: distinct vs total and NULL count"
+msgstr ""
+
+#: core/analyzers/recommendations_registry.py:1116
+msgid "Top 20 values by row count (skew / heavy-hitter detection)"
+msgstr ""
+
+#: core/analyzers/recommendations_registry.py:1127
+#, python-brace-format
+msgid "Top contributor columns: {cols}"
+msgstr ""
+
+#: core/analyzers/recommendations_registry.py:1133
+msgid "Investigate data distribution on hot join/grouping columns"
+msgstr ""
+
+#: core/analyzers/recommendations_registry.py:1136
+msgid ""
+"What hash resize means: Photon doubled and rebuilt its in-memory hash table "
+"this many times because row-count estimates were wrong. Many resizes signal "
+"a data/structural issue, not just slowness. Common root causes are (a) "
+"skewed key values, (b) high NULL concentration, or (c) duplicate rows from "
+"an upstream transformation. Running these diagnostics confirms which applies"
+" before choosing between AQE skew handling, broadcast, pre-aggregation, or "
+"fixing data"
+msgstr ""
+
+#: core/analyzers/recommendations_registry.py:1145
+msgid ""
+"Run the diagnostics below and compare against your expectation. If "
+"distinct_values is much lower than expected or null_count is large, the data"
+" itself is the problem — fix upstream. Otherwise proceed with skew-handling "
+"settings"
+msgstr ""
+
+#: core/analyzers/recommendations_registry.py:1153
+msgid "Confirm skew/NULL/duplicate rows hypothesis before applying fixes"
+msgstr ""
+
+#: core/analyzers/recommendations_registry.py:1155
+msgid "Read-only diagnostics; no data or config changes"
+msgstr ""
+
+#: core/analyzers/recommendations_registry.py:1159
+msgid "distinct_values close to expected cardinality"
+msgstr ""
+
+#: core/analyzers/recommendations_registry.py:1219
+msgid "First, check if Hierarchical Clustering is already configured:"
+msgstr ""
+
+#: core/analyzers/recommendations_registry.py:1221
+msgid ""
+"If delta.liquid.hierarchicalClusteringColumns is already set, skip this "
+"step."
+msgstr ""
+
+#: core/analyzers/recommendations_registry.py:1229
+msgid "Step 1: Ensure the hierarchical column is part of CLUSTER BY"
+msgstr ""
+
+#: core/analyzers/recommendations_registry.py:1231
+msgid "Step 2: Designate the low-cardinality column as the hierarchical key"
+msgstr ""
+
+#: core/analyzers/recommendations_registry.py:1235
+msgid "Step 3: Apply to existing data (DBR 17.1+ required)"
+msgstr ""
+
+#: core/analyzers/recommendations_registry.py:1240
+msgid "Hierarchical Clustering candidate detected"
+msgstr ""
+
+#: core/analyzers/recommendations_registry.py:1242
+#, python-brace-format
+msgid "Table: {t}"
+msgstr ""
+
+#: core/analyzers/recommendations_registry.py:1243
+#, python-brace-format
+msgid "Low-cardinality clustering key: {c}"
+msgstr ""
+
+#: core/analyzers/recommendations_registry.py:1246
+#, python-brace-format
+msgid ""
+"Low-cardinality clustering key {c} can benefit from hierarchical clustering"
+msgstr ""
+
+#: core/analyzers/recommendations_registry.py:1249
+msgid ""
+"Use Hierarchical Clustering to nest low-cardinality keys; TPC-DS style "
+"benchmarks report roughly 22-31% improvement in some scenarios. Check SHOW "
+"TBLPROPERTIES first — skip if already configured."
+msgstr ""
+
+#: core/analyzers/recommendations_registry.py:1256
+msgid "After OPTIMIZE FULL, confirm file pruning and scan locality"
+msgstr ""
+
+#: core/analyzers/recommendations_registry.py:1258
+msgid "Table properties and CLUSTER BY are reversible; validate in dev first"
+msgstr ""
+
+#: core/analyzers/recommendations_registry.py:1260
+msgid "Improved or stable"
+msgstr ""
+
+#: core/analyzers/recommendations_registry.py:1261
+msgid "Reduced on repeated filters"
+msgstr ""
+
+#: core/analyzers/recommendations_registry.py:1304
+#, python-brace-format
+msgid "Aggregate with arithmetic on Node #{nid}: `{expr}`"
+msgstr ""
+
+#: core/analyzers/recommendations_registry.py:1309
+#, python-brace-format
+msgid "Additional nodes with arithmetic aggregates: {n} more"
+msgstr ""
+
+#: core/analyzers/recommendations_registry.py:1317
+#, python-brace-format
+msgid "Heavy scanned tables: {tables}"
+msgstr ""
+
+#: core/analyzers/recommendations_registry.py:1321
+msgid ""
+"Confirm DECIMAL precision/scale of the columns in the aggregate expression"
+msgstr ""
+
+#: core/analyzers/recommendations_registry.py:1323
+msgid ""
+"If a column is DECIMAL(38, 0) and stores integer values only, migrate it"
+msgstr ""
+
+#: core/analyzers/recommendations_registry.py:1325
+msgid ""
+"If wider precision is required, narrow rather than keeping DECIMAL(38, x)"
+msgstr ""
+
+#: core/analyzers/recommendations_registry.py:1331
+msgid ""
+"Heavy aggregate with arithmetic on numeric columns — verify DECIMAL "
+"precision"
+msgstr ""
+
+#: core/analyzers/recommendations_registry.py:1335
+msgid ""
+"Arithmetic (* / + / -) on DECIMAL(38, x) columns implicitly widens the "
+"result to DECIMAL(38, 18). At this aggregate scale, the widening inflates "
+"per-row CPU and hash-table memory significantly. If the columns are integer-"
+"valued in practice (counts, quantities), migrating to INT/BIGINT eliminates "
+"the widening and enables faster Photon SIMD paths."
+msgstr ""
+
+#: core/analyzers/recommendations_registry.py:1343
+msgid ""
+"Use DESCRIBE TABLE on the heaviest scanned table(s) to confirm DECIMAL "
+"precision/scale. If a column is DECIMAL(38, 0) but holds integers, migrate "
+"to INT/BIGINT. If wider precision is required, narrow it (e.g., DECIMAL(18, "
+"2)) rather than retaining DECIMAL(38, *)."
+msgstr ""
+
+#: core/analyzers/recommendations_registry.py:1351
+msgid "Aggregate peak memory and hash-table resize count reduced"
+msgstr ""
+
+#: core/analyzers/recommendations_registry.py:1354
+msgid ""
+"Type changes propagate to JOIN counterparts and downstream consumers. "
+"Coordinate the change across all tables that share the column."
+msgstr ""
+
+#: core/analyzers/recommendations_registry.py:1358
+msgid "Reduced after type change"
+msgstr ""
+
+#: core/analyzers/recommendations_registry.py:1359
+msgid "Reduced if widening was the cause"
+msgstr ""
+
+#: core/analyzers/recommendations_registry.py:1391
+#, python-brace-format
+msgid "Avg hash probes per row: {probes}"
+msgstr ""
+
+#: core/analyzers/recommendations_registry.py:1396
+#, python-brace-format
+msgid "Hash build time: {time}ms"
+msgstr ""
+
+#: core/analyzers/recommendations_registry.py:1410
+msgid "Mitigate hash resize on JOIN and GROUP BY hot columns"
+msgstr ""
+
+#: core/analyzers/recommendations_registry.py:1412
+msgid "Mitigate hash resize on hot GROUP BY columns"
+msgstr ""
+
+#: core/analyzers/recommendations_registry.py:1414
+msgid "Mitigate hash resize on hot JOIN keys"
+msgstr ""
+
+#: core/analyzers/recommendations_registry.py:1416
+msgid "Mitigate hash table resize / high probe count"
+msgstr ""
+
+#: core/analyzers/recommendations_registry.py:1432
+msgid ""
+"For JOIN skew: pre-aggregate the build side, increase broadcast threshold, "
+"or enable AQE skew join handling. For GROUP BY skew: verify no unintended "
+"cardinality (row explosion / duplicates) and pre-aggregate upstream"
+msgstr ""
+
+#: core/analyzers/recommendations_registry.py:1447
+msgid ""
+"For JOIN skew: increase broadcast threshold or enable AQE skew join "
+"handling. For GROUP BY skew: verify no unintended cardinality and pre-"
+"aggregate upstream"
+msgstr ""
+
+#: core/analyzers/recommendations_registry.py:1455
+msgid ""
+"This card directly addresses the top [hash_table_resize_count] alert. Hash "
+"table resize + high probe count indicates that Photon's row-count estimate "
+"was wrong repeatedly — typically caused by skewed keys, unexpected "
+"cardinality from upstream row explosion, or memory pressure"
+msgstr ""
+
+#: core/analyzers/recommendations_registry.py:1466
+msgid "Setting changes are reversible; broadcast threshold increase is safe"
+msgstr ""
+
+#: core/analyzers/recommendations_registry.py:1502
+#, python-brace-format
+msgid "Filter efficiency: {ratio}"
+msgstr ""
+
+#: core/analyzers/recommendations_registry.py:1506
+#, python-brace-format
+msgid "Read file count: {read} / {total}"
+msgstr ""
+
+#: core/analyzers/recommendations_registry.py:1516
+#, python-brace-format
+msgid "LLM recommendation: {rationale}"
+msgstr ""
+
+#: core/analyzers/recommendations_registry.py:1520
+#, python-brace-format
+msgid "Workload pattern: {pattern}"
+msgstr ""
+
+#: core/analyzers/recommendations_registry.py:1523
+#, python-brace-format
+msgid "Confidence: {conf:.0%}"
+msgstr ""
+
+#: core/analyzers/recommendations_registry.py:1530
+msgid "Apply Liquid Clustering (recommended)"
+msgstr ""
+
+#: core/analyzers/recommendations_registry.py:1532
+msgid "FULL is required to re-cluster existing data (not just new records)"
+msgstr ""
+
+#: core/analyzers/recommendations_registry.py:1535
+msgid "Z-Order (only if Liquid Clustering is not available)"
+msgstr ""
+
+#: core/analyzers/recommendations_registry.py:1550
+msgid "Hierarchical Clustering (low-cardinality clustering key)"
+msgstr ""
+
+#: core/analyzers/recommendations_registry.py:1555
+msgid ""
+"Add a high-cardinality CLUSTER BY column alongside the low-cardinality key"
+msgstr ""
+
+#: core/analyzers/recommendations_registry.py:1564
+msgid "Low file pruning efficiency"
+msgstr ""
+
+#: core/analyzers/recommendations_registry.py:1567
+msgid ""
+"Liquid Clustering not configured, or clustering keys mismatch with filter "
+"conditions"
+msgstr ""
+
+#: core/analyzers/recommendations_registry.py:1569
+msgid "Apply Liquid Clustering (Z-Order only if Liquid is unavailable)"
+msgstr ""
+
+#: core/analyzers/recommendations_registry.py:1575
+msgid "Clustering changes require OPTIMIZE run; may take time on large tables"
+msgstr ""
+
+#: core/analyzers/recommendations_registry.py:1578
+msgid "Majority of files pruned"
+msgstr ""
+
+#: core/analyzers/recommendations_registry.py:1628
+msgid "Avoid SELECT * - specify only needed columns"
+msgstr ""
+
+#: core/analyzers/recommendations_registry.py:1631
+msgid "Add partition filter"
+msgstr ""
+
+#: core/analyzers/recommendations_registry.py:1634
+#: core/analyzers/recommendations_registry.py:1676
+#, python-brace-format
+msgid "Execution time share: {share}%"
+msgstr ""
+
+#: core/analyzers/recommendations_registry.py:1635
+#: core/analyzers/recommendations_registry.py:1677
+#, python-brace-format
+msgid "Operator: {op}"
+msgstr ""
+
+#: core/analyzers/recommendations_registry.py:1638
+#, python-brace-format
+msgid "Scan operation accounts for {share}% of total time"
+msgstr ""
+
+#: core/analyzers/recommendations_registry.py:1642
+msgid "Large data read or insufficient column pruning"
+msgstr ""
+
+#: core/analyzers/recommendations_registry.py:1643
+msgid "SELECT only required columns or add partition filter"
+msgstr ""
+
+#: core/analyzers/recommendations_registry.py:1647
+#, python-brace-format
+msgid "time_share of Node {id} < 20%"
+msgstr ""
+
+#: core/analyzers/recommendations_registry.py:1649
+msgid "Column selection and filter changes are safe and reversible"
+msgstr ""
+
+#: core/analyzers/recommendations_registry.py:1651
+msgid "time_share of scan node"
+msgstr ""
+
+#: core/analyzers/recommendations_registry.py:1685
+msgid "Use SHUFFLE_HASH hint to change join type"
+msgstr "SHUFFLE_HASH 힌트로 join 타입을 변경하세요"
+
+#: core/analyzers/recommendations_registry.py:1689
+msgid "Or pre-filter in CTE to reduce table size for BROADCAST"
+msgstr "또는 CTE에서 사전 필터링하여 BROADCAST용 테이블 크기를 줄이세요"
+
+#: core/analyzers/recommendations_registry.py:1695
+msgid "Consider using EXISTS for semi-join patterns"
+msgstr "세미 join 패턴에는 EXISTS 사용을 고려하세요"
+
+#: core/analyzers/recommendations_registry.py:1699
+msgid "Use query hints (SHUFFLE_HASH/BROADCAST) or rewrite JOIN pattern"
+msgstr "쿼리 힌트(SHUFFLE_HASH/BROADCAST) 또는 JOIN 패턴 재작성을 사용하세요"
+
+#: core/analyzers/recommendations_registry.py:1702
+msgid "Change join type (Hash Join recommended)"
+msgstr ""
+
+#: core/analyzers/recommendations_registry.py:1705
+#, python-brace-format
+msgid "Non-Photon join accounts for {share}% of total time"
+msgstr ""
+
+#: core/analyzers/recommendations_registry.py:1709
+msgid "Sort-Merge join or unsupported join type"
+msgstr ""
+
+#: core/analyzers/recommendations_registry.py:1714
+#, python-brace-format
+msgid "Photon execution on Node {id}"
+msgstr ""
+
+#: core/analyzers/recommendations_registry.py:1716
+msgid "Join type setting is reversible"
+msgstr ""
+
+#: core/analyzers/recommendations_registry.py:1749
+#, python-brace-format
+msgid "Compilation time: {secs:.1f}s ({pct:.0f}% of total)"
+msgstr "컴파일 시간: {secs:.1f}s (전체의 {pct:.0f}%)"
+
+#: core/analyzers/recommendations_registry.py:1754
+#, python-brace-format
+msgid "Metadata resolution: {secs:.1f}s"
+msgstr "메타데이터 확인: {secs:.1f}s"
+
+#: core/analyzers/recommendations_registry.py:1756
+#, python-brace-format
+msgid "Files pruned: {n:,}"
+msgstr ""
+
+#: core/analyzers/recommendations_registry.py:1760
+msgid "Compact small files to shorten metadata and pruning work"
+msgstr "작은 파일을 압축하여 메타데이터 및 프루닝 작업을 단축하세요"
+
+#: core/analyzers/recommendations_registry.py:1762
+msgid "Shorten Delta transaction log (requires retention period review)"
+msgstr "Delta 트랜잭션 로그 단축 (보존 기간 검토 필요)"
+
+#: core/analyzers/recommendations_registry.py:1764
+msgid "Enable auto compaction / predictive optimization if available"
+msgstr "가능한 경우 auto compaction / predictive optimization을 활성화하세요"
+
+#: core/analyzers/recommendations_registry.py:1772
+msgid "Compilation and file pruning dominate execution"
+msgstr "컴파일과 파일 프루닝이 실행 시간을 지배합니다"
+
+#: core/analyzers/recommendations_registry.py:1775
+msgid ""
+"Driver-side work (SQL parse, Catalyst, Delta log replay, file-stats pruning)"
+" is large relative to execution. Typical root causes: small-file "
+"proliferation, long-unvacuumed Delta log, cold warehouse cache, or excessive"
+" partitioning."
+msgstr ""
+
+#: core/analyzers/recommendations_registry.py:1781
+msgid ""
+"Compact files with OPTIMIZE, shorten the Delta log via VACUUM, enable "
+"Predictive Optimization, and re-run to rule out cold cache. Review partition"
+" design if partitionCount is very high."
+msgstr ""
+
+#: core/analyzers/recommendations_registry.py:1790
+msgid "OPTIMIZE/VACUUM are standard Delta maintenance operations"
+msgstr "OPTIMIZE/VACUUM은 Delta의 표준 유지 관리 작업입니다"
+
+#: core/analyzers/recommendations_registry.py:1822
+#, python-brace-format
+msgid "Driver overhead: {total:.1f}s ({pct:.0f}% of total)"
+msgstr "드라이버 오버헤드: {total:.1f}s (전체의 {pct:.0f}%)"
+
+#: core/analyzers/recommendations_registry.py:1829
+#, python-brace-format
+msgid "Queue wait: {q:.1f}s (provisioning={p:.1f}s, overload={o:.1f}s)"
+msgstr "큐 대기: {q:.1f}s (provisioning={p:.1f}s, overload={o:.1f}s)"
+
+#: core/analyzers/recommendations_registry.py:1834
+#, python-brace-format
+msgid "Scheduling + waiting-for-compute: {s:.1f}s"
+msgstr "스케줄링 + 컴퓨트 대기: {s:.1f}s"
+
+#: core/analyzers/recommendations_registry.py:1839
+msgid ""
+"Query waited in the warehouse queue before compilation started. "
+"Provisioning-heavy waits indicate Serverless cold start; overload-heavy "
+"waits indicate concurrent-query pressure."
+msgstr ""
+
+#: core/analyzers/recommendations_registry.py:1844
+msgid ""
+"Reduce queue time: enable Serverless warm pools, extend the auto-stop idle "
+"timeout, or increase the warehouse max clusters. For overload-dominated "
+"waits, stagger concurrent query launches."
+msgstr ""
+
+#: core/analyzers/recommendations_registry.py:1850
+msgid ""
+"Pre-execution driver work (task scheduling, waiting for compute to become "
+"ready) dominates. Typical causes: many concurrent queries contending on the "
+"driver, or a warehouse that has to ramp up before it can dispatch tasks."
+msgstr ""
+
+#: core/analyzers/recommendations_registry.py:1856
+msgid ""
+"Reduce concurrent query load on this warehouse, or pin the workload to a "
+"warehouse sized to stay warm. Verify via repeated runs that scheduling time "
+"shrinks once the warehouse is hot."
+msgstr ""
+
+#: core/analyzers/recommendations_registry.py:1862
+msgid "Driver-side wait dominates query time"
+msgstr "드라이버 측 대기가 쿼리 시간을 지배합니다"
+
+#: core/analyzers/recommendations_registry.py:1871
+msgid "Warehouse configuration changes are reversible"
+msgstr ""
+
+#: core/analyzers/recommendations_registry.py:1901
+msgid "external source"
+msgstr ""
+
+#: core/analyzers/recommendations_registry.py:1908
+#, python-brace-format
+msgid "Federated tables: {tables}"
+msgstr "Federated 테이블: {tables}"
+
+#: core/analyzers/recommendations_registry.py:1910
+#, python-brace-format
+msgid "Likely source type: {src}"
+msgstr "추정 소스 종류: {src}"
+
+#: core/analyzers/recommendations_registry.py:1913
+msgid ""
+"Scan node tag = ROW_DATA_SOURCE_SCAN_EXEC (Lakehouse Federation; data is "
+"read from the remote engine, not from Delta files)"
+msgstr ""
+"스캔 노드 태그 = ROW_DATA_SOURCE_SCAN_EXEC (Lakehouse Federation; 데이터는 Delta 파일이 "
+"아닌 원격 엔진에서 읽음)"
+
+#: core/analyzers/recommendations_registry.py:1919
+msgid ""
+"Focus on pushdown: run `EXPLAIN FORMATTED` and inspect the `EXTERNAL ENGINE "
+"QUERY` / `PushedFilters` / `PushedJoins` blocks to confirm filters and joins"
+" reach the remote engine. Unsupported predicates are evaluated in Databricks"
+" after a full fetch — rewrite or split them so the heavy reduction happens "
+"on the source side. For JDBC sources set `WITH ('fetchSize' 100000)` on "
+"large result sets; for BigQuery joins consider the materialization mode; for"
+" Snowflake tune `partition_size_in_mb`. Databricks-side tunings (Liquid "
+"Clustering, disk cache, shuffle partitions) generally do NOT help federated "
+"scans and are suppressed from the Top recommendations."
+msgstr ""
+
+#: core/analyzers/recommendations_registry.py:1934
+msgid "1. Confirm which predicates pushed down to the source"
+msgstr ""
+
+#: core/analyzers/recommendations_registry.py:1938
+msgid "2. (JDBC sources) tune batch size"
+msgstr ""
+
+#: core/analyzers/recommendations_registry.py:1945
+msgid ""
+"3. (High-freq dashboards) materialize into Delta to avoid repeated "
+"federation cost"
+msgstr ""
+
+#: core/analyzers/recommendations_registry.py:1956
+#, python-brace-format
+msgid ""
+"Lakehouse Federation query — remote engine ({src}) is the true bottleneck"
+msgstr "Lakehouse Federation 쿼리 — 원격 엔진({src})이 실제 병목"
+
+#: core/analyzers/recommendations_registry.py:1960
+msgid ""
+"Query reads via Lakehouse Federation; network transfer and remote engine "
+"execution dominate. Databricks-side storage optimizations (Liquid "
+"Clustering, disk cache, Photon compatibility) do not apply."
+msgstr ""
+"쿼리가 Lakehouse Federation을 통해 읽음. 네트워크 전송과 원격 엔진 실행이 지배적. Databricks 측 스토리지 "
+"최적화(Liquid Clustering, 디스크 캐시, Photon 호환성)는 적용되지 않습니다."
+
+#: core/analyzers/recommendations_registry.py:1970
+msgid ""
+"PushedFilters/PushedJoins contains the heavy predicates; bytes returned from"
+" source drops; wall-clock time drops."
+msgstr ""
+
+#: core/analyzers/recommendations_registry.py:1975
+msgid ""
+"All three steps are safe — EXPLAIN is read-only, fetchSize is a connector "
+"hint, CTAS runs once and can be dropped if not useful."
+msgstr ""
+
+#: core/analyzers/recommendations_registry.py:1998
+#: core/analyzers/recommendations_registry.py:2044
+msgid ""
+"Scan tasks were rescheduled to different nodes because another query "
+"saturated the local CPU slots. This loses disk-cache locality and forces "
+"remote reads — classic shared-warehouse contention."
+msgstr ""
+
+#: core/analyzers/recommendations_registry.py:2004
+#: core/analyzers/recommendations_registry.py:2050
+msgid ""
+"Isolate this workload on its own warehouse, stagger concurrent query "
+"launches, or raise max clusters so the warehouse can scale horizontally "
+"under load."
+msgstr ""
+
+#: core/analyzers/recommendations_registry.py:2010
+#: core/analyzers/recommendations_registry.py:2064
+msgid ""
+"Many AQE re-plans, subqueries, or broadcast-hash joins force the driver to "
+"do heavy coordination between stages; executors wait on the driver instead "
+"of running tasks."
+msgstr ""
+
+#: core/analyzers/recommendations_registry.py:2015
+#: core/analyzers/recommendations_registry.py:2082
+msgid ""
+"The plan itself is topologically narrow — stages run one after the other "
+"with few tasks each — so the warehouse runs idle even without any "
+"contention."
+msgstr ""
+
+#: core/analyzers/recommendations_registry.py:2034
+#, python-brace-format
+msgid "Effective parallelism: {par:.1f}x over {secs:.0f}s execution"
+msgstr ""
+
+#: core/analyzers/recommendations_registry.py:2040
+#, python-brace-format
+msgid "Rescheduled scan tasks: {pct:.1f}%"
+msgstr ""
+
+#: core/analyzers/recommendations_registry.py:2042
+#, python-brace-format
+msgid "Cache hit ratio: {pct:.1f}%"
+msgstr ""
+
+#: core/analyzers/recommendations_registry.py:2056
+#, python-brace-format
+msgid ""
+"AQE re-plans: {a}, subqueries: {s}, broadcast joins: {b}, total nodes: {n}"
+msgstr ""
+
+#: core/analyzers/recommendations_registry.py:2069
+msgid ""
+"Simplify the plan: replace multi-step subqueries with JOINs, persist multi-"
+"referenced CTE results with CTAS / Delta or rewrite to remove duplicate "
+"evaluation (a TEMP VIEW does NOT materialize them), and avoid broadcasting "
+"large sides. For Pro/Classic warehouses consider upgrading the driver node "
+"size."
+msgstr ""
+
+#: core/analyzers/recommendations_registry.py:2077
+#, python-brace-format
+msgid "Plan appears narrow: {n} plan nodes, {s} shuffle stages"
+msgstr ""
+
+#: core/analyzers/recommendations_registry.py:2087
+msgid ""
+"Widen stages with REPARTITION(n) hints on dominant scans, pre-aggregate to "
+"collapse serial stages, or review join strategy (switch SHJ → SMJ if build "
+"is oversized)."
+msgstr ""
+
+#: core/analyzers/recommendations_registry.py:2093
+msgid "Cluster underutilized during execution"
+msgstr "실행 중 클러스터 미활용"
+
+#: core/analyzers/recommendations_registry.py:2102
+msgid "Warehouse separation / REPARTITION hints are reversible"
+msgstr ""
+
+#: core/analyzers/recommendations_registry.py:2104
+msgid "Increased"
+msgstr ""
+
+#: core/analyzers/recommendations_registry.py:2130
+#, python-brace-format
+msgid "Compilation took {secs:.1f}s (absolute threshold)"
+msgstr "컴파일 시간 {secs:.1f}s (절대 임계값)"
+
+#: core/analyzers/recommendations_registry.py:2132
+#, python-brace-format
+msgid "Compilation: {secs:.1f}s"
+msgstr ""
+
+#: core/analyzers/recommendations_registry.py:2133
+#, python-brace-format
+msgid "Pruned files: {n:,}"
+msgstr ""
+
+#: core/analyzers/recommendations_registry.py:2136
+msgid ""
+"Driver-side compilation exceeds a normal 3-5s envelope even though it is a "
+"small fraction of total time. Long-lived tables with many small files or a "
+"long Delta log commit history typically drive this."
+msgstr ""
+
+#: core/analyzers/recommendations_registry.py:2142
+msgid ""
+"Schedule routine OPTIMIZE + VACUUM maintenance on the scanned table(s). For "
+"UC-managed tables enable Predictive Optimization to automate this."
+msgstr ""
+
+#: core/analyzers/recommendations_registry.py:2147
+msgid "Compact small files"
+msgstr ""
+
+#: core/analyzers/recommendations_registry.py:2149
+msgid "Shorten Delta log (verify retention policy first)"
+msgstr ""
+
+#: core/analyzers/recommendations_registry.py:2156
+msgid "OPTIMIZE/VACUUM are standard Delta maintenance"
+msgstr ""
+
+#: core/analyzers/shuffle_analysis.py:37 core/analyzers/shuffle_analysis.py:55
+#, python-brace-format
+msgid "Shuffle operations account for {ratio} of total time"
+msgstr ""
+
+#: core/analyzers/shuffle_analysis.py:44
+msgid ""
+"Consider increasing broadcast join threshold "
+"(spark.sql.autoBroadcastJoinThreshold) to 200MB. Expected improvement: "
+"30-50% reduction in shuffle time"
+msgstr ""
+
+#: core/analyzers/shuffle_analysis.py:95
+#, python-brace-format
+msgid ""
+"Shuffle memory efficiency issues in {count} node(s), worst: "
+"{worst_mb}MB/partition (Node {node_id})"
+msgstr ""
+
+#: core/analyzers/shuffle_analysis.py:106
+#, python-brace-format
+msgid "Consider using REPARTITION({partitions}, {attrs}) hint"
+msgstr ""
+
+#: core/analyzers/shuffle_analysis.py:156
+#, python-brace-format
+msgid "Average partition size for AQEShuffleRead is large ({size} > 128MB)"
+msgstr ""
+
+#: core/analyzers/shuffle_analysis.py:168
+#, python-brace-format
+msgid "Data skew detected ({count} partitions)"
+msgstr ""
+
+#: core/analyzers/warehouse_sizing.py:78
+#, python-brace-format
+msgid ""
+"Queue overload {seconds}s detected — consider separating BI and ETL "
+"workloads to dedicated warehouses"
+msgstr ""
+
+#: core/analyzers/warehouse_sizing.py:82
+msgid ""
+"Overload queue time indicates the warehouse may be saturated by mixed "
+"interactive and batch workloads. Isolating latency-sensitive BI from heavy "
+"ETL reduces head-of-line blocking."
+msgstr ""
+
+#: core/analyzers/warehouse_sizing.py:87
+msgid ""
+"Create separate warehouses: one for interactive BI (auto-stop 10min), one "
+"for ETL (auto-stop 5min)"
+msgstr ""
+
+#: core/analyzers/warehouse_sizing.py:91
+msgid ""
+"Cost impact depends on how you split traffic; expect fewer SLA misses and "
+"more predictable latency rather than automatic DBU reduction."
+msgstr ""
+
+#: core/analyzers/warehouse_sizing.py:113
+#, python-brace-format
+msgid ""
+"Provisioning wait {seconds}s with single-cluster — enable multi-cluster "
+"auto-scaling"
+msgstr ""
+
+#: core/analyzers/warehouse_sizing.py:117
+msgid ""
+"Provisioning queue time with max clusters pinned to 1 suggests new queries "
+"wait for capacity instead of scaling out. Raising max clusters allows the "
+"warehouse to add clusters under concurrent load."
+msgstr ""
+
+#: core/analyzers/warehouse_sizing.py:122
+msgid ""
+"Set max_num_clusters based on peak concurrent users (1 cluster per 10–15 "
+"users)"
+msgstr ""
+
+#: core/analyzers/warehouse_sizing.py:125
+msgid ""
+"Better concurrency; additional clusters increase DBU/h ceiling when load "
+"spikes."
+msgstr ""
+
+#: core/analyzers/warehouse_sizing.py:160
+#, python-brace-format
+msgid ""
+"Overload queue {seconds}s with multi-cluster (max={max}) — data skew or "
+"shuffle dominance detected; optimize query before sizing changes"
+msgstr ""
+
+#: core/analyzers/warehouse_sizing.py:164
+msgid ""
+"Overload queue indicates concurrent pressure, but this query shows data skew"
+" or high shuffle ratio. Sizing changes alone are unlikely to help; focus on "
+"SQL optimization (pre-aggregation, broadcast hints, skew handling) first."
+msgstr ""
+
+#: core/analyzers/warehouse_sizing.py:169
+msgid ""
+"1. Address data skew / shuffle in SQL. 2. Re-measure overload after "
+"optimization. 3. Then consider sizing changes if overload persists."
+msgstr ""
+
+#: core/analyzers/warehouse_sizing.py:174
+msgid ""
+"Query optimization typically has higher ROI than sizing changes when skew is"
+" present."
+msgstr ""
+
+#: core/analyzers/warehouse_sizing.py:185
+#, python-brace-format
+msgid ""
+"Overload queue {seconds}s with multi-cluster (max={max}) + heavy query "
+"({exec_s}s, {spill:.1f}GB spill) — consider sizing up"
+msgstr ""
+
+#: core/analyzers/warehouse_sizing.py:194
+msgid ""
+"Multi-cluster auto-scaling is enabled but overload queue persists. This "
+"query is individually heavy (long execution or significant spill), "
+"suggesting each cluster may lack sufficient resources. Consider increasing "
+"cluster size one step."
+msgstr ""
+
+#: core/analyzers/warehouse_sizing.py:200
+#, python-brace-format
+msgid ""
+"Increase warehouse cluster size one step (e.g. {from_size} → next size up). "
+"Then verify spill reduction and overload queue decrease."
+msgstr ""
+
+#: core/analyzers/warehouse_sizing.py:204
+msgid ""
+"Larger clusters reduce per-query memory pressure and spill; may also reduce "
+"overload by completing queries faster."
+msgstr ""
+
+#: core/analyzers/warehouse_sizing.py:216
+#, python-brace-format
+msgid ""
+"Overload queue {seconds}s with multi-cluster (max={max}) — query itself is "
+"light ({exec_s}s); consider increasing max_num_clusters"
+msgstr ""
+
+#: core/analyzers/warehouse_sizing.py:222
+msgid ""
+"Multi-cluster auto-scaling is enabled but overload persists. This query "
+"completes quickly with minimal resource pressure, suggesting the bottleneck "
+"is concurrent query volume rather than individual query weight. Increase "
+"max_num_clusters or separate workloads."
+msgstr ""
+
+#: core/analyzers/warehouse_sizing.py:228
+#, python-brace-format
+msgid ""
+"Increase max_num_clusters (current: {max}). Rule of thumb: 1 cluster per "
+"10-15 concurrent users. Also consider workload separation (BI vs ETL on "
+"different warehouses)."
+msgstr ""
+
+#: core/analyzers/warehouse_sizing.py:233
+msgid "More clusters reduce queue wait; DBU cost scales with cluster count."
+msgstr ""
+
+#: core/analyzers/warehouse_sizing.py:244
+#, python-brace-format
+msgid ""
+"Overload queue {seconds}s with multi-cluster (max={max}) — check "
+"system.query.history to determine if sizing up or scaling out is needed"
+msgstr ""
+
+#: core/analyzers/warehouse_sizing.py:248
+msgid ""
+"Overload queue detected but this single query profile is insufficient to "
+"determine whether the issue is individual query weight or concurrent volume."
+" Query system.query.history for the past 7 days to see p50/p90 duration and "
+"concurrent query count trends."
+msgstr ""
+
+#: core/analyzers/warehouse_sizing.py:254
+msgid ""
+"SELECT warehouse_id, DATE(start_time), COUNT(*) AS queries, "
+"PERCENTILE(total_duration_ms, 0.9)/1000 AS p90_sec FROM system.query.history"
+" WHERE start_time >= NOW() - INTERVAL 7 DAY GROUP BY 1, 2 ORDER BY 2"
+msgstr ""
+
+#: core/analyzers/warehouse_sizing.py:261
+msgid ""
+"Analyze trends first — sizing changes without data may waste resources."
+msgstr ""
+
+#: core/analyzers/warehouse_sizing.py:279
+#, python-brace-format
+msgid ""
+"Long provisioning wait ({seconds}s) on Pro/Classic — Serverless eliminates "
+"cold start"
+msgstr ""
+
+#: core/analyzers/warehouse_sizing.py:283
+msgid ""
+"Long provisioning waits often reflect warehouse startup or capacity "
+"scheduling. Serverless SQL warehouses reduce cold-start friction for many "
+"workloads; validate fit against your governance and networking constraints."
+msgstr ""
+
+#: core/analyzers/warehouse_sizing.py:288
+msgid ""
+"Evaluate migrating this workload to a Serverless SQL warehouse or scheduling"
+" queries on warm warehouses"
+msgstr ""
+
+#: core/analyzers/warehouse_sizing.py:292
+msgid ""
+"Fewer wasted minutes waiting in queue; pricing model differs — compare per-"
+"query Serverless DBU vs Pro/Classic uptime billing."
+msgstr ""
+
+#: core/analyzers/warehouse_sizing.py:312
+msgid ""
+"Classic warehouse detected — consider Pro or Serverless for Photon support"
+msgstr ""
+
+#: core/analyzers/warehouse_sizing.py:315
+msgid ""
+"Classic warehouses do not run Photon. If this query would benefit from "
+"Photon vectorization, Pro or Serverless warehouses are the typical upgrade "
+"paths."
+msgstr ""
+
+#: core/analyzers/warehouse_sizing.py:320
+msgid ""
+"Create a Pro or Serverless warehouse and replay the workload to compare "
+"Photon utilization and latency"
+msgstr ""
+
+#: core/analyzers/warehouse_sizing.py:324
+msgid ""
+"Potential higher DBU rate with Pro/Serverless offset by faster queries; "
+"measure wall-clock and DBU per business outcome."
+msgstr ""
+
+#: core/analyzers/warehouse_sizing.py:353
+#, python-brace-format
+msgid ""
+"Query completes in {seconds}s on {size} with no spill/queue — consider "
+"downsizing to {smaller_size}"
+msgstr ""
+
+#: core/analyzers/warehouse_sizing.py:357
+msgid ""
+"Short execution with no disk spill and no overload queue suggests the "
+"allocated warehouse capacity may exceed steady-state needs. Validate with "
+"repeated runs and peak concurrency before shrinking."
+msgstr ""
+
+#: core/analyzers/warehouse_sizing.py:362
+#, python-brace-format
+msgid ""
+"Reduce cluster size one step (e.g. {from_size} → {to_size}) and re-measure "
+"p95 latency and spill"
+msgstr ""
+
+#: core/analyzers/warehouse_sizing.py:366
+#, python-brace-format
+msgid ""
+"Reference DBU/h drops from {hi} to {lo} (~{pct}% lower DBU/h at full "
+"utilization of that size)"
+msgstr "참조 DBU/h가 {hi}에서 {lo}로 감소 (해당 크기 완전 활용 시 약 {pct}% DBU/h 절감)"
+
+#: core/analyzers/warehouse_sizing.py:381
+#, python-brace-format
+msgid ""
+"Heavy query ({seconds}s, {spill_gb:.1f} GB spill) on {size} — consider "
+"scaling up"
+msgstr ""
+
+#: core/analyzers/warehouse_sizing.py:386
+#, python-brace-format
+msgid "Large disk spill ({spill_gb:.1f} GB) on {size} — consider scaling up"
+msgstr ""
+
+#: core/analyzers/warehouse_sizing.py:389
+#, python-brace-format
+msgid "Long-running query ({seconds}s) on {size} — consider scaling up"
+msgstr ""
+
+#: core/analyzers/warehouse_sizing.py:398
+msgid ""
+"Large spill or long runtime on the smallest warehouse tiers often indicates "
+"memory pressure or insufficient parallelism for the working set."
+msgstr ""
+
+#: core/analyzers/warehouse_sizing.py:402
+msgid ""
+"Increase warehouse size one step or enable multi-cluster scaling; then re-"
+"check spill and total time"
+msgstr ""
+
+#: core/analyzers/warehouse_sizing.py:406
+msgid ""
+"Higher DBU/h while undersized can still reduce wall-clock and total DBU per "
+"successful query if spill drops sharply"
+msgstr ""
+
+#: core/analyzers/warehouse_sizing.py:435
+#, python-brace-format
+msgid "Recommended {size}"
+msgstr "권장 {size}"
+
+#: core/analyzers/warehouse_sizing.py:438
+#, python-brace-format
+msgid "(min viable {size})"
+msgstr "(최소 실용 {size})"
+
+#: core/analyzers/warehouse_sizing.py:441
+#, python-brace-format
+msgid "confidence: {c}"
+msgstr "신뢰도: {c}"
+
+#: core/analyzers/warehouse_sizing.py:464
+msgid "Warehouse Sizing"
+msgstr "웨어하우스 사이징"
+
+#: core/analyzers/warehouse_sizing.py:467
+#: core/analyzers/warehouse_sizing.py:492
+msgid ""
+"Current warehouse size matches the recommended band — no change needed."
+msgstr "현재 웨어하우스 크기가 권장 범위와 일치합니다 — 변경이 필요하지 않습니다."
+
+#: core/analyzers/warehouse_sizing.py:476
+msgid ""
+"Insufficient signal for a sizing recommendation (warehouse info unavailable "
+"and the workload does not show clear under/over-utilization patterns)."
+msgstr ""
+"사이징 권장에 필요한 정보가 부족합니다 (웨어하우스 정보 사용 불가이며 워크로드에서 명확한 과소/과다 사용 패턴이 보이지 않습니다)."
+
+#: core/analyzers/warehouse_sizing.py:488
+msgid "Warehouse Sizing Recommendations"
+msgstr "웨어하우스 사이징 권장"
+
+#: core/analyzers/warehouse_sizing.py:502
+msgid "Recommended size"
+msgstr "권장 크기"
+
+#: core/analyzers/warehouse_sizing.py:503
+msgid "confidence"
+msgstr "신뢰도"
+
+#: core/analyzers/warehouse_sizing.py:507 core/reporters/sections.py:207
+msgid "Minimum viable"
+msgstr "최소 실용"
+
+#: core/analyzers/warehouse_sizing.py:511 core/reporters/sections.py:213
+msgid "Oversized beyond"
+msgstr "과다 크기"
+
+#: core/analyzers/warehouse_sizing.py:514 core/reporters/sections.py:547
+msgid "Current"
+msgstr "현재"
+
+#: core/analyzers/warehouse_sizing.py:516 core/reporters/action_plan.py:59
+msgid "Rationale"
+msgstr "근거"
+
+#: core/analyzers/warehouse_sizing.py:524
+msgid ""
+"Insufficient signal for a sizing recommendation. Configure DATABRICKS_HOST /"
+" DATABRICKS_TOKEN so the warehouse API can be reached, or analyze a longer-"
+"running profile to surface parallelism / spill signals."
+msgstr ""
+"사이징 권장에 필요한 정보가 부족합니다. DATABRICKS_HOST / DATABRICKS_TOKEN을 설정하여 웨어하우스 API에 "
+"접근하거나, 더 긴 실행 시간의 프로필을 분석하여 병렬도/스필 신호를 확보해주세요."
+
+#: core/analyzers/warehouse_sizing.py:531
+msgid "Additional observations"
+msgstr "추가 관찰"
+
+#: core/analyzers/warehouse_sizing.py:536 core/reporters/sections.py:482
+msgid "Recommended action"
+msgstr "권장 작업"
+
+#: core/analyzers/warehouse_sizing.py:538
+msgid "Cost impact"
+msgstr "비용 영향"
+
+#: core/reporters/__init__.py:117
+msgid "Query Performance Report"
+msgstr ""
+
+#: core/reporters/__init__.py:139
+msgid "Executive Summary"
+msgstr "요약"
+
+#: core/reporters/__init__.py:183
+msgid "Key Alerts"
+msgstr "주요 알림"
+
+#: core/reporters/__init__.py:194
+msgid "Additional alerts in Appendix H"
+msgstr ""
+
+#: core/reporters/__init__.py:203 core/reporters/action_plan.py:42
+#: core/reporters/details.py:161 core/reporters/details.py:203
+msgid "Recommended Actions"
+msgstr ""
+
+#: core/reporters/__init__.py:235
+msgid "Additional LLM-generated recommendations"
+msgstr ""
+
+#: core/reporters/__init__.py:238
+msgid ""
+"These supplementary recommendations were generated by the LLM based on the "
+"full analysis context. They may overlap with the rule-based cards above when"
+" both layers identify the same alert."
+msgstr ""
+
+#: core/reporters/__init__.py:247 core/reporters/sections.py:1088
+#: core/reporters/summary.py:279
+msgid "Impact"
+msgstr "영향"
+
+#: core/reporters/__init__.py:249 core/reporters/summary.py:281
+msgid "Effort"
+msgstr "노력"
+
+#: core/reporters/__init__.py:253 core/reporters/summary.py:142
+#: core/reporters/summary.py:286 core/reporters/summary.py:297
+msgid "Fix"
+msgstr "수정"
+
+#: core/reporters/__init__.py:263 core/reporters/__init__.py:272
+#: core/reporters/query_metrics.py:54 core/reporters/query_metrics.py:165
+msgid "Performance Metrics"
+msgstr "성능 메트릭"
+
+#: core/reporters/__init__.py:293 core/reporters/__init__.py:294
+#: core/reporters/sections.py:104 core/reporters/sections.py:138
+msgid "Estimated Query Cost"
+msgstr "추정 쿼리 비용"
+
+#: core/reporters/__init__.py:294 core/reporters/sections.py:104
+#: core/reporters/sections.py:138
+msgid "Estimated Query Cost Share"
+msgstr "추정 쿼리 비용 분담"
+
+#: core/reporters/__init__.py:295 core/reporters/query_metrics.py:22
+#: core/reporters/sections.py:54 core/reporters/sections.py:140
+msgid "Item"
+msgstr "항목"
+
+#: core/reporters/__init__.py:295 core/reporters/query_metrics.py:22
+#: core/reporters/query_metrics.py:58 core/reporters/query_metrics.py:70
+#: core/reporters/query_metrics.py:112 core/reporters/query_metrics.py:134
+#: core/reporters/query_metrics.py:169 core/reporters/query_metrics.py:190
+#: core/reporters/query_metrics.py:206 core/reporters/sections.py:54
+#: core/reporters/sections.py:140 core/reporters/sections.py:579
+#: core/reporters/sections.py:677 core/reporters/sections.py:831
+#: core/reporters/sections.py:1167 core/reporters/sections.py:1183
+#: core/reporters/sections.py:1194
+msgid "Value"
+msgstr "값"
+
+#: core/reporters/__init__.py:297 core/reporters/sections.py:105
+#: core/reporters/sections.py:142
+msgid "Billing Model"
+msgstr "과금 모델"
+
+#: core/reporters/__init__.py:299 core/reporters/sections.py:60
+#: core/reporters/sections.py:111 core/reporters/sections.py:146
+msgid "Cluster Size"
+msgstr "클러스터 크기"
+
+#: core/reporters/__init__.py:301 core/reporters/sections.py:148
+msgid "DBU/hour"
+msgstr "DBU/시간"
+
+#: core/reporters/__init__.py:303 core/reporters/sections.py:106
+#: core/reporters/sections.py:149
+msgid "DBU Unit Price"
+msgstr "DBU 단가"
+
+#: core/reporters/__init__.py:305 core/reporters/sections.py:113
+#: core/reporters/sections.py:150
+msgid "Estimated DBU"
+msgstr "추정 DBU"
+
+#: core/reporters/__init__.py:308 core/reporters/sections.py:153
+msgid "Parallelism Ratio"
+msgstr "병렬도 비율"
+
+#: core/reporters/__init__.py:311 core/reporters/sections.py:172
+msgid "Reference Cost by Warehouse Size"
+msgstr "웨어하우스 크기별 참조 비용"
+
+#: core/reporters/__init__.py:312 core/reporters/sections.py:59
+#: core/reporters/sections.py:173 core/reporters/sections.py:199
+msgid "Size"
+msgstr "크기"
+
+#: core/reporters/__init__.py:312 core/reporters/sections.py:173
+msgid "Estimated Cost"
+msgstr "추정 비용"
+
+#: core/reporters/__init__.py:333
+msgid "Root Cause Analysis"
+msgstr ""
+
+#: core/reporters/__init__.py:340
+msgid "Hot Operators"
+msgstr ""
+
+#: core/reporters/__init__.py:356 core/reporters/sections.py:1016
+msgid "AQE Shuffle Health"
+msgstr ""
+
+#: core/reporters/__init__.py:363 core/reporters/__init__.py:367
+#: core/reporters/__init__.py:393 core/reporters/__init__.py:411
+msgid "Insight"
+msgstr ""
+
+#: core/reporters/__init__.py:363
+msgid ""
+"shuffle nodes exceed 128MB/partition threshold. REPARTITION hints or query "
+"rewrites recommended."
+msgstr ""
+
+#: core/reporters/__init__.py:367
+msgid "All"
+msgstr ""
+
+#: core/reporters/__init__.py:367
+msgid "shuffle nodes are within healthy memory limits."
+msgstr ""
+
+#: core/reporters/__init__.py:378
+msgid "Scan Locality"
+msgstr ""
+
+#: core/reporters/__init__.py:393
+msgid ""
+"scan nodes show File Layout pattern (>5% rescheduled). Consider Liquid "
+"Clustering or OPTIMIZE."
+msgstr ""
+
+#: core/reporters/__init__.py:400
+msgid "Data Flow"
+msgstr ""
+
+#: core/reporters/__init__.py:411
+msgid "— repeated scans detected. Consider consolidating into a common CTE."
+msgstr ""
+
+#: core/reporters/__init__.py:421 core/reporters/__init__.py:496
+#: core/reporters/__init__.py:500 core/reporters/dataflow.py:391
+msgid "Data Flow Details"
+msgstr ""
+
+#: core/reporters/__init__.py:432
+msgid "Optimized SQL"
+msgstr ""
+
+#: core/reporters/__init__.py:439 core/reporters/__init__.py:444
+#: core/reporters/__init__.py:449
+msgid "LLM Analysis Report"
+msgstr ""
+
+#: core/reporters/__init__.py:452
+msgid "LLM analysis was successfully parsed into sections"
+msgstr ""
+
+#: core/reporters/__init__.py:461
+msgid "Appendix"
+msgstr "부록"
+
+#: core/reporters/__init__.py:465 core/reporters/query_metrics.py:21
+msgid "Query Overview"
+msgstr "쿼리 개요"
+
+#: core/reporters/__init__.py:477
+msgid "SQL / Query Structure"
+msgstr ""
+
+#: core/reporters/__init__.py:483
+msgid "Stage Execution"
+msgstr "스테이지 실행"
+
+#: core/reporters/__init__.py:509
+msgid "Scan Locality Details"
+msgstr ""
+
+#: core/reporters/__init__.py:514 templates/result.html:45
+msgid "Bottleneck Indicators"
+msgstr "병목 지표"
+
+#: core/reporters/__init__.py:523
+msgid "Spill & Photon Analysis"
+msgstr ""
+
+#: core/reporters/__init__.py:530
+msgid "All Alerts"
+msgstr "전체 알림"
+
+#: core/reporters/__init__.py:545
+msgid "This report was generated using Databricks Foundation Model APIs."
+msgstr ""
+
+#: core/reporters/_helpers.py:22 core/reporters/details.py:202
+#: core/reporters/details.py:231 core/reporters/details.py:278
+msgid "Low"
+msgstr ""
+
+#: core/reporters/_helpers.py:24 core/reporters/details.py:201
+#: core/reporters/details.py:230 core/reporters/details.py:277
+msgid "Medium"
+msgstr ""
+
+#: core/reporters/_helpers.py:26 core/reporters/details.py:200
+#: core/reporters/details.py:225 core/reporters/details.py:228
+#: core/reporters/details.py:276
+msgid "High"
+msgstr ""
+
+#: core/reporters/_helpers.py:28
+msgid "Very High"
+msgstr ""
+
+#: core/reporters/_helpers.py:80 core/reporters/details.py:156
+#: core/reporters/sections.py:844
+msgid "Good"
+msgstr "양호"
+
+#: core/reporters/_helpers.py:81
+msgid "Info"
+msgstr "정보"
+
+#: core/reporters/_helpers.py:82 core/reporters/sections.py:842
+#: core/reporters/sections.py:1030
+msgid "Warning"
+msgstr "경고"
+
+#: core/reporters/_helpers.py:83
+msgid "Alert"
+msgstr ""
+
+#: core/reporters/_helpers.py:84 core/reporters/details.py:156
+#: core/reporters/details.py:250 core/reporters/sections.py:840
+#: templates/shared_result.html:81
+msgid "Critical"
+msgstr "심각"
+
+#: core/reporters/action_plan.py:18
+msgid "Quick Summary"
+msgstr ""
+
+#: core/reporters/action_plan.py:66
+msgid "Cause Hypothesis"
+msgstr "원인 가설"
+
+#: core/reporters/action_plan.py:70
+msgid "Improvement"
+msgstr ""
+
+#: core/reporters/action_plan.py:78
+msgid "Fix Risk"
+msgstr ""
+
+#: core/reporters/action_plan.py:85 core/reporters/action_plan.py:96
+msgid "Verification Metric"
+msgstr ""
+
+#: core/reporters/action_plan.py:91 core/reporters/action_plan.py:93
+msgid "Expected"
+msgstr ""
+
+#: core/reporters/action_plan.py:93
+msgid "Run"
+msgstr ""
+
+#: core/reporters/dataflow.py:268
+msgid "⚖️ AQE skew-join split"
+msgstr ""
+
+#: core/reporters/dataflow.py:269
+#, python-brace-format
+msgid "{n} skewed partition(s) were split at runtime"
+msgstr ""
+
+#: core/reporters/dataflow.py:280
+#, python-brace-format
+msgid ""
+"partitions {orig} → {intended} (×{ratio:.0f}) — AQE auto-repartitioned due "
+"to data volume"
+msgstr ""
+
+#: core/reporters/dataflow.py:283
+#, python-brace-format
+msgid "AQE self-triggered repartition (count={n})"
+msgstr ""
+
+#: core/reporters/dataflow.py:285
+msgid "🔀 AQE auto-repartition"
+msgstr ""
+
+#: core/reporters/dataflow.py:293
+#, python-brace-format
+msgid "cancelled {n} stage(s) and re-planned"
+msgstr ""
+
+#: core/reporters/dataflow.py:295
+#, python-brace-format
+msgid "re-optimized after {n} materialization(s)"
+msgstr ""
+
+#: core/reporters/dataflow.py:299
+msgid "🔁 AQE re-plan"
+msgstr ""
+
+#: core/reporters/dataflow.py:310
+#, python-brace-format
+msgid "partitions {old} → {new} — AOS coordinated repartition"
+msgstr ""
+
+#: core/reporters/dataflow.py:312
+#, python-brace-format
+msgid "AOS coordinated repartition (count={n})"
+msgstr ""
+
+#: core/reporters/dataflow.py:314
+msgid "🎯 AOS repartition"
+msgstr ""
+
+#: core/reporters/dataflow.py:319
+msgid "AQE / AOS Runtime Optimization Events"
+msgstr ""
+
+#: core/reporters/dataflow.py:322
+msgid ""
+"These events show where Adaptive Query Execution (AQE) or Auto-Optimized "
+"Shuffle (AOS) changed the physical plan at runtime. Presence of these events"
+" means the initial plan was sub-optimal and the engine self-corrected; the "
+"sustainable fix is usually to improve the source layout (Liquid Clustering) "
+"or pre-aggregate to avoid the runtime correction in the first place."
+msgstr ""
+
+#: core/reporters/dataflow.py:330 core/reporters/sections.py:937
+#: core/reporters/sections.py:1019
+msgid "Node"
+msgstr ""
+
+#: core/reporters/dataflow.py:330
+msgid "Event"
+msgstr ""
+
+#: core/reporters/dataflow.py:330 core/reporters/sections.py:452
+#: core/reporters/sections.py:1123
+msgid "Detail"
+msgstr "상세"
+
+#: core/reporters/dataflow.py:368
+msgid "Data Flow Summary"
+msgstr "데이터 흐름 요약"
+
+#: core/reporters/dataflow.py:375
+msgid "Data Flow Diagram"
+msgstr ""
+
+#: core/reporters/dataflow.py:384
+msgid "Data Flow Tree"
+msgstr ""
+
+#: core/reporters/dataflow.py:384
+msgid "text"
+msgstr ""
+
+#: core/reporters/dataflow.py:393
+msgid "Operation"
+msgstr ""
+
+#: core/reporters/dataflow.py:393
+msgid "Output Rows"
+msgstr ""
+
+#: core/reporters/dataflow.py:393 core/reporters/query_metrics.py:238
+#: templates/compare.html:80 templates/compare.html:148
+#: templates/compare.html:153 templates/compare.html:234
+#: templates/compare.html:297 templates/compare.html:302
+#: templates/history.html:81 templates/history.html:153
+#: templates/spark_perf.html:210 templates/spark_perf_report.html:32
+msgid "Duration"
+msgstr "지속 시간"
+
+#: core/reporters/dataflow.py:394 core/reporters/sections.py:894
+msgid "Peak Memory"
+msgstr ""
+
+#: core/reporters/dataflow.py:394
+msgid "Join Keys"
+msgstr ""
+
+#: core/reporters/details.py:27
+msgid "Hot Operators (Top Time-Consuming)"
+msgstr ""
+
+#: core/reporters/details.py:38
+msgid "scan"
+msgstr ""
+
+#: core/reporters/details.py:39
+msgid "join"
+msgstr ""
+
+#: core/reporters/details.py:40
+msgid "shuffle"
+msgstr ""
+
+#: core/reporters/details.py:41
+msgid "sort"
+msgstr ""
+
+#: core/reporters/details.py:42
+msgid "agg"
+msgstr ""
+
+#: core/reporters/details.py:43 core/reporters/details.py:116
+msgid "spill"
+msgstr ""
+
+#: core/reporters/details.py:46
+msgid "Main Bottleneck Type"
+msgstr ""
+
+#: core/reporters/details.py:51 core/reporters/query_metrics.py:239
+#: core/reporters/sections.py:561 core/reporters/sections.py:579
+#: core/reporters/sections.py:1163
+msgid "Note"
+msgstr "참고"
+
+#: core/reporters/details.py:51
+msgid ""
+"The Task Time column shows durationMs from operator metrics, which "
+"represents cumulative task time across all parallel executors, not wall-"
+"clock time. This is why individual operator times can exceed the total query"
+" time. The Share is calculated against taskTotalTimeMs per tuning guide "
+"section 9.2."
+msgstr ""
+
+#: core/reporters/details.py:56 core/reporters/sections.py:894
+msgid "Rank"
+msgstr ""
+
+#: core/reporters/details.py:56 core/reporters/sections.py:894
+msgid "Operator"
+msgstr "오퍼레이터"
+
+#: core/reporters/details.py:56
+msgid "Task Time"
+msgstr ""
+
+#: core/reporters/details.py:56 core/reporters/sections.py:894
+msgid "Share"
+msgstr "비중"
+
+#: core/reporters/details.py:56
+msgid "Rows (in/out)"
+msgstr ""
+
+#: core/reporters/details.py:56 core/reporters/details.py:245
+#: core/reporters/sections.py:894 templates/shared_result.html:73
+#: templates/spark_perf_report.html:44
+msgid "Spill"
+msgstr "스필"
+
+#: core/reporters/details.py:56 templates/shared_result.html:69
+msgid "Photon"
+msgstr "Photon"
+
+#: core/reporters/details.py:56 core/reporters/sections.py:58
+msgid "Type"
+msgstr ""
+
+#: core/reporters/details.py:102
+msgid "Full Operator Names"
+msgstr ""
+
+#: core/reporters/details.py:110
+msgid "Warning: The following operators are critical bottlenecks"
+msgstr ""
+
+#: core/reporters/details.py:114
+msgid "time share"
+msgstr ""
+
+#: core/reporters/details.py:145
+msgid "Tuning Guide"
+msgstr ""
+
+#: core/reporters/details.py:146
+msgid "The following recommendations are based on detected bottlenecks."
+msgstr ""
+
+#: core/reporters/details.py:150
+msgid "I/O Optimization"
+msgstr ""
+
+#: core/reporters/details.py:152 core/reporters/details.py:195
+#: core/reporters/details.py:215 core/reporters/details.py:245
+#: core/reporters/details.py:271 core/reporters/details.py:313
+msgid "Current Status"
+msgstr ""
+
+#: core/reporters/details.py:152
+msgid "Filter efficiency"
+msgstr ""
+
+#: core/reporters/details.py:152
+msgid "Bytes pruning"
+msgstr ""
+
+#: core/reporters/details.py:154 core/reporters/details.py:197
+#: core/reporters/details.py:273
+msgid "Evaluation Criteria"
+msgstr ""
+
+#: core/reporters/details.py:156 core/reporters/query_metrics.py:58
+#: core/reporters/query_metrics.py:70 core/reporters/query_metrics.py:112
+#: core/reporters/query_metrics.py:134 core/reporters/query_metrics.py:169
+#: core/reporters/query_metrics.py:190 core/reporters/query_metrics.py:206
+#: core/reporters/sections.py:677 core/reporters/sections.py:831
+#: core/reporters/sections.py:1183 core/reporters/sections.py:1194
+#: templates/compare.html:110 templates/compare.html:258
+msgid "Metric"
+msgstr ""
+
+#: core/reporters/details.py:156
+msgid "Needs Improvement"
+msgstr ""
+
+#: core/reporters/details.py:159 core/reporters/sections.py:621
+msgid "Filter Efficiency"
+msgstr "필터 효율"
+
+#: core/reporters/details.py:160 core/reporters/sections.py:629
+msgid "Bytes Pruning"
+msgstr "바이트 프루닝"
+
+#: core/reporters/details.py:163
+msgid "Partitioning"
+msgstr ""
+
+#: core/reporters/details.py:163
+msgid "Partition by frequently filtered columns (date columns recommended)"
+msgstr ""
+
+#: core/reporters/details.py:165
+msgid "Target partition count"
+msgstr ""
+
+#: core/reporters/details.py:166
+msgid "Run OPTIMIZE per partition to avoid small files"
+msgstr ""
+
+#: core/reporters/details.py:168
+msgid "Apply Z-Order for columns not suitable for partitioning"
+msgstr ""
+
+#: core/reporters/details.py:170 core/reporters/sections.py:202
+msgid "Recommended"
+msgstr ""
+
+#: core/reporters/details.py:170
+msgid "columns or less"
+msgstr ""
+
+#: core/reporters/details.py:171
+msgid "Place Z-Order target columns in first 32 columns"
+msgstr ""
+
+#: core/reporters/details.py:173
+msgid "Consider as alternative to partitioning + Z-Order"
+msgstr ""
+
+#: core/reporters/details.py:175
+msgid "Effective for reducing Shuffle operations"
+msgstr ""
+
+#: core/reporters/details.py:176
+msgid "Especially useful when memory usage exceeds 100GB"
+msgstr ""
+
+#: core/reporters/details.py:177
+msgid "Example SQL"
+msgstr ""
+
+#: core/reporters/details.py:193
+msgid "Cache Efficiency"
+msgstr ""
+
+#: core/reporters/details.py:195
+msgid "Cache hit ratio"
+msgstr ""
+
+#: core/reporters/details.py:195
+msgid "Remote read ratio"
+msgstr ""
+
+#: core/reporters/details.py:198 core/reporters/sections.py:588
+#: templates/result.html:52
+msgid "Cache Hit Ratio"
+msgstr "캐시 히트율"
+
+#: core/reporters/details.py:198 core/reporters/details.py:274
+msgid "Evaluation"
+msgstr ""
+
+#: core/reporters/details.py:198 core/reporters/details.py:247
+#: core/reporters/sections.py:555 core/reporters/sections.py:1088
+msgid "Action"
+msgstr "작업"
+
+#: core/reporters/details.py:200 core/reporters/details.py:276
+msgid "Good state"
+msgstr ""
+
+#: core/reporters/details.py:201
+msgid "Consider scale up"
+msgstr ""
+
+#: core/reporters/details.py:202
+msgid "Review cache strategy"
+msgstr ""
+
+#: core/reporters/details.py:204
+msgid "Re-run the same query to verify cache effect"
+msgstr ""
+
+#: core/reporters/details.py:205
+msgid "If cache hit remains low, consider scaling up the cluster"
+msgstr ""
+
+#: core/reporters/details.py:207
+msgid ""
+"Prioritize I/O optimization (partitioning/Liquid) to reduce data read first"
+msgstr ""
+
+#: core/reporters/details.py:213
+msgid "Shuffle Optimization"
+msgstr ""
+
+#: core/reporters/details.py:215
+msgid "Shuffle impact ratio"
+msgstr ""
+
+#: core/reporters/details.py:219
+msgid "Inefficient Shuffle Operations"
+msgstr ""
+
+#: core/reporters/details.py:219
+msgid "detected"
+msgstr ""
+
+#: core/reporters/details.py:221
+msgid "Memory Efficiency Criteria"
+msgstr ""
+
+#: core/reporters/details.py:222
+msgid "Memory/Partition"
+msgstr ""
+
+#: core/reporters/details.py:222
+msgid "Priority"
+msgstr ""
+
+#: core/reporters/details.py:222
+msgid "Recommended Action"
+msgstr ""
+
+#: core/reporters/details.py:225
+msgid "Scale up cluster or significantly increase partition count"
+msgstr ""
+
+#: core/reporters/details.py:228
+msgid "Increase partition count, adjust AQE settings"
+msgstr ""
+
+#: core/reporters/details.py:230
+msgid "Recommend partition count adjustment"
+msgstr ""
+
+#: core/reporters/details.py:231
+msgid "Efficient state"
+msgstr ""
+
+#: core/reporters/details.py:232
+msgid "REPARTITION Hints"
+msgstr ""
+
+#: core/reporters/details.py:244
+msgid "Disk Spill Countermeasures"
+msgstr ""
+
+#: core/reporters/details.py:246
+msgid "Severity Criteria"
+msgstr ""
+
+#: core/reporters/details.py:247
+msgid "Spill Amount"
+msgstr ""
+
+#: core/reporters/details.py:247 templates/schema_analysis.html:174
+msgid "Severity"
+msgstr "심각도"
+
+#: core/reporters/details.py:250
+msgid "Memory configuration and partition strategy review required"
+msgstr ""
+
+#: core/reporters/details.py:252
+msgid "Important"
+msgstr ""
+
+#: core/reporters/details.py:252
+msgid "Optimization strongly recommended"
+msgstr ""
+
+#: core/reporters/details.py:253
+msgid "Caution"
+msgstr ""
+
+#: core/reporters/details.py:253
+msgid "Monitor and consider improvement"
+msgstr ""
+
+#: core/reporters/details.py:254
+msgid "Ideal"
+msgstr ""
+
+#: core/reporters/details.py:254
+msgid "Optimal state"
+msgstr ""
+
+#: core/reporters/details.py:255
+msgid "Countermeasures by Priority"
+msgstr ""
+
+#: core/reporters/details.py:256
+msgid "Emergency (High Priority)"
+msgstr ""
+
+#: core/reporters/details.py:257
+msgid "Scale up cluster (increase worker nodes)"
+msgstr ""
+
+#: core/reporters/details.py:258
+msgid "Change to high-memory instance type"
+msgstr ""
+
+#: core/reporters/details.py:259
+msgid "Short-term"
+msgstr ""
+
+#: core/reporters/details.py:262
+msgid "Medium-term"
+msgstr ""
+
+#: core/reporters/details.py:263
+msgid "Explicit partition specification (.repartition())"
+msgstr ""
+
+#: core/reporters/details.py:264
+msgid "JOIN strategy optimization (use Broadcast JOIN)"
+msgstr ""
+
+#: core/reporters/details.py:265
+msgid "Implement Liquid Clustering"
+msgstr ""
+
+#: core/reporters/details.py:269
+msgid "Photon Utilization Improvement"
+msgstr ""
+
+#: core/reporters/details.py:271
+msgid "Photon utilization"
+msgstr "Photon 사용률"
+
+#: core/reporters/details.py:274
+msgid "Utilization"
+msgstr ""
+
+#: core/reporters/details.py:274
+msgid "Description"
+msgstr ""
+
+#: core/reporters/details.py:277
+msgid "Room for improvement"
+msgstr ""
+
+#: core/reporters/details.py:278
+msgid "Optimization required"
+msgstr ""
+
+#: core/reporters/details.py:279 core/reporters/sections.py:448
+msgid "Photon Support Status"
+msgstr ""
+
+#: core/reporters/details.py:280 core/reporters/sections.py:270
+msgid "Join Type"
+msgstr ""
+
+#: core/reporters/details.py:280
+msgid "Photon Support"
+msgstr ""
+
+#: core/reporters/details.py:282 core/reporters/details.py:283
+#: core/reporters/details.py:285
+msgid "Supported"
+msgstr ""
+
+#: core/reporters/details.py:284
+msgid "Not Supported"
+msgstr ""
+
+#: core/reporters/details.py:287
+msgid "Detected Photon Blockers"
+msgstr ""
+
+#: core/reporters/details.py:294
+msgid "Cluster Size Adjustment"
+msgstr ""
+
+#: core/reporters/details.py:296
+msgid "Scale Out"
+msgstr ""
+
+#: core/reporters/details.py:296
+msgid "When concurrent query count is high and queue waiting occurs"
+msgstr ""
+
+#: core/reporters/details.py:298
+msgid "DBSQL max concurrent queries per cluster"
+msgstr ""
+
+#: core/reporters/details.py:298
+msgid "fixed value"
+msgstr ""
+
+#: core/reporters/details.py:299
+msgid "Determine max cluster count based on queued query count"
+msgstr ""
+
+#: core/reporters/details.py:301
+msgid "Scale Up"
+msgstr ""
+
+#: core/reporters/details.py:301
+msgid "When performance degradation is caused by high-load queries"
+msgstr ""
+
+#: core/reporters/details.py:303
+msgid "CPU/Memory/Disk spill resource issues"
+msgstr ""
+
+#: core/reporters/details.py:304
+msgid "Low Delta cache hit ratio"
+msgstr ""
+
+#: core/reporters/details.py:306
+msgid ""
+"Scale up reduces cluster count, enabling effective Delta cache utilization"
+msgstr ""
+
+#: core/reporters/details.py:311
+msgid "Cloud Storage Bottleneck"
+msgstr ""
+
+#: core/reporters/details.py:313
+msgid "Retry ratio"
+msgstr ""
+
+#: core/reporters/details.py:315
+msgid "Judgment Criteria"
+msgstr ""
+
+#: core/reporters/details.py:316
+msgid "High retry count indicates cloud storage access is a bottleneck"
+msgstr ""
+
+#: core/reporters/details.py:317
+msgid "Ideal state is retry count = 0"
+msgstr ""
+
+#: core/reporters/details.py:318
+msgid "Metrics to Check"
+msgstr ""
+
+#: core/reporters/details.py:327
+msgid ""
+"No significant bottlenecks detected. Query performance appears optimal."
+msgstr ""
+
+#: core/reporters/details.py:354
+msgid "Recommended Spark Parameters"
+msgstr ""
+
+#: core/reporters/details.py:369
+msgid "Serverless SQL Warehouse"
+msgstr "Serverless SQL Warehouse"
+
+#: core/reporters/details.py:370
+msgid ""
+"Only a limited set of Spark configs can be SET. Use query rewrites for other"
+" optimizations."
+msgstr ""
+
+#: core/reporters/details.py:375
+msgid "Shuffle Optimization (Query Rewrite)"
+msgstr ""
+
+#: core/reporters/details.py:377
+msgid ""
+"shuffle.partitions cannot be SET on Serverless. Use query rewrites instead."
+msgstr ""
+
+#: core/reporters/details.py:390
+msgid "Join Optimization (Query Rewrite)"
+msgstr ""
+
+#: core/reporters/details.py:391
+msgid "Use query hints instead of Spark config changes"
+msgstr ""
+
+#: core/reporters/details.py:393
+msgid "Use BROADCAST hint for small tables"
+msgstr ""
+
+#: core/reporters/details.py:397
+msgid "Use SHUFFLE_HASH to avoid Sort-Merge Join"
+msgstr ""
+
+#: core/reporters/details.py:404
+msgid "Shuffle/Skew Optimization (Query Rewrite)"
+msgstr ""
+
+#: core/reporters/details.py:405
+msgid "Use CTEs and query patterns instead of AQE config changes"
+msgstr ""
+
+#: core/reporters/details.py:407
+msgid "Pre-filter in CTE to reduce shuffle data volume"
+msgstr "CTE에서 사전 필터링하여 shuffle 데이터 볼륨 감소"
+
+#: core/reporters/details.py:414
+msgid "Pre-aggregate in CTE before JOIN"
+msgstr "JOIN 전에 CTE에서 사전 집계하세요"
+
+#: core/reporters/details.py:422
+msgid "CTE pre-aggregation for data skew"
+msgstr ""
+
+#: core/reporters/details.py:435
+msgid "Join Optimization"
+msgstr ""
+
+#: core/reporters/details.py:437
+msgid "Recommended based on detected join/shuffle issues"
+msgstr ""
+
+#: core/reporters/details.py:445
+msgid "AQE (Adaptive Query Execution) Settings"
+msgstr ""
+
+#: core/reporters/details.py:448
+msgid ""
+"Extended AQE settings recommended based on detected shuffle/spill issues"
+msgstr ""
+
+#: core/reporters/details.py:482
+msgid "Shuffle Partition Settings"
+msgstr ""
+
+#: core/reporters/details.py:484
+msgid ""
+"Significant shuffle impact detected. Consider partition count adjustment."
+msgstr ""
+
+#: core/reporters/details.py:519
+msgid "Validation Checklist"
+msgstr ""
+
+#: core/reporters/details.py:520
+msgid "Please verify the following metrics after optimization"
+msgstr ""
+
+#: core/reporters/details.py:535
+msgid "on re-run"
+msgstr ""
+
+#: core/reporters/query_metrics.py:24 templates/compare.html:76
+#: templates/compare.html:145 templates/compare.html:150
+#: templates/history.html:77 templates/result.html:19
+#: templates/schema_analysis.html:202
+msgid "Query ID"
+msgstr "쿼리 ID"
+
+#: core/reporters/query_metrics.py:25 core/reporters/query_metrics.py:238
+#: core/reporters/sections.py:579 core/reporters/sections.py:831
+#: core/reporters/sections.py:1019 core/reporters/summary.py:54
+#: core/reporters/summary.py:177 templates/compare.html:115
+#: templates/compare.html:263 templates/result.html:24
+#: templates/schema_analysis.html:177 templates/spark_perf.html:217
+msgid "Status"
+msgstr "상태"
+
+#: core/reporters/query_metrics.py:26 core/reporters/query_metrics.py:60
+#: core/reporters/summary.py:55
+msgid "Total Execution Time"
+msgstr "총 실행 시간"
+
+#: core/reporters/query_metrics.py:27 core/reporters/query_metrics.py:61
+msgid "Compilation Time"
+msgstr "컴파일 시간"
+
+#: core/reporters/query_metrics.py:28 core/reporters/query_metrics.py:62
+#: templates/result.html:31
+msgid "Execution Time"
+msgstr "실행 시간"
+
+#: core/reporters/query_metrics.py:29
+msgid "Rows Read"
+msgstr ""
+
+#: core/reporters/query_metrics.py:30
+msgid "Rows Produced"
+msgstr ""
+
+#: core/reporters/query_metrics.py:57
+msgid "Time Metrics"
+msgstr "시간 메트릭"
+
+#: core/reporters/query_metrics.py:63 core/reporters/query_metrics.py:212
+msgid "Task Total Time"
+msgstr ""
+
+#: core/reporters/query_metrics.py:64 core/reporters/query_metrics.py:214
+msgid "Photon Total Time"
+msgstr "Photon 총 시간"
+
+#: core/reporters/query_metrics.py:65 core/reporters/sections.py:608
+#: templates/result.html:66
+msgid "Photon Utilization"
+msgstr "Photon 사용률"
+
+#: core/reporters/query_metrics.py:69 core/reporters/sections.py:675
+msgid "I/O Metrics"
+msgstr "I/O 메트릭"
+
+#: core/reporters/query_metrics.py:70 core/reporters/query_metrics.py:112
+#: core/reporters/query_metrics.py:134 core/reporters/sections.py:677
+#: templates/result.html:235
+msgid "Details"
+msgstr ""
+
+#: core/reporters/query_metrics.py:72 core/reporters/sections.py:681
+#: core/reporters/summary.py:57
+msgid "Total Read"
+msgstr "총 읽기"
+
+#: core/reporters/query_metrics.py:75 core/reporters/sections.py:685
+msgid "From Cache"
+msgstr ""
+
+#: core/reporters/query_metrics.py:79 core/reporters/sections.py:690
+msgid "From Remote"
+msgstr ""
+
+#: core/reporters/query_metrics.py:84 core/reporters/sections.py:696
+msgid "Files Read"
+msgstr "파일 읽기 수"
+
+#: core/reporters/query_metrics.py:85 core/reporters/sections.py:698
+msgid "Files Pruned"
+msgstr "파일 프루닝 수"
+
+#: core/reporters/query_metrics.py:89 core/reporters/sections.py:615
+#: templates/result.html:94
+msgid "Disk Spill"
+msgstr "디스크 스필"
+
+#: core/reporters/query_metrics.py:103 core/reporters/query_metrics.py:106
+msgid "Cloud Storage Retry"
+msgstr ""
+
+#: core/reporters/query_metrics.py:106
+msgid "No overhead detected"
+msgstr ""
+
+#: core/reporters/query_metrics.py:111
+msgid "Shuffle I/O"
+msgstr ""
+
+#: core/reporters/query_metrics.py:114
+msgid "Shuffle Write"
+msgstr ""
+
+#: core/reporters/query_metrics.py:121
+msgid "Shuffle Remote Read"
+msgstr ""
+
+#: core/reporters/query_metrics.py:124
+msgid "Shuffle Local Read"
+msgstr ""
+
+#: core/reporters/query_metrics.py:128
+msgid "Shuffle/Read Ratio"
+msgstr ""
+
+#: core/reporters/query_metrics.py:133
+msgid "Write I/O"
+msgstr ""
+
+#: core/reporters/query_metrics.py:136
+msgid "Bytes Written"
+msgstr ""
+
+#: core/reporters/query_metrics.py:138
+msgid "Files Written"
+msgstr ""
+
+#: core/reporters/query_metrics.py:140
+msgid "Avg File Size"
+msgstr ""
+
+#: core/reporters/query_metrics.py:142
+msgid "Rows Written"
+msgstr ""
+
+#: core/reporters/query_metrics.py:145
+msgid "Write/Read Ratio"
+msgstr ""
+
+#: core/reporters/query_metrics.py:168
+msgid "Micro-Batch Duration"
+msgstr ""
+
+#: core/reporters/query_metrics.py:171 core/reporters/summary.py:179
+msgid "Finished Batches"
+msgstr ""
+
+#: core/reporters/query_metrics.py:173 core/reporters/sections.py:1177
+msgid "Running"
+msgstr ""
+
+#: core/reporters/query_metrics.py:181 core/reporters/summary.py:195
+msgid "Duration CV"
+msgstr ""
+
+#: core/reporters/query_metrics.py:184
+msgid "Slow Batches"
+msgstr ""
+
+#: core/reporters/query_metrics.py:189
+msgid "Micro-Batch I/O Distribution"
+msgstr ""
+
+#: core/reporters/query_metrics.py:193 core/reporters/sections.py:1196
+msgid "Read Bytes (min)"
+msgstr ""
+
+#: core/reporters/query_metrics.py:196
+msgid "Read Bytes (avg)"
+msgstr ""
+
+#: core/reporters/query_metrics.py:199 core/reporters/sections.py:1197
+msgid "Read Bytes (max)"
+msgstr ""
+
+#: core/reporters/query_metrics.py:201 core/reporters/sections.py:1198
+msgid "Rows Read (avg)"
+msgstr ""
+
+#: core/reporters/query_metrics.py:205
+msgid "Cumulative Snapshot"
+msgstr ""
+
+#: core/reporters/query_metrics.py:205
+msgid "query uptime total — not per-batch"
+msgstr ""
+
+#: core/reporters/query_metrics.py:208
+msgid "Query Uptime"
+msgstr ""
+
+#: core/reporters/query_metrics.py:210
+msgid "Total Read (all batches)"
+msgstr ""
+
+#: core/reporters/query_metrics.py:236
+msgid "Stage Execution Analysis"
+msgstr ""
+
+#: core/reporters/query_metrics.py:238
+msgid "Stage"
+msgstr "스테이지"
+
+#: core/reporters/query_metrics.py:238
+msgid "Tasks"
+msgstr "작업"
+
+#: core/reporters/query_metrics.py:239 templates/rewrite.html:147
+msgid "Completed"
+msgstr "완료"
+
+#: core/reporters/query_metrics.py:239 templates/rewrite.html:146
+#: templates/spark_perf.html:310
+msgid "Failed"
+msgstr "실패"
+
+#: core/reporters/sections.py:43
+msgid "Compute Information"
+msgstr "컴퓨트 정보"
+
+#: core/reporters/sections.py:56
+msgid "Warehouse Name"
+msgstr ""
+
+#: core/reporters/sections.py:57
+msgid "Warehouse ID"
+msgstr ""
+
+#: core/reporters/sections.py:61
+msgid "Clusters"
+msgstr ""
+
+#: core/reporters/sections.py:62
+msgid "DBSQL Version"
+msgstr ""
+
+#: core/reporters/sections.py:62 core/reporters/sections.py:63
+msgid "N/A"
+msgstr ""
+
+#: core/reporters/sections.py:63
+msgid "Channel"
+msgstr ""
+
+#: core/reporters/sections.py:64
+msgid "Estimated DBU/hour"
+msgstr ""
+
+#: core/reporters/sections.py:74
+msgid "Warehouse information could not be retrieved"
+msgstr ""
+
+#: core/reporters/sections.py:76
+msgid "Endpoint ID"
+msgstr "엔드포인트 ID"
+
+#: core/reporters/sections.py:78
+msgid ""
+"To retrieve warehouse information, set DATABRICKS_HOST and DATABRICKS_TOKEN "
+"environment variables."
+msgstr ""
+
+#: core/reporters/sections.py:88
+msgid "Warehouse information not available"
+msgstr ""
+
+#: core/reporters/sections.py:90
+msgid "This profile does not contain endpoint information."
+msgstr ""
+
+#: core/reporters/sections.py:109
+msgid "assumed"
+msgstr ""
+
+#: core/reporters/sections.py:117 core/reporters/sections.py:158
+msgid ""
+"Note: Classic/Pro warehouses are billed per uptime, not per query. This is "
+"an estimated share."
+msgstr ""
+
+#: core/reporters/sections.py:121
+msgid ""
+"Note: Cluster size is assumed. Connect warehouse API for accurate "
+"estimation."
+msgstr ""
+
+#: core/reporters/sections.py:198
+msgid "Recommended Warehouse Size for This Workload"
+msgstr ""
+
+#: core/reporters/sections.py:199
+msgid "Band"
+msgstr ""
+
+#: core/reporters/sections.py:219
+msgid "Confidence"
+msgstr "신뢰도"
+
+#: core/reporters/sections.py:226
+msgid ""
+"Note: actual billing for Classic/Pro warehouses is uptime-based; the value "
+"shown here is what this workload alone would consume at the recommended "
+"size."
+msgstr ""
+
+#: core/reporters/sections.py:250
+msgid "Click to expand SQL"
+msgstr "SQL을 펼치려면 클릭"
+
+#: core/reporters/sections.py:261
+msgid "Query Structure"
+msgstr ""
+
+#: core/reporters/sections.py:262 core/reporters/sections.py:1174
+msgid "Statement Type"
+msgstr ""
+
+#: core/reporters/sections.py:265
+msgid "Join Count"
+msgstr ""
+
+#: core/reporters/sections.py:267
+msgid "Join Types"
+msgstr ""
+
+#: core/reporters/sections.py:269
+msgid "Join Details"
+msgstr ""
+
+#: core/reporters/sections.py:270
+msgid "Left Table"
+msgstr ""
+
+#: core/reporters/sections.py:270
+msgid "Right Table"
+msgstr ""
+
+#: core/reporters/sections.py:279
+msgid "CTE Count"
+msgstr ""
+
+#: core/reporters/sections.py:281
+msgid "CTE Names"
+msgstr ""
+
+#: core/reporters/sections.py:284
+msgid "Subquery Count"
+msgstr ""
+
+#: core/reporters/sections.py:288
+msgid "Aggregate Functions"
+msgstr ""
+
+#: core/reporters/sections.py:292
+msgid "Window Functions"
+msgstr ""
+
+#: core/reporters/sections.py:308
+msgid "Clauses Used"
+msgstr ""
+
+#: core/reporters/sections.py:312
+msgid "Complexity"
+msgstr ""
+
+#: core/reporters/sections.py:312
+msgid "Score"
+msgstr ""
+
+#: core/reporters/sections.py:331
+msgid "Execution Plan Analysis (EXPLAIN)"
+msgstr ""
+
+#: core/reporters/sections.py:336
+msgid "Physical Plan Summary"
+msgstr ""
+
+#: core/reporters/sections.py:343
+msgid "Operator Type"
+msgstr ""
+
+#: core/reporters/sections.py:343 core/reporters/sections.py:1088
+msgid "Count"
+msgstr ""
+
+#: core/reporters/sections.py:353
+msgid "Table Scans"
+msgstr ""
+
+#: core/reporters/sections.py:354 core/reporters/sections.py:756
+#: core/reporters/sections.py:762
+msgid "Table"
+msgstr ""
+
+#: core/reporters/sections.py:354
+msgid "Format"
+msgstr ""
+
+#: core/reporters/sections.py:365
+msgid "(None)"
+msgstr ""
+
+#: core/reporters/sections.py:374
+msgid "Join Operators"
+msgstr ""
+
+#: core/reporters/sections.py:394
+msgid "Shuffle/Exchange"
+msgstr ""
+
+#: core/reporters/sections.py:395
+msgid "Exchange operations"
+msgstr ""
+
+#: core/reporters/sections.py:402
+msgid "Hash Partitioning detected"
+msgstr ""
+
+#: core/reporters/sections.py:405
+msgid "Range Partitioning detected"
+msgstr ""
+
+#: core/reporters/sections.py:408
+msgid "SinglePartition detected (for broadcast)"
+msgstr ""
+
+#: core/reporters/sections.py:415
+msgid "Aggregation Operators"
+msgstr ""
+
+#: core/reporters/sections.py:416
+msgid "Aggregation stages"
+msgstr ""
+
+#: core/reporters/sections.py:421
+msgid "Using multi-stage aggregation (Partial -> Final)"
+msgstr ""
+
+#: core/reporters/sections.py:427
+msgid "Optimized Logical Plan Summary"
+msgstr ""
+
+#: core/reporters/sections.py:432
+msgid "Referenced tables"
+msgstr ""
+
+#: core/reporters/sections.py:437
+msgid "Joins"
+msgstr ""
+
+#: core/reporters/sections.py:442
+msgid "Filters"
+msgstr ""
+
+#: core/reporters/sections.py:442
+msgid "pushdown applied"
+msgstr ""
+
+#: core/reporters/sections.py:449
+msgid "Query is not fully supported by Photon"
+msgstr ""
+
+#: core/reporters/sections.py:452
+msgid "Expression"
+msgstr ""
+
+#: core/reporters/sections.py:452 templates/schema_analysis.html:189
+msgid "Category"
+msgstr "카테고리"
+
+#: core/reporters/sections.py:462
+msgid "Reference node"
+msgstr ""
+
+#: core/reporters/sections.py:472
+msgid "Optimizer Statistics"
+msgstr ""
+
+#: core/reporters/sections.py:474
+msgid "Missing statistics"
+msgstr ""
+
+#: core/reporters/sections.py:476
+msgid "Partial statistics"
+msgstr ""
+
+#: core/reporters/sections.py:478
+msgid "Full statistics"
+msgstr ""
+
+#: core/reporters/sections.py:482
+msgid "Run ANALYZE TABLE for tables with missing or partial statistics"
+msgstr ""
+
+#: core/reporters/sections.py:509
+msgid "Performance Alerts"
+msgstr ""
+
+#: core/reporters/sections.py:527
+msgid "Summary"
+msgstr "요약"
+
+#: core/reporters/sections.py:549 core/reporters/sections.py:579
+msgid "Target"
+msgstr "목표"
+
+#: core/reporters/sections.py:561
+msgid "This recommendation may conflict with"
+msgstr ""
+
+#: core/reporters/sections.py:579
+msgid "Indicator"
+msgstr "지표"
+
+#: core/reporters/sections.py:586
+msgid "Likely cold run - validate on re-execution"
+msgstr ""
+
+#: core/reporters/sections.py:595
+msgid "Expected for first execution"
+msgstr ""
+
+#: core/reporters/sections.py:600
+msgid "Remote Read Ratio"
+msgstr ""
+
+#: core/reporters/sections.py:636
+msgid "Shuffle Impact Ratio"
+msgstr ""
+
+#: core/reporters/sections.py:646
+msgid "Rescheduled Scan Ratio"
+msgstr "재스케줄 스캔 비율"
+
+#: core/reporters/sections.py:698 core/reporters/sections.py:705
+msgid "efficiency"
+msgstr ""
+
+#: core/reporters/sections.py:705
+msgid "Bytes Pruned"
+msgstr ""
+
+#: core/reporters/sections.py:711
+msgid "Rows Skipped (Predictive I/O)"
+msgstr ""
+
+#: core/reporters/sections.py:715
+msgid "Batches Skipped (Predictive I/O)"
+msgstr ""
+
+#: core/reporters/sections.py:747
+msgid "Top Scanned Tables"
+msgstr ""
+
+#: core/reporters/sections.py:756 core/reporters/sections.py:762
+msgid "Bytes Read"
+msgstr ""
+
+#: core/reporters/sections.py:756 core/reporters/sections.py:762
+msgid "Pruning Rate"
+msgstr ""
+
+#: core/reporters/sections.py:757 core/reporters/sections.py:762
+msgid "Current Clustering"
+msgstr ""
+
+#: core/reporters/sections.py:757
+msgid "Column Types"
+msgstr ""
+
+#: core/reporters/sections.py:776
+msgid "none configured"
+msgstr ""
+
+#: core/reporters/sections.py:829
+msgid "Cloud Storage Performance"
+msgstr ""
+
+#: core/reporters/sections.py:835
+msgid "Total Requests"
+msgstr ""
+
+#: core/reporters/sections.py:846
+msgid "Total Retries"
+msgstr ""
+
+#: core/reporters/sections.py:850
+msgid "Avg Request Duration"
+msgstr ""
+
+#: core/reporters/sections.py:854
+msgid "Retry Overhead"
+msgstr ""
+
+#: core/reporters/sections.py:860
+msgid "Warning: Retry rate indicates possible storage throttling"
+msgstr ""
+
+#: core/reporters/sections.py:882
+msgid "Spill Analysis"
+msgstr ""
+
+#: core/reporters/sections.py:889
+msgid "Total Spill"
+msgstr ""
+
+#: core/reporters/sections.py:889
+msgid "Max Spill Operator"
+msgstr ""
+
+#: core/reporters/sections.py:935
+msgid "Scan Locality (Per-Node)"
+msgstr ""
+
+#: core/reporters/sections.py:937
+msgid "Local"
+msgstr ""
+
+#: core/reporters/sections.py:937
+msgid "Non-Local"
+msgstr ""
+
+#: core/reporters/sections.py:937
+msgid "Rescheduled %"
+msgstr ""
+
+#: core/reporters/sections.py:937
+msgid "Cache Hit %"
+msgstr ""
+
+#: core/reporters/sections.py:937
+msgid "Pattern"
+msgstr "패턴"
+
+#: core/reporters/sections.py:949
+msgid "Cold Node"
+msgstr ""
+
+#: core/reporters/sections.py:951
+msgid "CPU Contention"
+msgstr ""
+
+#: core/reporters/sections.py:953
+msgid "File Layout"
+msgstr ""
+
+#: core/reporters/sections.py:955 core/reporters/sections.py:1038
+msgid "OK"
+msgstr ""
+
+#: core/reporters/sections.py:982
+msgid "Cold node pattern detected"
+msgstr ""
+
+#: core/reporters/sections.py:984
+msgid ""
+"High non-local + low cache hit suggests tasks were scheduled on nodes "
+"without cached data (scale-out or CPU contention)."
+msgstr ""
+
+#: core/reporters/sections.py:1019
+msgid "Partitions"
+msgstr ""
+
+#: core/reporters/sections.py:1019
+msgid "Data Size"
+msgstr ""
+
+#: core/reporters/sections.py:1019
+msgid "Avg Size"
+msgstr ""
+
+#: core/reporters/sections.py:1019
+msgid "Skewed"
+msgstr ""
+
+#: core/reporters/sections.py:1055 core/reporters/sections.py:1059
+#: templates/schema_analysis.html:191
+msgid "Recommendation"
+msgstr "권장사항"
+
+#: core/reporters/sections.py:1055
+msgid ""
+"Use REPARTITION hint or pre-aggregate CTEs to reduce partition sizes "
+"(shuffle.partitions cannot be SET on Serverless)."
+msgstr ""
+
+#: core/reporters/sections.py:1082
+msgid "Photon Blockers"
+msgstr ""
+
+#: core/reporters/sections.py:1085
+msgid "Photon utilization is"
+msgstr ""
+
+#: core/reporters/sections.py:1085
+msgid "The following operations are not running on Photon"
+msgstr ""
+
+#: core/reporters/sections.py:1088 templates/schema_analysis.html:176
+msgid "Reason"
+msgstr ""
+
+#: core/reporters/sections.py:1104
+msgid "Detailed Photon Blocker Information"
+msgstr ""
+
+#: core/reporters/sections.py:1106
+msgid "The following details are extracted from EXPLAIN EXTENDED output."
+msgstr ""
+
+#: core/reporters/sections.py:1115
+msgid "Unsupported Expression"
+msgstr ""
+
+#: core/reporters/sections.py:1126
+msgid "Reference Node"
+msgstr ""
+
+#: core/reporters/sections.py:1136
+msgid "Recommended Rewrite"
+msgstr ""
+
+#: core/reporters/sections.py:1161
+msgid "Streaming Query Snapshot"
+msgstr ""
+
+#: core/reporters/sections.py:1163
+msgid "This is a running streaming query snapshot. Metrics are cumulative."
+msgstr ""
+
+#: core/reporters/sections.py:1167
+msgid "Property"
+msgstr ""
+
+#: core/reporters/sections.py:1170
+msgid "Target Table"
+msgstr ""
+
+#: core/reporters/sections.py:1172
+msgid "Entry Point"
+msgstr ""
+
+#: core/reporters/sections.py:1175
+msgid "Micro-Batches"
+msgstr ""
+
+#: core/reporters/sections.py:1182
+msgid "Batch Duration Statistics"
+msgstr ""
+
+#: core/reporters/sections.py:1204
+msgid "Slow Batches Detected"
+msgstr ""
+
+#: core/reporters/sections.py:1206
+msgid "batch(es) exceeded 2x average duration"
+msgstr ""
+
+#: core/reporters/summary.py:35
+msgid "No significant issues detected. Query performance appears normal."
+msgstr ""
+
+#: core/reporters/summary.py:63
+msgid "unknown source"
+msgstr ""
+
+#: core/reporters/summary.py:68
+msgid "Source"
+msgstr "출처"
+
+#: core/reporters/summary.py:68
+msgid "Lakehouse Federation"
+msgstr "Lakehouse Federation"
+
+#: core/reporters/summary.py:80 core/reporters/summary.py:211
+msgid "Key Findings"
+msgstr "주요 발견"
+
+#: core/reporters/summary.py:85 core/reporters/summary.py:144
+#: core/reporters/summary.py:216
+msgid "Likely Cause"
+msgstr "추정 원인"
+
+#: core/reporters/summary.py:99
+msgid "Total alerts"
+msgstr "총 알림"
+
+#: core/reporters/summary.py:183
+msgid "Avg Batch Duration"
+msgstr ""
+
+#: core/reporters/summary.py:198
+msgid "slow batch(es)"
+msgstr ""
+
+#: core/reporters/summary.py:264
+msgid "Must-read alerts"
+msgstr "필독 알림"
+
+#: core/reporters/summary.py:269
+msgid "Top 10 recommended actions"
+msgstr "권장 작업 상위 10"
+
+#: core/reporters/summary.py:272
+msgid ""
+"Apply the highest-impact items first, then re-analyze to uncover the next "
+"opportunities."
+msgstr "가장 영향이 큰 항목부터 적용한 후 재분석하여 다음 개선 기회를 찾으세요."
+
+#: core/reporters/summary.py:288
+msgid "Selected because"
+msgstr "선정 이유"
+
+#: core/reporters/summary.py:294
+msgid "Other recommendations"
+msgstr "기타 권장사항"
+
+#: core/reporters/summary.py:319
+msgid "Addresses"
+msgstr "대응"
+
+#: core/reporters/summary.py:320
+msgid "General recommendation"
+msgstr "일반 권장사항"
+
+#: routes/analysis.py:282
+msgid "Analysis not found"
+msgstr "분석을 찾을 수 없습니다"
+
+#: routes/analysis.py:291
+#, python-brace-format
+msgid "Analysis not ready. Status: {status}"
+msgstr "분석 준비 중. 상태: {status}"
+
+#: routes/report.py:78
+msgid "Report not found"
+msgstr ""
+
+#: routes/schema_analysis.py:204 routes/schema_analysis.py:802
+#, python-brace-format
+msgid ""
+"High-cardinality column {col} used as partition key — causes small file "
+"proliferation. Migrate to Liquid Clustering."
+msgstr ""
+
+#: routes/schema_analysis.py:796
+#, python-brace-format
+msgid ""
+"ALTER TABLE {fqn} CLUSTER BY ({cols}); DROP PARTITION — no data rewrite "
+"needed with LC"
+msgstr ""
+
+#: templates/analyze.html:3 templates/index.html:21
+msgid "Query Analysis"
+msgstr ""
+
+#: templates/analyze.html:16
+msgid "Query Profile Analysis"
+msgstr ""
+
+#: templates/analyze.html:22
+msgid ""
+"Upload a Databricks SQL query profile JSON to analyze performance metrics "
+"and get optimization recommendations."
+msgstr ""
+
+#: templates/analyze.html:29
+msgid "Drag and drop JSON file"
+msgstr ""
+
+#: templates/analyze.html:30 templates/report_upload.html:29
+msgid "or click to select"
+msgstr ""
+
+#: templates/analyze.html:51
+msgid "EXPLAIN Analysis (Optional)"
+msgstr ""
+
+#: templates/analyze.html:57
+msgid ""
+"Adding EXPLAIN EXTENDED output enables detailed analysis based on the "
+"execution plan."
+msgstr ""
+
+#: templates/analyze.html:61
+msgid ""
+"Tip: with EXPLAIN EXTENDED attached, the toolkit detects whether optimizer "
+"statistics are up-to-date."
+msgstr ""
+
+#: templates/analyze.html:66
+msgid "EXPLAIN file (.txt)"
+msgstr ""
+
+#: templates/analyze.html:71
+msgid "or"
+msgstr ""
+
+#: templates/analyze.html:75
+msgid "Paste EXPLAIN text"
+msgstr ""
+
+#: templates/analyze.html:97
+msgid "LLM Analysis Options"
+msgstr ""
+
+#: templates/analyze.html:105
+msgid "Skip LLM analysis (metrics only)"
+msgstr ""
+
+#: templates/analyze.html:111
+msgid "Primary Model"
+msgstr ""
+
+#: templates/analyze.html:119
+msgid "Review Model"
+msgstr ""
+
+#: templates/analyze.html:127
+msgid "Refine Model"
+msgstr ""
+
+#: templates/analyze.html:137
+msgid "Report Post-Processing (Optional)"
+msgstr ""
+
+#: templates/analyze.html:141
+msgid "Review generated report with LLM"
+msgstr ""
+
+#: templates/analyze.html:147
+msgid "Refine report based on review"
+msgstr ""
+
+#: templates/analyze.html:161 templates/spark_perf.html:133
+msgid "Experiment & Variant"
+msgstr ""
+
+#: templates/analyze.html:167
+msgid ""
+"Tag this analysis for comparison. Same experiment_id groups related analyses"
+" together."
+msgstr ""
+
+#: templates/analyze.html:171 templates/spark_perf.html:140
+msgid "Experiment ID"
+msgstr ""
+
+#: templates/analyze.html:176 templates/compare.html:36
+#: templates/compare.html:79 templates/compare.html:147
+#: templates/compare.html:152 templates/compare.html:189
+#: templates/compare.html:233 templates/compare.html:296
+#: templates/compare.html:301 templates/compare_report.html:40
+#: templates/compare_report.html:46 templates/history.html:45
+#: templates/history.html:80 templates/history.html:116
+#: templates/history.html:152 templates/spark_perf.html:141
+#: templates/spark_perf.html:213
+msgid "Variant"
+msgstr ""
+
+#: templates/analyze.html:183 templates/spark_perf.html:144
+msgid "Variant \"baseline\" is automatically used as the comparison reference."
+msgstr ""
+
+#: templates/analyze.html:196
+msgid "Table Output Settings"
+msgstr ""
+
+#: templates/analyze.html:202
+msgid ""
+"Save analysis results to Databricks managed Delta tables. Requires a SQL "
+"Warehouse."
+msgstr ""
+
+#: templates/analyze.html:208
+msgid "Save results to Delta tables"
+msgstr ""
+
+#: templates/analyze.html:214 templates/schema_analysis.html:39
+#: templates/spark_perf.html:22
+msgid "Catalog"
+msgstr ""
+
+#: templates/analyze.html:219 templates/schema_analysis.html:43
+#: templates/spark_perf.html:23
+msgid "Schema"
+msgstr ""
+
+#: templates/analyze.html:225 templates/spark_perf.html:31
+msgid "SQL Warehouse HTTP Path"
+msgstr ""
+
+#: templates/analyze.html:232
+msgid "Save as Default"
+msgstr ""
+
+#: templates/analyze.html:237 templates/spark_perf.html:40
+msgid "Reset to Deploy Defaults"
+msgstr ""
+
+#: templates/analyze.html:250
+msgid "Start Analysis"
+msgstr ""
+
+#: templates/analyze.html:293
+#, python-brace-format
+msgid "File loaded: {name}"
+msgstr ""
+
+#: templates/analyze.html:294
+#, python-brace-format
+msgid "Text input: {lines} lines"
+msgstr ""
+
+#: templates/analyze.html:295
+msgid "Please select a JSON file"
+msgstr ""
+
+#: templates/analyze.html:296 templates/error.html:3
+#: templates/spark_perf.html:311
+msgid "Error"
+msgstr "오류"
+
+#: templates/analyze.html:297
+msgid "Analysis failed"
+msgstr ""
+
+#: templates/analyze.html:298
+msgid "Server returned non-JSON response. Check console."
+msgstr ""
+
+#: templates/analyze.html:299
+msgid "Starting analysis..."
+msgstr ""
+
+#: templates/analyze.html:483
+msgid "Analysis in progress..."
+msgstr ""
+
+#: templates/analyze.html:591
+msgid "Resuming status check..."
+msgstr ""
+
+#: templates/base.html:74
+msgid "SQL Analysis"
+msgstr "SQL 분석"
+
+#: templates/base.html:79 templates/history.html:245
+#: templates/history.html:347 templates/report_upload.html:3
+#: templates/report_upload.html:49 templates/report_upload.html:188
+#: templates/report_view.html:3 templates/spark_perf.html:443
+msgid "View Report"
+msgstr ""
+
+#: templates/base.html:84 templates/compare.html:12 templates/compare.html:16
+#: templates/compare.html:59 templates/compare.html:212
+#: templates/history.html:14
+msgid "Compare"
+msgstr "비교"
+
+#: templates/base.html:89 templates/index.html:47 templates/spark_perf.html:2
+#: templates/spark_perf.html:9
+msgid "Spark Job Analysis"
+msgstr "Spark 작업 분석"
+
+#: templates/base.html:94 templates/schema_analysis.html:2
+#: templates/schema_analysis.html:27
+msgid "Schema Analysis"
+msgstr "스키마 분석"
+
+#: templates/base.html:104
+msgid "Toggle theme"
+msgstr ""
+
+#: templates/base.html:158
+msgid "Zoom In"
+msgstr ""
+
+#: templates/base.html:159
+msgid "Zoom Out"
+msgstr ""
+
+#: templates/base.html:161
+msgid "Fit"
+msgstr ""
+
+#: templates/base.html:162
+msgid "Reset"
+msgstr ""
+
+#: templates/compare.html:2 templates/compare.html:6
+msgid "Compare Analyses"
+msgstr ""
+
+#: templates/compare.html:28 templates/compare.html:29
+#: templates/compare.html:77 templates/history.html:37
+#: templates/history.html:78
+msgid "Fingerprint"
+msgstr ""
+
+#: templates/compare.html:32 templates/compare.html:78
+#: templates/compare.html:146 templates/compare.html:151
+#: templates/compare.html:185 templates/compare.html:232
+#: templates/compare.html:295 templates/compare.html:300
+#: templates/compare_report.html:39 templates/compare_report.html:45
+#: templates/history.html:41 templates/history.html:79
+#: templates/history.html:112 templates/history.html:151
+#: templates/spark_perf.html:212
+msgid "Experiment"
+msgstr ""
+
+#: templates/compare.html:40 templates/compare.html:193
+#: templates/history.html:49 templates/history.html:120
+msgid "Search"
+msgstr "검색"
+
+#: templates/compare.html:46 templates/compare.html:73
+#: templates/compare.html:112 templates/compare.html:199
+#: templates/compare.html:227 templates/compare.html:260
+#: templates/compare_report.html:37
+msgid "Baseline"
+msgstr "Baseline"
+
+#: templates/compare.html:46 templates/compare.html:47
+#: templates/compare.html:199 templates/compare.html:200
+msgid "not selected"
+msgstr ""
+
+#: templates/compare.html:47 templates/compare.html:74
+#: templates/compare.html:113 templates/compare.html:200
+#: templates/compare.html:228 templates/compare.html:261
+#: templates/compare_report.html:43 templates/schema_analysis.html:178
+msgid "Candidate"
+msgstr "Candidate"
+
+#: templates/compare.html:64 templates/compare.html:217
+#: templates/history.html:66 templates/history.html:125
+#: templates/report_upload.html:165 templates/spark_perf_report.html:67
+msgid "Loading..."
+msgstr "로딩 중..."
+
+#: templates/compare.html:65
+msgid "No analyses found. Run an analysis with --persist first."
+msgstr ""
+
+#: templates/compare.html:75 templates/compare.html:229
+#: templates/history.html:76 templates/history.html:148
+#: templates/schema_analysis.html:195
+msgid "Analyzed At"
+msgstr ""
+
+#: templates/compare.html:81 templates/history.html:83
+msgid "Warehouse"
+msgstr ""
+
+#: templates/compare.html:82 templates/compare.html:149
+#: templates/compare.html:154 templates/compare.html:236
+#: templates/compare.html:298 templates/compare.html:303
+#: templates/history.html:84 templates/history.html:156
+#: templates/spark_perf_report.html:53 templates/spark_perf_report.html:58
+msgid "Alerts"
+msgstr ""
+
+#: templates/compare.html:92 templates/compare.html:165
+#: templates/compare.html:314 templates/history.html:97
+#: templates/spark_perf.html:228
+msgid "Prev"
+msgstr ""
+
+#: templates/compare.html:93 templates/compare.html:166
+#: templates/compare.html:315 templates/history.html:98
+#: templates/spark_perf.html:232
+msgid "Next"
+msgstr ""
+
+#: templates/compare.html:101 templates/compare.html:248
+msgid "Comparing..."
+msgstr ""
+
+#: templates/compare.html:107 templates/compare.html:254
+msgid "Metric Comparison"
+msgstr ""
+
+#: templates/compare.html:111 templates/compare.html:259
+msgid "Group"
+msgstr ""
+
+#: templates/compare.html:114 templates/compare.html:262
+msgid "Change"
+msgstr ""
+
+#: templates/compare.html:121 templates/compare.html:270
+msgid "Full Report"
+msgstr ""
+
+#: templates/compare.html:127 templates/compare.html:276
+msgid "Comparison History"
+msgstr ""
+
+#: templates/compare.html:128 templates/compare.html:277
+msgid "No comparison history found."
+msgstr ""
+
+#: templates/compare.html:132 templates/compare.html:281
+#: templates/history.html:57 templates/history.html:133
+#: templates/spark_perf.html:192
+msgid "Delete Selected"
+msgstr ""
+
+#: templates/compare.html:135 templates/compare.html:284
+#: templates/history.html:60 templates/history.html:136
+#: templates/spark_perf.html:195
+msgid "Select All"
+msgstr ""
+
+#: templates/compare.html:144 templates/compare.html:293
+msgid "Compared At"
+msgstr ""
+
+#: templates/compare.html:155 templates/compare.html:304
+msgid "Verdict"
+msgstr ""
+
+#: templates/compare.html:156 templates/compare.html:305
+#: templates/history.html:87 templates/history.html:158
+msgid "Report"
+msgstr ""
+
+#: templates/compare.html:181 templates/spark_perf.html:207
+msgid "Cluster ID"
+msgstr ""
+
+#: templates/compare.html:218
+msgid "No Spark applications found."
+msgstr ""
+
+#: templates/compare.html:231 templates/history.html:150
+#: templates/spark_perf.html:211 templates/spark_perf_report.html:36
+msgid "Jobs"
+msgstr ""
+
+#: templates/compare.html:332 templates/compare_report.html:70
+msgid "Genie — Comparison Analysis"
+msgstr ""
+
+#: templates/compare.html:334 templates/compare_report.html:72
+#: templates/shared_result.html:209 templates/spark_perf.html:265
+#: templates/spark_perf_report.html:88
+msgid "New Conversation"
+msgstr "새 대화"
+
+#: templates/compare.html:345 templates/compare.html:1072
+#: templates/compare_report.html:79 templates/compare_report.html:126
+#: templates/compare_report.html:140
+msgid "Ask questions about this comparison."
+msgstr ""
+
+#: templates/compare.html:347 templates/report_view.html:58
+#: templates/shared_result.html:224 templates/spark_perf.html:280
+#: templates/spark_perf_report.html:103
+msgid "Examples:"
+msgstr ""
+
+#: templates/compare.html:355 templates/compare_report.html:84
+msgid "Ask about this comparison..."
+msgstr ""
+
+#: templates/compare.html:377
+msgid "Comparing metrics..."
+msgstr ""
+
+#: templates/compare.html:378
+msgid "AI analysis in progress..."
+msgstr ""
+
+#: templates/compare.html:380
+msgid "Saving results..."
+msgstr ""
+
+#: templates/compare.html:838 templates/compare.html:841
+#: templates/compare_report.html:17
+msgid "Regression"
+msgstr ""
+
+#: templates/compare.html:845 templates/compare.html:848
+msgid "Improved"
+msgstr "개선됨"
+
+#: templates/compare.html:851
+msgid "No Change"
+msgstr ""
+
+#: templates/compare_report.html:2 templates/compare_report.html:13
+msgid "Comparison Report"
+msgstr ""
+
+#: templates/compare_report.html:20
+msgid "No Regression"
+msgstr ""
+
+#: templates/compare_report.html:26
+msgid "Back to Compare"
+msgstr ""
+
+#: templates/compare_report.html:29 templates/shared_result.html:52
+#: templates/spark_perf_report.html:23
+msgid "Print"
+msgstr "인쇄"
+
+#: templates/compare_report.html:57
+msgid "No report available for this comparison."
+msgstr ""
+
+#: templates/compare_report.html:132
+msgid "Initializing Genie Space..."
+msgstr "Genie Space 초기화 중..."
+
+#: templates/error.html:11
+msgid "An error occurred"
+msgstr "오류가 발생했습니다"
+
+#: templates/error.html:15
+msgid "Return to Home"
+msgstr "홈으로 돌아가기"
+
+#: templates/feedback_export.html:2 templates/feedback_export.html:8
+msgid "Send all feedback as a ZIP"
+msgstr ""
+
+#: templates/feedback_export.html:11
+msgid ""
+"Download all feedback in this workspace plus the related reports as a single"
+" ZIP. This is the primary monthly workflow."
+msgstr ""
+
+#: templates/feedback_export.html:16
+msgid "Permission denied"
+msgstr ""
+
+#: templates/feedback_export.html:18
+msgid ""
+"Bulk feedback ZIP export requires workspace_admin-equivalent permission. Add"
+" your email to the FEEDBACK_EXPORT_ADMIN_EMAILS env var."
+msgstr ""
+
+#: templates/feedback_export.html:21
+msgid "(unauthenticated)"
+msgstr ""
+
+#: templates/feedback_export.html:29
+msgid ""
+"FEEDBACK_EXPORT_ADMIN_EMAILS is not set, so all authenticated users can "
+"currently export (dev_mode). Set this in production."
+msgstr ""
+
+#: templates/feedback_export.html:34
+msgid "1. Select date range"
+msgstr ""
+
+#: templates/feedback_export.html:37
+msgid "Last 30 days"
+msgstr ""
+
+#: templates/feedback_export.html:38
+msgid "Last 7 days"
+msgstr ""
+
+#: templates/feedback_export.html:39
+msgid "Last 90 days"
+msgstr ""
+
+#: templates/feedback_export.html:40
+msgid "All time (use with care)"
+msgstr ""
+
+#: templates/feedback_export.html:43
+msgid "Recalculate"
+msgstr ""
+
+#: templates/feedback_export.html:49
+msgid "2. Scope"
+msgstr ""
+
+#: templates/feedback_export.html:52 templates/rewrite.html:154
+#: templates/shared_result.html:40
+msgid "Feedback"
+msgstr "피드백"
+
+#: templates/feedback_export.html:56
+msgid "Analyses in scope"
+msgstr ""
+
+#: templates/feedback_export.html:60
+msgid "Estimated size"
+msgstr ""
+
+#: templates/feedback_export.html:64
+msgid "Vs. all-time totals"
+msgstr ""
+
+#: templates/feedback_export.html:72
+msgid "3. Confirm → download"
+msgstr ""
+
+#: templates/feedback_export.html:74
+msgid "Included:"
+msgstr ""
+
+#: templates/feedback_export.html:76
+msgid ""
+"The bulk ZIP never includes profile.json (raw). When raw is needed, use the "
+"per-analysis ZIP from /shared/<id>."
+msgstr ""
+
+#: templates/feedback_export.html:79
+msgid ""
+"user_email is hashed (sha256:16 chars; only the domain stays in plaintext). "
+"This is not full anonymization."
+msgstr ""
+
+#: templates/feedback_export.html:84 templates/shared_result.html:171
+msgid "I have reviewed the contents and confirm forwarding."
+msgstr ""
+
+#: templates/feedback_export.html:90
+msgid "Download ZIP"
+msgstr ""
+
+#: templates/feedback_export.html:139
+msgid "Preparation error: "
+msgstr ""
+
+#: templates/feedback_export.html:149
+msgid "All time"
+msgstr ""
+
+#: templates/feedback_export.html:150
+msgid "items"
+msgstr ""
+
+#: templates/feedback_export.html:150
+msgid "analyses"
+msgstr ""
+
+#: templates/feedback_export.html:151
+msgid "Oldest: "
+msgstr ""
+
+#: templates/feedback_export.html:154
+msgid "Over limit: "
+msgstr ""
+
+#: templates/feedback_export.html:155
+msgid "Narrow the date range or revisit the scope."
+msgstr ""
+
+#: templates/feedback_export.html:161
+msgid "Network error: "
+msgstr ""
+
+#: templates/feedback_export.html:183
+msgid "Recalculate and retry"
+msgstr ""
+
+#: templates/feedback_export.html:190 templates/shared_result.html:1017
+msgid "Preparing..."
+msgstr ""
+
+#: templates/feedback_export.html:207 templates/shared_result.html:1043
+msgid "Download started"
+msgstr ""
+
+#: templates/feedback_export.html:212 templates/shared_result.html:1049
+msgid "Failed: "
+msgstr ""
+
+#: templates/history.html:2 templates/history.html:8
+msgid "Analysis History"
+msgstr ""
+
+#: templates/history.html:11
+msgid "Home"
+msgstr ""
+
+#: templates/history.html:16
+msgid "Open the bulk feedback ZIP export page"
+msgstr ""
+
+#: templates/history.html:17
+msgid "All feedback ZIP"
+msgstr ""
+
+#: templates/history.html:25 templates/history.html:29
+msgid "History"
+msgstr "이력"
+
+#: templates/history.html:67
+msgid "No analyses found. Run an analysis with --persist to save results."
+msgstr ""
+
+#: templates/history.html:82 templates/history.html:154
+msgid "Est. Cost"
+msgstr ""
+
+#: templates/history.html:85 templates/history.html:157
+#: templates/spark_perf.html:214
+msgid "Lang"
+msgstr ""
+
+#: templates/history.html:86
+msgid "Whether EXPLAIN text was attached at analysis time"
+msgstr ""
+
+#: templates/history.html:86
+msgid "EXPLAIN"
+msgstr ""
+
+#: templates/history.html:126
+msgid "No Spark analyses found."
+msgstr ""
+
+#: templates/history.html:237 templates/history.html:238
+#: templates/history.html:340 templates/history.html:341
+#: templates/spark_perf.html:437 templates/spark_perf.html:438
+msgid "Click to edit"
+msgstr ""
+
+#: templates/history.html:244
+msgid "EXPLAIN attached"
+msgstr ""
+
+#: templates/history.html:244
+msgid "No EXPLAIN attached"
+msgstr ""
+
+#: templates/history.html:244
+msgid "Unknown (legacy analysis)"
+msgstr ""
+
+#: templates/history.html:245 templates/shared_result.html:35
+msgid "Rewrite SQL"
+msgstr "SQL 재작성"
+
+#: templates/history.html:245 templates/history.html:347
+#: templates/spark_perf.html:443
+msgid "Download Markdown"
+msgstr ""
+
+#: templates/index.html:10
+msgid ""
+"Performance analysis and optimization platform for Databricks SQL / Spark "
+"workloads"
+msgstr ""
+
+#: templates/index.html:23
+msgid ""
+"Upload a query profile to get bottleneck detection, LLM-powered root cause "
+"analysis, and optimization recommendations."
+msgstr ""
+
+#: templates/index.html:34
+msgid "Compare & Optimize"
+msgstr ""
+
+#: templates/index.html:36
+msgid ""
+"Compare before/after profiles — hint changes, warehouse sizing, Photon "
+"tuning — with AI-powered regression detection."
+msgstr ""
+
+#: templates/index.html:49
+msgid ""
+"Analyze Spark event logs — bottleneck classification, skew/shuffle/GC, Spot "
+"loss, executor diagnostics."
+msgstr ""
+
+#: templates/report_upload.html:11
+msgid "View Saved Report"
+msgstr ""
+
+#: templates/report_upload.html:16
+msgid "Upload a previously downloaded Markdown report to view it."
+msgstr ""
+
+#: templates/report_upload.html:20
+msgid ""
+"Note: Only reports generated by the current version are supported. Older "
+"versions may not display correctly."
+msgstr ""
+
+#: templates/report_upload.html:28
+msgid "Drag and drop Markdown file"
+msgstr ""
+
+#: templates/report_upload.html:141
+msgid "Please select a Markdown file (.md)"
+msgstr ""
+
+#: templates/report_view.html:18 templates/shared_result.html:179
+msgid "Download"
+msgstr ""
+
+#: templates/report_view.html:22
+msgid "Upload Another"
+msgstr ""
+
+#: templates/report_view.html:56 templates/report_view.html:238
+#: templates/shared_result.html:222 templates/shared_result.html:353
+msgid "Ask questions about this DBSQL query analysis data."
+msgstr ""
+
+#: templates/report_view.html:59 templates/shared_result.html:225
+msgid "What are the recommended actions?"
+msgstr ""
+
+#: templates/report_view.html:60 templates/shared_result.html:226
+msgid "Show table scan details"
+msgstr ""
+
+#: templates/report_view.html:61 templates/shared_result.html:227
+msgid "Which operators are hot?"
+msgstr ""
+
+#: templates/report_view.html:68 templates/shared_result.html:234
+msgid "Ask about this analysis..."
+msgstr ""
+
+#: templates/report_view.html:195 templates/report_view.html:210
+#: templates/result.html:350 templates/schema_analysis.html:90
+msgid "Copy"
+msgstr ""
+
+#: templates/report_view.html:207 templates/result.html:363
+msgid "Copied!"
+msgstr ""
+
+#: templates/result.html:3
+msgid "Analysis Result"
+msgstr ""
+
+#: templates/result.html:14
+msgid "Query Information"
+msgstr "쿼리 정보"
+
+#: templates/result.html:32
+msgid "seconds"
+msgstr ""
+
+#: templates/result.html:34
+msgid "File"
+msgstr "파일"
+
+#: templates/result.html:80
+msgid "Shuffle Impact"
+msgstr "Shuffle 영향"
+
+#: templates/result.html:110
+msgid "Detected Issues"
+msgstr "감지된 문제"
+
+#: templates/result.html:143
+msgid "Next action"
+msgstr "다음 작업"
+
+#: templates/result.html:150
+msgid "Rewrite SQL with LLM"
+msgstr "LLM으로 SQL 재작성"
+
+#: templates/result.html:154
+msgid ""
+"Open the Rewrite workspace: side-by-side diff, validation, feedback refine, "
+"and persisted history."
+msgstr "재작성 작업공간 열기: side-by-side 차분, 검증, 피드백 개선, 영구 이력."
+
+#: templates/result.html:165
+msgid "Export"
+msgstr "내보내기"
+
+#: templates/result.html:171
+msgid "Copy Share Link"
+msgstr "공유 링크 복사"
+
+#: templates/result.html:175
+msgid "Copy Slack Summary"
+msgstr "Slack 요약 복사"
+
+#: templates/result.html:180
+msgid ""
+"Not saved to Delta — shared links will become invalid after the session "
+"ends. To persist, enable \"Save to Delta Table\" during analysis."
+msgstr ""
+
+#: templates/result.html:185
+msgid "Download as Markdown"
+msgstr "Markdown으로 다운로드"
+
+#: templates/result.html:189 templates/spark_perf_report.html:22
+msgid "Print / Save as PDF"
+msgstr "인쇄 / PDF로 저장"
+
+#: templates/result.html:201
+msgid "Analysis Report"
+msgstr "분석 리포트"
+
+#: templates/result.html:206
+msgid "LLM Analyzed"
+msgstr "LLM 분석 완료"
+
+#: templates/result.html:211
+msgid "Metrics Only"
+msgstr "메트릭만"
+
+#: templates/result.html:217
+msgid "vs Baseline"
+msgstr "Baseline 대비"
+
+#: templates/result.html:220
+msgid "Regression detected"
+msgstr "회귀 감지"
+
+#: templates/result.html:224
+msgid "No regression"
+msgstr ""
+
+#: templates/rewrite.html:3 templates/rewrite.html:66
+msgid "Query Rewrite"
+msgstr ""
+
+#: templates/rewrite.html:69
+msgid "Back to analysis"
+msgstr "분석으로 돌아가기"
+
+#: templates/rewrite.html:75
+msgid ""
+"Default: databricks-claude-sonnet-4-6 (largest output budget in the "
+"catalogue)"
+msgstr "기본값: databricks-claude-sonnet-4-6 (카탈로그 최대 출력 예산)"
+
+#: templates/rewrite.html:79
+msgid "Generate rewrite"
+msgstr "재작성 생성"
+
+#: templates/rewrite.html:82
+msgid "Validate"
+msgstr "검증"
+
+#: templates/rewrite.html:85
+msgid "Copy rewrite"
+msgstr "재작성 복사"
+
+#: templates/rewrite.html:93
+msgid "Source SQL"
+msgstr "원본 SQL"
+
+#: templates/rewrite.html:94 templates/rewrite.html:239
+msgid "chars"
+msgstr "문자"
+
+#: templates/rewrite.html:102 templates/shared_result.html:202
+msgid "Rewrite"
+msgstr "재작성"
+
+#: templates/rewrite.html:103 templates/rewrite.html:199
+msgid "not validated"
+msgstr "검증되지 않음"
+
+#: templates/rewrite.html:106
+msgid "No rewrite generated yet. Click \"Generate rewrite\" to start."
+msgstr "아직 재작성이 생성되지 않았습니다. \"재작성 생성\"을 클릭하여 시작하세요."
+
+#: templates/rewrite.html:113
+msgid "Refine with feedback"
+msgstr "피드백으로 개선"
+
+#: templates/rewrite.html:115
+msgid ""
+"e.g. Use BROADCAST hint instead of CTE; preserve MERGE INTO clause; ..."
+msgstr "예: CTE 대신 BROADCAST 힌트 사용; MERGE INTO 절 유지; ..."
+
+#: templates/rewrite.html:117
+msgid "Apply feedback"
+msgstr "피드백 적용"
+
+#: templates/rewrite.html:123
+msgid "History (this session)"
+msgstr "이력 (이번 세션)"
+
+#: templates/rewrite.html:131
+msgid "Persisted history (all sessions)"
+msgstr "영구 이력 (모든 세션)"
+
+#: templates/rewrite.html:134
+msgid "Reload"
+msgstr "재로드"
+
+#: templates/rewrite.html:137 templates/rewrite.html:388
+msgid "Loading…"
+msgstr "로딩 중…"
+
+#: templates/rewrite.html:145
+msgid "Running…"
+msgstr "실행 중…"
+
+#: templates/rewrite.html:148
+msgid "Validated"
+msgstr "검증됨"
+
+#: templates/rewrite.html:149
+msgid "Invalid"
+msgstr "유효하지 않음"
+
+#: templates/rewrite.html:150
+msgid "Copied"
+msgstr "복사됨"
+
+#: templates/rewrite.html:151
+msgid "Copy failed"
+msgstr "복사 실패"
+
+#: templates/rewrite.html:152
+msgid "Revision"
+msgstr "리비전"
+
+#: templates/rewrite.html:153
+msgid "Initial"
+msgstr "초기"
+
+#: templates/rewrite.html:155
+msgid "Show"
+msgstr "표시"
+
+#: templates/rewrite.html:196
+msgid "diff output"
+msgstr "diff 출력"
+
+#: templates/rewrite.html:214
+msgid ""
+"Diff output is not validated (apply the patch first, then validate the "
+"resulting SQL)."
+msgstr "Diff 출력은 검증되지 않습니다 (패치를 먼저 적용한 후 결과 SQL을 검증해주세요)."
+
+#: templates/rewrite.html:219 templates/shared_result.html:622
+msgid "Refine is disabled for diff outputs — apply the patch first."
+msgstr "Diff 출력에서는 개선이 비활성화됩니다 — 먼저 패치를 적용해주세요."
+
+#: templates/rewrite.html:329
+msgid "output emitted as a diff patch (query exceeds the model output budget)"
+msgstr "쿼리가 모델 출력 예산을 초과하여 diff 패치로 출력되었습니다"
+
+#: templates/rewrite.html:393
+msgid "Persistence disabled (no SQL Warehouse configured)."
+msgstr "영구 저장 비활성화 (SQL Warehouse 미구성)."
+
+#: templates/rewrite.html:397
+msgid "Failed to load persisted history."
+msgstr "영구 이력 로딩 실패."
+
+#: templates/rewrite.html:402
+msgid "No persisted attempts yet."
+msgstr "아직 영구 저장된 시도가 없습니다."
+
+#: templates/rewrite.html:410
+msgid "validated"
+msgstr "검증됨"
+
+#: templates/rewrite.html:411
+msgid "invalid"
+msgstr "유효하지 않음"
+
+#: templates/rewrite.html:416
+msgid "Diff patch — apply manually before validating or refining"
+msgstr "Diff 패치 — 검증/개선 전에 수동으로 적용해주세요"
+
+#: templates/rewrite.html:416
+msgid "diff"
+msgstr "diff"
+
+#: templates/rewrite.html:422
+msgid "Restore"
+msgstr ""
+
+#: templates/rewrite.html:427
+msgid "Failed:"
+msgstr "실패:"
+
+#: templates/rewrite.html:435
+msgid "(restored)"
+msgstr "(복원됨)"
+
+#: templates/rewrite.html:450
+msgid "Restored from persisted history"
+msgstr "영구 이력에서 복원됨"
+
+#: templates/schema_analysis.html:33
+msgid ""
+"Connect to the configured SQL Warehouse, scan table metadata, and flag "
+"suboptimal column types."
+msgstr ""
+
+#: templates/schema_analysis.html:48
+msgid "Tables (optional)"
+msgstr ""
+
+#: templates/schema_analysis.html:50
+msgid ""
+"e.g. store_sales, customer (comma-separated, leave empty for all tables)"
+msgstr ""
+
+#: templates/schema_analysis.html:53 templates/schema_analysis.html:54
+msgid "Or load from past analyses"
+msgstr ""
+
+#: templates/schema_analysis.html:55
+msgid "-- loading... --"
+msgstr ""
+
+#: templates/schema_analysis.html:61
+msgid "Analyze Schema"
+msgstr ""
+
+#: templates/schema_analysis.html:69
+msgid "Total tables analyzed"
+msgstr ""
+
+#: templates/schema_analysis.html:70
+msgid "Total issues found"
+msgstr ""
+
+#: templates/schema_analysis.html:71 templates/schema_analysis.html:175
+msgid "Estimated Savings"
+msgstr ""
+
+#: templates/schema_analysis.html:71
+msgid "total"
+msgstr ""
+
+#: templates/schema_analysis.html:77
+msgid "Verify with Sample before applying"
+msgstr ""
+
+#: templates/schema_analysis.html:83
+msgid "ALTER TABLE (in-place)"
+msgstr ""
+
+#: templates/schema_analysis.html:87
+msgid "Generate Migration SQL"
+msgstr ""
+
+#: templates/schema_analysis.html:95
+msgid "CREATE TABLE AS SELECT (safe copy)"
+msgstr ""
+
+#: templates/schema_analysis.html:99
+msgid "Generate Migration DML"
+msgstr ""
+
+#: templates/schema_analysis.html:102
+msgid "Copy DML"
+msgstr ""
+
+#: templates/schema_analysis.html:105
+msgid ""
+"Review the generated SQL, run in a dev catalog/schema, then swap or replace "
+"after validation."
+msgstr ""
+
+#: templates/schema_analysis.html:112
+msgid "Migration DML (CTAS)"
+msgstr ""
+
+#: templates/schema_analysis.html:113
+msgid "Close"
+msgstr ""
+
+#: templates/schema_analysis.html:171
+msgid "Column name"
+msgstr ""
+
+#: templates/schema_analysis.html:172
+msgid "Current Type"
+msgstr ""
+
+#: templates/schema_analysis.html:173
+msgid "Recommended Type"
+msgstr ""
+
+#: templates/schema_analysis.html:179
+msgid "Confirmed"
+msgstr ""
+
+#: templates/schema_analysis.html:180
+msgid "Sample"
+msgstr ""
+
+#: templates/schema_analysis.html:181 templates/spark_perf.html:332
+msgid "rows"
+msgstr ""
+
+#: templates/schema_analysis.html:182
+msgid "files"
+msgstr ""
+
+#: templates/schema_analysis.html:183
+msgid "avg"
+msgstr ""
+
+#: templates/schema_analysis.html:184
+msgid "Row count unavailable"
+msgstr ""
+
+#: templates/schema_analysis.html:185
+msgid "row"
+msgstr ""
+
+#: templates/schema_analysis.html:186
+msgid "No issues found for the selected schema."
+msgstr ""
+
+#: templates/schema_analysis.html:187
+msgid "No type issues in this table."
+msgstr ""
+
+#: templates/schema_analysis.html:188
+msgid "issues"
+msgstr ""
+
+#: templates/schema_analysis.html:190
+msgid "Cross-Table Issues"
+msgstr ""
+
+#: templates/schema_analysis.html:192
+msgid "Involved types"
+msgstr ""
+
+#: templates/schema_analysis.html:193
+msgid "Past Analyses (related to this schema)"
+msgstr ""
+
+#: templates/schema_analysis.html:194
+msgid "queries"
+msgstr ""
+
+#: templates/schema_analysis.html:196
+msgid "Query"
+msgstr ""
+
+#: templates/schema_analysis.html:197
+msgid "Tables"
+msgstr ""
+
+#: templates/schema_analysis.html:198
+msgid "JOIN Issues"
+msgstr ""
+
+#: templates/schema_analysis.html:199
+msgid "Link"
+msgstr ""
+
+#: templates/schema_analysis.html:200
+msgid "No past analyses found for this schema."
+msgstr ""
+
+#: templates/schema_analysis.html:201
+msgid "JOIN Type Mismatch (from past analyses)"
+msgstr ""
+
+#: templates/schema_analysis.html:203
+msgid "Left table.column (type)"
+msgstr ""
+
+#: templates/schema_analysis.html:204
+msgid "Right table.column (type)"
+msgstr ""
+
+#: templates/schema_analysis.html:205
+msgid "Past queries scanned"
+msgstr ""
+
+#: templates/schema_analysis.html:206
+msgid "No JOIN type mismatches found in recent profiler queries."
+msgstr ""
+
+#: templates/schema_analysis.html:207
+msgid "tables"
+msgstr ""
+
+#: templates/schema_analysis.html:208
+msgid "-- Select from past analyses --"
+msgstr ""
+
+#: templates/shared_result.html:2 templates/shared_result.html:16
+msgid "Shared Analysis"
+msgstr "공유된 분석"
+
+#: templates/shared_result.html:20
+msgid "Persisted"
+msgstr "영구 저장됨"
+
+#: templates/shared_result.html:22
+msgid "Session only"
+msgstr "세션 한정"
+
+#: templates/shared_result.html:34
+msgid ""
+"Open the Rewrite workspace: side-by-side diff, validate, refine, persisted "
+"history"
+msgstr "재작성 작업공간 열기: side-by-side 차분, 검증, 개선, 영구 이력"
+
+#: templates/shared_result.html:39
+msgid "Jump to the feedback box at the bottom of the report"
+msgstr "리포트 하단의 피드백 상자로 이동"
+
+#: templates/shared_result.html:42
+msgid "Download report + feedback as a ZIP and forward it"
+msgstr "리포트 + 피드백을 ZIP으로 다운로드하여 전달"
+
+#: templates/shared_result.html:43
+msgid "ZIP"
+msgstr "ZIP"
+
+#: templates/shared_result.html:46 templates/spark_perf_report.html:20
+#: templates/spark_perf_report.html:252
+msgid "Copy Link"
+msgstr "링크 복사"
+
+#: templates/shared_result.html:49
+msgid "Slack Summary"
+msgstr "Slack 요약"
+
+#: templates/shared_result.html:61
+msgid "Total Time"
+msgstr "총 시간"
+
+#: templates/shared_result.html:65
+msgid "Cache Hit"
+msgstr "캐시 히트"
+
+#: templates/shared_result.html:87
+msgid "Actions"
+msgstr "작업"
+
+#: templates/shared_result.html:101
+msgid "No report available for this analysis."
+msgstr ""
+
+#: templates/shared_result.html:110
+msgid "Feedback on this report"
+msgstr "이 리포트에 대한 피드백"
+
+#: templates/shared_result.html:113
+msgid ""
+"Use this form for both whole-report omissions and per-action improvement "
+"requests. We review submissions monthly."
+msgstr "리포트 전반의 누락 신고 및 개별 작업 개선 요청에 모두 이 양식을 사용해주세요. 매월 제출 내용을 검토합니다."
+
+#: templates/shared_result.html:118
+msgid "Target: whole report (optional)"
+msgstr "대상: 리포트 전체 (선택)"
+
+#: templates/shared_result.html:122
+msgid "Select a category..."
+msgstr "카테고리 선택..."
+
+#: templates/shared_result.html:125
+msgid ""
+"Describe what is missing or how you would have liked the recommendation to "
+"read"
+msgstr "누락된 내용 또는 권장사항이 어떻게 작성되었으면 했는지 설명해주세요"
+
+#: templates/shared_result.html:129
+msgid "Submit"
+msgstr "제출"
+
+#: templates/shared_result.html:142
+msgid "Download report + feedback as a ZIP"
+msgstr ""
+
+#: templates/shared_result.html:145
+msgid "Please review the contents on your end before forwarding."
+msgstr ""
+
+#: templates/shared_result.html:148
+msgid "Always included:"
+msgstr "항상 포함:"
+
+#: templates/shared_result.html:150
+msgid "Report (report.md)"
+msgstr ""
+
+#: templates/shared_result.html:151
+msgid "Structured report (canonical_report.json)"
+msgstr ""
+
+#: templates/shared_result.html:152
+msgid "Feedback (feedback.json — emails are hashed)"
+msgstr ""
+
+#: templates/shared_result.html:153
+msgid "Literal-redacted profile (profile_redacted.json)"
+msgstr ""
+
+#: templates/shared_result.html:154
+msgid "Checksums + README (notes that this is not full anonymization)"
+msgstr ""
+
+#: templates/shared_result.html:157
+msgid "⚠ \"完全匿名化\" ではありません。テーブル名・列名は保持されます。"
+msgstr ""
+
+#: templates/shared_result.html:163
+msgid "Include the raw profile (profile.json)"
+msgstr ""
+
+#: templates/shared_result.html:165
+msgid ""
+"Includes the full SQL, literal values, clustering bounds, etc. Turn on only "
+"when problem reproduction is required."
+msgstr ""
+
+#: templates/shared_result.html:176
+msgid "Cancel"
+msgstr "취소"
+
+#: templates/shared_result.html:196
+msgid "Model for Rewrite"
+msgstr "재작성용 모델"
+
+#: templates/shared_result.html:201
+msgid "Generate optimized SQL from analysis"
+msgstr "분석에서 최적화된 SQL 생성"
+
+#: templates/shared_result.html:206
+msgid "Open dedicated rewrite workspace (side-by-side, history)"
+msgstr "전용 재작성 작업공간 열기 (side-by-side, 이력)"
+
+#: templates/shared_result.html:543
+msgid "Rewrite this query"
+msgstr "이 쿼리 재작성"
+
+#: templates/shared_result.html:544
+msgid "Generating SQL rewrite..."
+msgstr "SQL 재작성 생성 중..."
+
+#: templates/shared_result.html:582
+msgid "Token limit: query needs ~"
+msgstr "토큰 한도: 쿼리에 약 "
+
+#: templates/shared_result.html:582
+msgid " tokens but max is "
+msgstr " 토큰이 필요하지만 최대값은 "
+
+#: templates/shared_result.html:582
+msgid "."
+msgstr "."
+
+#: templates/shared_result.html:583
+msgid ""
+"Diff-format rewrite generated. Apply changes to the original query using the"
+" merge steps below."
+msgstr "Diff 형식의 재작성이 생성되었습니다. 아래 병합 단계를 사용하여 원본 쿼리에 변경 사항을 적용하세요."
+
+#: templates/shared_result.html:589
+msgid "Query length requires ~"
+msgstr "쿼리 길이로 약 "
+
+#: templates/shared_result.html:589
+msgid "output tokens."
+msgstr ""
+
+#: templates/shared_result.html:590
+msgid "is recommended."
+msgstr ""
+
+#: templates/shared_result.html:611
+msgid ""
+"Query exceeds the model output budget — output emitted as a diff patch with "
+"manual merge steps."
+msgstr "쿼리가 모델 출력 예산을 초과 — 수동 병합 단계와 함께 diff 패치로 출력되었습니다."
+
+#: templates/shared_result.html:626
+msgid "Open in Rewrite Workspace"
+msgstr "재작성 작업공간에서 열기"
+
+#: templates/shared_result.html:629 templates/shared_result.html:729
+msgid "Refine"
+msgstr ""
+
+#: templates/shared_result.html:632
+msgid "Diff output — validate after applying the patch."
+msgstr "Diff 출력 — 패치 적용 후 검증해주세요."
+
+#: templates/shared_result.html:665
+msgid "e.g. keep table aliases, use column name user_id, reduce CTEs..."
+msgstr ""
+
+#: templates/shared_result.html:668
+msgid "Send Fix Request"
+msgstr ""
+
+#: templates/shared_result.html:683
+msgid "Fixing rewrite..."
+msgstr ""
+
+#: templates/shared_result.html:756
+msgid "Validating..."
+msgstr ""
+
+#: templates/shared_result.html:772
+msgid "EXPLAIN passed"
+msgstr ""
+
+#: templates/shared_result.html:774
+msgid ""
+"syntax and logical plan OK. Table/schema existence depends on SP "
+"permissions."
+msgstr "구문 및 논리 계획 OK. 테이블/스키마 존재 여부는 SP 권한에 따라 다릅니다."
+
+#: templates/shared_result.html:776
+msgid "Syntax OK (local)"
+msgstr ""
+
+#: templates/shared_result.html:780
+msgid "EXPLAIN unavailable — local check only: "
+msgstr ""
+
+#: templates/shared_result.html:786
+msgid "EXPLAIN error"
+msgstr ""
+
+#: templates/shared_result.html:786
+msgid "Syntax error"
+msgstr ""
+
+#: templates/shared_result.html:839
+msgid "Please select a category."
+msgstr ""
+
+#: templates/shared_result.html:844
+msgid "Please enter a description."
+msgstr ""
+
+#: templates/shared_result.html:856
+msgid "Sending..."
+msgstr ""
+
+#: templates/shared_result.html:875
+msgid "Sent — thank you."
+msgstr ""
+
+#: templates/shared_result.html:881
+msgid "Failed to send: "
+msgstr ""
+
+#: templates/shared_result.html:944
+msgid "Improvement request"
+msgstr ""
+
+#: templates/shared_result.html:945
+msgid "Send feedback for this action"
+msgstr ""
+
+#: templates/shared_result.html:1010
+msgid "analysis_id not found"
+msgstr ""
+
+#: templates/spark_perf.html:15
+msgid "Settings"
+msgstr "설정"
+
+#: templates/spark_perf.html:19
+msgid ""
+"Configure the catalog, schema, and table prefix for Spark Performance Gold "
+"tables."
+msgstr ""
+
+#: templates/spark_perf.html:24
+msgid "Table Prefix"
+msgstr ""
+
+#: templates/spark_perf.html:28
+msgid "Advanced Settings (Optional)"
+msgstr ""
+
+#: templates/spark_perf.html:32
+msgid "ETL Job ID"
+msgstr ""
+
+#: templates/spark_perf.html:33
+msgid "Create Report Job ID"
+msgstr ""
+
+#: templates/spark_perf.html:37
+msgid "Save"
+msgstr "저장"
+
+#: templates/spark_perf.html:49
+msgid "Run ETL Pipeline"
+msgstr ""
+
+#: templates/spark_perf.html:53
+msgid ""
+"Process Spark event logs through the ETL pipeline to generate Gold tables."
+msgstr ""
+
+#: templates/spark_perf.html:56
+msgid "Path format and supported compute types"
+msgstr ""
+
+#: templates/spark_perf.html:59
+msgid ""
+"Enter the Destination path from Compute > Advanced Options > Logging tab."
+msgstr ""
+
+#: templates/spark_perf.html:64
+msgid ""
+"Copy the Destination path as-is. The cluster ID is automatically included."
+msgstr ""
+
+#: templates/spark_perf.html:69
+msgid "Append the cluster ID to the Destination path."
+msgstr ""
+
+#: templates/spark_perf.html:74
+msgid "Append the cluster ID to the pipeline log path."
+msgstr ""
+
+#: templates/spark_perf.html:85
+msgid "No event logs. Use the SQL Analysis page with Query Profile JSON."
+msgstr ""
+
+#: templates/spark_perf.html:90
+msgid "Cluster Log Destination"
+msgstr ""
+
+#: templates/spark_perf.html:97
+msgid "Run ETL"
+msgstr ""
+
+#: templates/spark_perf.html:109 templates/spark_perf.html:171
+msgid "View in Databricks"
+msgstr ""
+
+#: templates/spark_perf.html:120 templates/spark_perf.html:152
+msgid "Create Report"
+msgstr ""
+
+#: templates/spark_perf.html:124
+msgid ""
+"Generate an LLM analysis report from Gold tables for the selected "
+"application."
+msgstr ""
+
+#: templates/spark_perf.html:127 templates/spark_perf.html:206
+msgid "App ID"
+msgstr ""
+
+#: templates/spark_perf.html:127
+msgid "Report Target Spark Application"
+msgstr ""
+
+#: templates/spark_perf.html:137
+msgid ""
+"Tag this analysis for comparison. The same experiment_id groups related "
+"analyses together."
+msgstr ""
+
+#: templates/spark_perf.html:183
+msgid "Spark Application List"
+msgstr ""
+
+#: templates/spark_perf.html:185
+msgid "Refresh"
+msgstr ""
+
+#: templates/spark_perf.html:208
+msgid "Name"
+msgstr ""
+
+#: templates/spark_perf.html:209
+msgid "Started"
+msgstr ""
+
+#: templates/spark_perf.html:215
+msgid "ETL Run Time"
+msgstr ""
+
+#: templates/spark_perf.html:216
+msgid "Report Date"
+msgstr ""
+
+#: templates/spark_perf.html:238 templates/spark_perf.html:316
+msgid "No applications found."
+msgstr ""
+
+#: templates/spark_perf.html:246 templates/spark_perf.html:317
+msgid "Loading report..."
+msgstr ""
+
+#: templates/spark_perf.html:263 templates/spark_perf_report.html:86
+msgid "Genie — Spark Analysis"
+msgstr ""
+
+#: templates/spark_perf.html:278 templates/spark_perf.html:327
+#: templates/spark_perf_report.html:101
+msgid "Ask questions about this Spark application's performance data."
+msgstr ""
+
+#: templates/spark_perf.html:290 templates/spark_perf_report.html:113
+msgid "Ask about this application..."
+msgstr ""
+
+#: templates/spark_perf.html:305
+msgid "Saving..."
+msgstr ""
+
+#: templates/spark_perf.html:306
+msgid "Saved!"
+msgstr ""
+
+#: templates/spark_perf.html:307
+msgid "Save failed"
+msgstr ""
+
+#: templates/spark_perf.html:308
+msgid "Resetting..."
+msgstr ""
+
+#: templates/spark_perf.html:309
+msgid "Reset!"
+msgstr ""
+
+#: templates/spark_perf.html:312
+msgid "Load failed"
+msgstr ""
+
+#: templates/spark_perf.html:313
+msgid "Starting..."
+msgstr ""
+
+#: templates/spark_perf.html:314
+msgid "Starting report generation..."
+msgstr ""
+
+#: templates/spark_perf.html:315
+msgid "Thinking..."
+msgstr ""
+
+#: templates/spark_perf.html:318
+msgid "Report loading timed out"
+msgstr ""
+
+#: templates/spark_perf.html:319
+msgid "Report failed"
+msgstr ""
+
+#: templates/spark_perf.html:320
+msgid "Cluster Log Destination is required"
+msgstr ""
+
+#: templates/spark_perf.html:321
+msgid "Invalid path. Expected format: /Volumes/.../cluster_logs/<cluster_id>"
+msgstr ""
+
+#: templates/spark_perf.html:322
+msgid "(No response)"
+msgstr ""
+
+#: templates/spark_perf.html:323
+msgid "Timed out waiting for response."
+msgstr ""
+
+#: templates/spark_perf.html:324
+msgid "Query failed"
+msgstr ""
+
+#: templates/spark_perf.html:325
+msgid "Failed to initialize Genie"
+msgstr ""
+
+#: templates/spark_perf.html:326
+msgid "Genie connection failed"
+msgstr ""
+
+#: templates/spark_perf.html:328
+msgid "applications"
+msgstr ""
+
+#: templates/spark_perf.html:329
+msgid "Page"
+msgstr ""
+
+#: templates/spark_perf.html:330
+msgid "Showing"
+msgstr ""
+
+#: templates/spark_perf.html:331
+msgid "of"
+msgstr ""
+
+#: templates/spark_perf_report.html:10
+msgid "Spark Analysis"
+msgstr ""
+
+#: templates/spark_perf_report.html:19
+msgid "Copy share link"
+msgstr ""
+
+#: templates/spark_perf_report.html:40
+msgid "Shuffle"
+msgstr ""
+
+#: templates/spark_perf_report.html:70
+msgid "No report available for this application."
+msgstr ""
+
+#: templates/spark_perf_report.html:275
+msgid "Ask questions about this Spark application performance data."
+msgstr ""
+
+#: templates/workload.html:25
+msgid ""
+"Compare DBSQL query analysis and Spark job analysis side by side to identify"
+" bottlenecks across the same workload."
+msgstr ""
+
+#: templates/workload.html:27
+msgid "Left: DBSQL"
+msgstr ""
+
+#: templates/workload.html:27
+msgid "Select a saved query analysis (saved to Delta on the history screen)"
+msgstr ""
+
+#: templates/workload.html:28
+msgid "Right: Spark"
+msgstr ""
+
+#: templates/workload.html:28
+msgid "Select a Spark app generated by the ETL pipeline"
+msgstr ""
+
+#: templates/workload.html:29
+msgid "After selecting both, save the link with"
+msgstr ""
+
+#: templates/workload.html:29
+msgid "you can recall it next time"
+msgstr ""
+
+#: templates/workload.html:110
+msgid "Select a DBSQL analysis from the dropdown on the left"
+msgstr ""
+
+#: templates/workload.html:111
+msgid "(Analyze on the top screen → Save to Delta → displayed here)"
+msgstr ""
+
+#: templates/workload.html:127
+msgid "Select a Spark app from the dropdown on the right"
+msgstr ""
+
+#: templates/workload.html:128
+msgid "(Displays the same data as the Spark Perf page)"
+msgstr ""

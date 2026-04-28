@@ -32,14 +32,14 @@ logging.getLogger("werkzeug").setLevel(logging.WARNING)
 logging.getLogger("sqlglot").setLevel(logging.ERROR)
 
 # Overwritten by deploy.sh from pyproject.toml at deploy time
-APP_VERSION = "6.7.2"
+APP_VERSION = "6.7.13"
 
 app = Flask(__name__)
 app.config["MAX_CONTENT_LENGTH"] = 10 * 1024 * 1024  # 10MB limit
 
 # i18n Configuration
 app.config["BABEL_DEFAULT_LOCALE"] = "en"
-app.config["BABEL_SUPPORTED_LOCALES"] = ["en", "ja"]
+app.config["BABEL_SUPPORTED_LOCALES"] = ["en", "ja", "ko"]
 
 
 def get_locale():

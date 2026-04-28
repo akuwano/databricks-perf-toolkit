@@ -70,20 +70,23 @@ def _get_mo_translation(lang: str):
     return t
 
 
+_SUPPORTED_LANGS = ("en", "ja", "ko")
+
+
 def set_language(lang: str) -> None:
     """Set the current language for non-Flask contexts (thread-local).
 
     Args:
-        lang: Language code ('en' or 'ja')
+        lang: Language code ('en', 'ja', or 'ko')
     """
-    _set_current_language(lang if lang in ("en", "ja") else "en")
+    _set_current_language(lang if lang in _SUPPORTED_LANGS else "en")
 
 
 def get_language() -> str:
     """Get the current language setting (thread-local).
 
     Returns:
-        Current language code ('en' or 'ja')
+        Current language code ('en', 'ja', or 'ko')
     """
     return _get_current_language()
 

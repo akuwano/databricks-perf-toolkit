@@ -1,6 +1,6 @@
 [project]
 name = "dbsql-profiler-analyzer"
-version = "6.7.13"
+version = "6.8.1"
 description = "Databricks SQL Query Profile Analyzer using LLM"
 readme = "README.md"
 requires-python = ">=3.11"

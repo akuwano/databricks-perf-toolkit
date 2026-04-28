@@ -595,6 +595,61 @@ def _no_force_fill_block(lang: str) -> str:
     )
 
 
+def _korean_output_directive(lang: str) -> str:
+    """v6.8.0: Korean LLM-output directive.
+
+    The prompt builders below carry full ja / en branches. Adding a
+    parallel ko branch for every prompt would be a major rewrite, so
+    when ``lang == "ko"`` we keep the English prompt structure and
+    append a single output-language directive instructing the LLM to
+    respond in Korean. The LLM follows this reliably in practice, and
+    Korean output quality is good enough for v6.8.0 MVP. Section
+    headers and structured fields will appear as the English prompt
+    requests but the prose is rendered in Korean.
+
+    Returns "" for non-ko languages so existing en/ja prompts are
+    unaffected.
+    """
+    if lang != "ko":
+        return ""
+    return (
+        "\n\n## Output Language (MANDATORY)\n"
+        "Write the entire report in Korean (한국어). Keep section headers, "
+        "code snippets, SQL keywords, metric names, and JSON keys in their "
+        "original English form, but translate all narrative prose, "
+        "explanations, and recommendations into natural Korean. "
+        "Use Korean technical conventions (e.g., 디스크 스필, 셔플, 캐시 "
+        "히트율) where they exist; otherwise leave the English term "
+        "unchanged in parentheses. Do NOT mix Japanese phrasing.\n"
+    )
+
+
+def _append_korean_directive(func):
+    """Decorator (v6.8.0): append the Korean output directive to a
+    system-prompt builder's return value when ``lang == "ko"``.
+
+    All 5 main system-prompt builders (analyze / structured / review /
+    refine / rewrite) carry the EN/JA branch internally and accept
+    ``lang`` either positionally (2nd) or as kwarg. Rather than weave a
+    third branch through every f-string, wrap the builder so the
+    Korean directive is appended once at the end. Falls through to the
+    EN prompt body, which the LLM then renders in Korean per the
+    directive.
+    """
+    import functools as _ft
+
+    @_ft.wraps(func)
+    def _wrapper(*args, **kwargs):
+        lang = kwargs.get("lang")
+        if lang is None and len(args) >= 2 and isinstance(args[1], str):
+            lang = args[1]
+        if lang is None:
+            lang = get_language()
+        return func(*args, **kwargs) + _korean_output_directive(lang)
+
+    return _wrapper
+
+
 def _recommendation_format_block(lang: str) -> str:
     """Return the evidence-constrained recommendation format template.
 
@@ -1140,6 +1195,7 @@ Use the following constraints when recommending fixes:
 - **Source-specific guidance**: when `federation_source_type` is known (BigQuery/Snowflake/Postgres/…), emit source-specific DDL / WITH hints. When unknown, caveat with "confirm source type first" but still give generic federation advice"""
 
 
+@_append_korean_directive
 def create_system_prompt(
     tuning_knowledge: str, lang: str | None = None, is_serverless: bool = False
 ) -> str:
@@ -1588,6 +1644,7 @@ If AQE self-repartition == yes AND no shuffle spilled, the root cause is data vo
 # =============================================================================
 
 
+@_append_korean_directive
 def create_review_system_prompt(
     tuning_knowledge: str,
     lang: str | None = None,
@@ -1970,6 +2027,7 @@ Specifically check:
 # =============================================================================
 
 
+@_append_korean_directive
 def create_refine_system_prompt(
     tuning_knowledge: str,
     lang: str | None = None,
@@ -2345,6 +2403,7 @@ Improvement points:
 # =============================================================================
 
 
+@_append_korean_directive
 def create_structured_system_prompt(
     tuning_knowledge: str,
     lang: str | None = None,
@@ -3163,6 +3222,7 @@ Please recommend optimal clustering keys in JSON format."""
 # =============================================================================
 
 
+@_append_korean_directive
 def create_rewrite_system_prompt(
     knowledge: str,
     lang: str,
